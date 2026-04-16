@@ -22,8 +22,8 @@ watch(() => props.messages.length, scrollToBottom)
 </script>
 
 <template>
-  <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 bg-[#f5f7fa]">
-    <EmptyState v-if="!messages.length" title="还没有消息" desc="发送第一条消息开启对话" />
+  <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 bg-white">
+    <EmptyState v-if="!messages.length" title="还没有消息" desc="等待用户发起咨询…" />
     <MessageBubble
       v-for="m in messages"
       :key="m.id"

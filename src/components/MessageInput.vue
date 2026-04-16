@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 const props = withDefaults(
-  defineProps<{ variant?: 'desktop' | 'mobile'; disabled?: boolean; aiSuggestion?: string }>(),
+  defineProps<{ variant?: 'desktop' | 'mobile'; disabled?: boolean }>(),
   { variant: 'desktop', disabled: false },
 )
 
@@ -35,10 +35,6 @@ function onFileChange(e: Event) {
   ;(e.target as HTMLInputElement).value = ''
 }
 
-function useAi() {
-  if (props.aiSuggestion) text.value = props.aiSuggestion
-}
-
 const tools = [
   { icon: '😊', label: '表情' },
   { icon: '🖼️', label: '图片', action: 'image' },
@@ -50,48 +46,58 @@ const tools = [
 </script>
 
 <template>
-  <div class="border-t border-line-light bg-white" :class="variant === 'mobile' ? 'p-2' : 'px-4 pt-2 pb-3'">
-    <!-- AI 建议条 -->
-    <div
-      v-if="variant === 'desktop' && aiSuggestion"
-      class="flex items-center gap-2 mb-2 px-3 py-2 rounded-md bg-gradient-to-r from-brand-50 to-white border border-brand-100"
-    >
-      <span class="text-brand-500 text-xs">✨ AI 建议</span>
-      <span class="flex-1 text-xs text-ink-700 truncate">{{ aiSuggestion }}</span>
-      <button class="text-xs text-brand-600 hover:underline shrink-0" @click="useAi">一键采用</button>
-    </div>
-
-    <div v-if="variant === 'desktop'" class="flex gap-4 mb-2 text-ink-600">
-      <button
-        v-for="t in tools"
-        :key="t.label"
-        class="flex items-center gap-1 text-xs hover:text-brand-500"
-        @click="t.action === 'image' ? pickImage() : null"
-      >
-        <span class="text-base">{{ t.icon }}</span>
-        <span>{{ t.label }}</span>
-      </button>
-    </div>
-
+  <div v-if="variant === 'mobile'" class="border-t border-line-light bg-white p-2">
     <div class="flex items-end gap-2">
       <textarea
         v-model="text"
         :disabled="disabled"
-        :placeholder="disabled ? '未连接…' : (variant === 'desktop' ? '输入回复内容，或点击上方「一键采用」AI建议...' : '请输入消息')"
-        :rows="variant === 'mobile' ? 1 : 3"
+        :placeholder="disabled ? '未连接…' : '请输入消息'"
+        :rows="1"
         class="flex-1 resize-none rounded-md border border-line-light px-3 py-2 text-sm bg-white focus:outline-none focus:border-brand-500 disabled:bg-bg-soft"
         @keydown="handleKeydown"
       />
-      <button
-        v-if="variant === 'mobile'"
-        class="shrink-0 px-2 text-ink-600"
-        @click="pickImage"
-      >🖼️</button>
+      <button class="shrink-0 px-2 text-ink-600" @click="pickImage">🖼️</button>
       <button
         class="shrink-0 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-sm px-4 py-2 disabled:opacity-50"
         :disabled="disabled || !text.trim()"
         @click="handleSend"
       >发送</button>
+    </div>
+    <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+  </div>
+
+  <div v-else class="bg-white">
+    <!-- 工具栏（独立于输入框） -->
+    <div class="flex items-center gap-6 px-6 h-11 border-t border-line-light">
+      <button
+        v-for="t in tools"
+        :key="t.label"
+        class="flex items-center gap-1.5 text-xs text-ink-700 hover:text-brand-500"
+        @click="t.action === 'image' ? pickImage() : null"
+      >
+        <span class="text-sm">{{ t.icon }}</span>
+        <span>{{ t.label }}</span>
+      </button>
+    </div>
+
+    <!-- 输入框 -->
+    <div class="bg-white px-4 py-3 border-t border-line-light">
+      <textarea
+        v-model="text"
+        :disabled="disabled"
+        placeholder="输入回复内容，或点击上方「一键采用」AI建议..."
+        rows="3"
+        class="w-full resize-none text-[13px] bg-transparent focus:outline-none placeholder:text-ink-600/70 disabled:text-ink-600"
+        @keydown="handleKeydown"
+      />
+      <div class="flex items-center justify-end gap-3 mt-2">
+        <button class="text-xs text-ink-700 hover:text-brand-500">存为话术</button>
+        <button
+          class="rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs px-5 py-1.5 disabled:opacity-50"
+          :disabled="disabled || !text.trim()"
+          @click="handleSend"
+        >发送</button>
+      </div>
     </div>
 
     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
