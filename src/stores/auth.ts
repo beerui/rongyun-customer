@@ -1,8 +1,29 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { fetchUserImCredential, agentLogin as apiAgentLogin } from '@/apis/auth'
+import { fetchUserImCredential, agentLogin as apiAgentLogin, type AgentImCredential } from '@/apis/auth'
 
 export type Role = 'guest' | 'user' | 'agent'
+
+const AGENT_SESSION_KEY = 'agent_session'
+
+interface AgentSession {
+  rcToken: string
+  agentId: string
+  name: string
+  avatar?: string
+  peers: Array<{ id: string; name: string; avatar?: string }>
+}
+
+function loadAgentSession(): AgentSession | null {
+  try {
+    const raw = localStorage.getItem(AGENT_SESSION_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+function saveAgentSession(s: AgentSession) {
+  localStorage.setItem(AGENT_SESSION_KEY, JSON.stringify(s))
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const role = ref<Role>('guest')
@@ -10,12 +31,19 @@ export const useAuthStore = defineStore('auth', () => {
   const name = ref('')
   const avatar = ref('')
   const rcToken = ref('')
-  /** 私聊模式下为对端 userId；群模式下为 groupId */
   const peerId = ref('')
-  /** 客服持有的对端/群列表 */
   const peers = ref<Array<{ id: string; name: string; avatar?: string }>>([])
 
   const isAgent = computed(() => role.value === 'agent')
+
+  function applyAgent(cred: AgentImCredential) {
+    role.value = 'agent'
+    userId.value = cred.agentId
+    name.value = cred.name
+    avatar.value = cred.avatar ?? ''
+    rcToken.value = cred.rcToken
+    peers.value = cred.peers ?? []
+  }
 
   async function bootstrapUser() {
     const cred = await fetchUserImCredential()
@@ -30,17 +58,35 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginAgent(account: string, password: string) {
     const cred = await apiAgentLogin(account, password)
     localStorage.setItem('auth_token', cred.authToken || '')
-    role.value = 'agent'
-    userId.value = cred.agentId
-    name.value = cred.name
-    avatar.value = cred.avatar ?? ''
-    rcToken.value = cred.rcToken
-    peers.value = cred.peers ?? []
+    applyAgent(cred)
+    saveAgentSession({
+      rcToken: cred.rcToken,
+      agentId: cred.agentId,
+      name: cred.name,
+      avatar: cred.avatar,
+      peers: cred.peers,
+    })
   }
 
-  /** App.vue 启动时决定是否自动加载用户端凭证 */
+  /** 从 localStorage 恢复客服会话（刷新后调用） */
+  function restoreAgent(): boolean {
+    const s = loadAgentSession()
+    if (!s || !s.rcToken) return false
+    role.value = 'agent'
+    userId.value = s.agentId
+    name.value = s.name
+    avatar.value = s.avatar ?? ''
+    rcToken.value = s.rcToken
+    peers.value = s.peers ?? []
+    return true
+  }
+
   async function bootstrap() {
-    if (location.pathname.startsWith('/agent')) return
+    const onAgent = location.pathname.startsWith('/agent')
+    if (onAgent) {
+      restoreAgent()
+      return
+    }
     try {
       await bootstrapUser()
     } catch {
@@ -50,6 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout() {
     localStorage.removeItem('auth_token')
+    localStorage.removeItem(AGENT_SESSION_KEY)
     role.value = 'guest'
     userId.value = ''
     name.value = ''
@@ -61,6 +108,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     role, userId, name, avatar, rcToken, peerId, peers, isAgent,
-    bootstrap, bootstrapUser, loginAgent, logout,
+    bootstrap, bootstrapUser, loginAgent, restoreAgent, logout,
   }
 })

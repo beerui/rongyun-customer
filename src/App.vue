@@ -8,7 +8,11 @@ const im = useImStore()
 
 onMounted(async () => {
   await auth.bootstrap()
-  if (auth.rcToken) await im.connect(auth.rcToken)
+  if (auth.rcToken) {
+    im.connect(auth.rcToken).catch((e) => {
+      console.warn('RC connect failed on bootstrap:', e)
+    })
+  }
 })
 </script>
 
