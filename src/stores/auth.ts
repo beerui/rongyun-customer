@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginAgent(account: string, password: string) {
     const cred = await apiAgentLogin(account, password)
-    localStorage.setItem('auth_token', cred.authToken)
+    localStorage.setItem('auth_token', cred.authToken || '')
     role.value = 'agent'
     userId.value = cred.agentId
     name.value = cred.name
