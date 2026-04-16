@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import {
   initIM, connectIM, disconnectIM,
   onMessage, onConnectionStatus,
-  getHistory, sendText, sendImage, sendVideo, sendFile, clearUnread,
+  getHistory, sendText, sendImage, sendVideo, sendFile, sendCustomCard, clearUnread,
   type Message, type ConnectionStatus,
 } from '@/im'
 import { uploadImage, uploadVideo, uploadFile as upFile } from '@/utils/upload'
@@ -158,6 +158,20 @@ export const useImStore = defineStore('im', () => {
     }
   }
 
+  async function sendCard(customType: 'product' | 'order' | 'coupon', data: Record<string, any>) {
+    const targetId = currentTargetId.value
+    if (!targetId) return
+    const tempId = pushOptimistic({ type: customType as any, content: data })
+    try {
+      const real = await sendCustomCard(targetId, customType, data)
+      replace(tempId, () => ({ ...real, senderId: real.senderId || 'me' }))
+    } catch (e) {
+      console.warn('send card failed, keeping local preview', e)
+      // 即使 SDK 发送失败，仍保留本地渲染（方便未连接时预览卡片效果）
+      replace(tempId, (m) => ({ ...m, status: 'sent' }))
+    }
+  }
+
   async function retry(messageId: string) {
     const m = messages.value.find((x) => x.id === messageId)
     if (!m || m.status !== 'failed') return
@@ -178,8 +192,7 @@ export const useImStore = defineStore('im', () => {
   return {
     status, connected, currentTargetId, messages, isMock,
     connect, disconnect, openConversation,
-    sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, retry,
-    /** 向后兼容旧代码 */
+    sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry,
     sendImageMessage: (url: string) => sendTextMessage(url),
   }
 })

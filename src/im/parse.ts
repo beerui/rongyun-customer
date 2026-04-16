@@ -1,13 +1,18 @@
 import type { Message, Conversation, MessageType } from './types'
 
-function detectType(objectName: string): MessageType {
+function detectType(objectName: string, content: any): MessageType {
   switch (objectName) {
     case 'RC:TxtMsg': return 'text'
     case 'RC:ImgMsg': return 'image'
     case 'RC:FileMsg': return 'file'
     case 'RC:SightMsg': return 'video'
-    default: return 'custom'
   }
+  // 自定义消息：通过 content.customType 区分
+  const ct = content?.customType
+  if (ct === 'product') return 'product'
+  if (ct === 'order')   return 'order'
+  if (ct === 'coupon')  return 'coupon'
+  return 'custom'
 }
 
 function parseContent(type: MessageType, content: any): any {
@@ -28,13 +33,16 @@ function parseContent(type: MessageType, content: any): any {
     name: content?.name ?? '',
     size: Number(content?.size ?? 0),
   }
+  if (type === 'product' || type === 'order' || type === 'coupon') {
+    return content?.data ?? content
+  }
   return content
 }
 
 export function parseRcMessage(raw: any): Message {
   const objectName = raw?.messageType || raw?.objectName || 'RC:TxtMsg'
-  const type = detectType(objectName)
   const content = raw?.content ?? {}
+  const type = detectType(objectName, content)
   return {
     id: String(raw?.messageUId ?? raw?.messageId ?? `${raw?.sentTime ?? Date.now()}_${Math.random()}`),
     targetId: String(raw?.targetId ?? ''),

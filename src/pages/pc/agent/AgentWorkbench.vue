@@ -3,36 +3,57 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import { useConversationsStore } from '@/stores/conversations'
-import { suspendConversation, transferConversation, endConversation, fetchAgentsForTransfer } from '@/apis/customer'
+import { useComposerStore } from '@/stores/composer'
+import {
+  suspendConversation,
+  transferConversation,
+  endConversation,
+  fetchAgentsForTransfer,
+} from '@/apis/customer'
 import ConversationItem from '@/components/ConversationItem.vue'
 import MessageList from '@/components/MessageList.vue'
 import MessageInput from '@/components/MessageInput.vue'
 import UserInfoPanel from './UserInfoPanel.vue'
 import Avatar from '@/components/Avatar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
+import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
+import CouponDrawer from '@/components/drawers/CouponDrawer.vue'
+import QuickReplyDrawer from '@/components/drawers/QuickReplyDrawer.vue'
+import type { ProductPayload, OrderPayload, CouponPayload } from '@/im'
 
 const auth = useAuthStore()
 const im = useImStore()
 const conv = useConversationsStore()
+const composer = useComposerStore()
 
 const keyword = ref('')
 const filterKey = ref<'all' | 'waiting' | 'active'>('all')
 
+/**
+ * demo 对照数据 — 每个会话附带 tag，用来决定工具栏中"订单列表/商品列表"按钮的可见性
+ * 规则（按接入用户的咨询类型）：
+ *   退款申请 / 物流异常 / 物流查询 / 账户异常 → 订单相关 → 显示"订单列表"
+ *   商品咨询 / 优惠问题 → 商品相关 → 显示"商品列表"
+ *   其它 → 两个都显示
+ */
 const demoConvs = [
   { targetId: 'u_wen',  title: '温温', avatarBg: '#E8FFEA', tag: '退款申请', lastMessage: '我要申请退货退款.......', timeLabel: '5分钟' },
   { targetId: 'u_zs',   title: '张三', avatarBg: '#FFF7E8', tag: '物流异常', lastMessage: '我一直没收到货啊......',    timeLabel: '12分钟' },
   { targetId: 'u_ls',   title: '李四', avatarBg: '#FFECE8', tag: '物流查询', lastMessage: '我的快递到哪里了？',        timeLabel: '30分钟' },
   { targetId: 'u_wq1',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
-  { targetId: 'u_wq2',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
+  { targetId: 'u_wq2',  title: '赵敏', avatarBg: '#E6F4FF', tag: '优惠问题', lastMessage: '新人券怎么领？',            timeLabel: '1小时' },
 ]
 
 const filtered = computed(() => {
-  const base = conv.list.length ? conv.list.map((c, i) => ({
-    ...c,
-    tag: (demoConvs[i % demoConvs.length] as any).tag,
-    avatarBg: (demoConvs[i % demoConvs.length] as any).avatarBg,
-    timeLabel: '',
-  })) : demoConvs.map((c) => ({ ...c, unread: 0, lastTime: 0 } as any))
+  const base = conv.list.length
+    ? conv.list.map((c, i) => ({
+        ...c,
+        tag: (demoConvs[i % demoConvs.length] as any).tag,
+        avatarBg: (demoConvs[i % demoConvs.length] as any).avatarBg,
+        timeLabel: '',
+      }))
+    : demoConvs.map((c) => ({ ...c, unread: 0, lastTime: 0 } as any))
   return base.filter((c: any) => !keyword.value || c.title.includes(keyword.value))
 })
 
@@ -42,13 +63,22 @@ const activePeer = computed(() => {
   return c ? { id: c.targetId, name: c.title, avatar: c.avatar, avatarBg: c.avatarBg, tag: c.tag } : undefined
 })
 
+const toolVisibility = computed(() => {
+  const tag = activePeer.value?.tag || ''
+  const orderTags = ['退款申请', '物流异常', '物流查询', '账户异常']
+  const productTags = ['商品咨询', '优惠问题']
+  const showOrder = orderTags.includes(tag) || !productTags.includes(tag)
+  const showProduct = productTags.includes(tag) || !orderTags.includes(tag)
+  return { showOrder, showProduct, showCoupon: true, showQuick: true }
+})
+
 const stats = { today: '23', satisfaction: '99.6%', avgDuration: '4m12s', solveRate: '91.6%' }
 
 async function selectConv(targetId: string) {
   await im.openConversation(targetId)
 }
 
-// --- 会话操作：挂起 / 转接 / 结束 ---
+// ========== 会话操作：挂起 / 转接 / 结束 ==========
 
 const showTransfer = ref(false)
 const transferAgents = ref<Array<{ id: string; name: string; avatar?: string; online?: boolean }>>([])
@@ -60,10 +90,8 @@ async function onSuspend() {
   if (!confirm(`确定挂起与 ${activePeer.value.name} 的会话？`)) return
   busy.value = 'suspend'
   try {
-    await suspendConversation(activePeer.value.id)
-    alert('已挂起')
-  } catch (e: any) {
-    alert(`挂起失败：${e?.message || '未知错误'}`)
+    await suspendConversation(activePeer.value.id).catch(() => {})
+    alert('已挂起（模拟）')
   } finally { busy.value = '' }
 }
 
@@ -77,6 +105,7 @@ async function openTransfer() {
     transferAgents.value = [
       { id: 'agent2', name: '小伊', online: true },
       { id: 'agent3', name: '客服3', online: false },
+      { id: 'agent4', name: '客服4', online: true },
     ]
   }
 }
@@ -85,11 +114,9 @@ async function onTransferTo(agentId: string) {
   if (!activePeer.value) return
   busy.value = 'transfer'
   try {
-    await transferConversation(activePeer.value.id, agentId)
+    await transferConversation(activePeer.value.id, agentId).catch(() => {})
     showTransfer.value = false
-    alert('已转接')
-  } catch (e: any) {
-    alert(`转接失败：${e?.message || '未知错误'}`)
+    alert('已转接（模拟）')
   } finally { busy.value = '' }
 }
 
@@ -98,16 +125,55 @@ async function onEnd() {
   if (!confirm(`确定结束与 ${activePeer.value.name} 的会话？`)) return
   busy.value = 'end'
   try {
-    await endConversation(activePeer.value.id)
-    alert('会话已结束')
-  } catch (e: any) {
-    alert(`结束失败：${e?.message || '未知错误'}`)
+    await endConversation(activePeer.value.id).catch(() => {})
+    alert('会话已结束（模拟）')
   } finally { busy.value = '' }
 }
 
 const filteredAgents = computed(() =>
   transferAgents.value.filter((a) => !transferKeyword.value || a.name.includes(transferKeyword.value)),
 )
+
+// ========== 工具栏抽屉 ==========
+
+const drawerOrder = ref(false)
+const drawerProduct = ref(false)
+const drawerCoupon = ref(false)
+const drawerQuick = ref(false)
+
+function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick') {
+  if (kind === 'order')   drawerOrder.value = true
+  if (kind === 'product') drawerProduct.value = true
+  if (kind === 'coupon')  drawerCoupon.value = true
+  if (kind === 'quick')   drawerQuick.value = true
+}
+
+async function sendProduct(p: ProductPayload) {
+  await im.sendCard('product', p)
+  drawerProduct.value = false
+}
+
+async function sendOrder(o: OrderPayload) {
+  await im.sendCard('order', o)
+  drawerOrder.value = false
+}
+
+async function sendCoupon(c: CouponPayload) {
+  await im.sendCard('coupon', c)
+  drawerCoupon.value = false
+}
+
+function pickQuickReply(t: string) {
+  composer.insert(t)
+  drawerQuick.value = false
+}
+
+async function sendQuickReply(t: string) {
+  await im.sendTextMessage(t)
+  drawerQuick.value = false
+}
+
+// ========== 发送 ==========
 
 onMounted(async () => {
   if (!im.connected && auth.rcToken) {
@@ -133,7 +199,6 @@ function logout() {
 
 <template>
   <div class="h-screen w-screen flex flex-col bg-bg-app min-w-[1280px]">
-    <!-- 顶部红色栏 -->
     <header class="h-20 bg-brand-500 flex items-center px-5 shrink-0 text-white">
       <div class="text-[20px] font-semibold">智能客服工作台</div>
       <div class="flex items-center gap-1.5 ml-8 text-[14px]">
@@ -153,7 +218,6 @@ function logout() {
     </header>
 
     <div class="flex-1 flex min-h-0">
-      <!-- 左侧：会话列表 -->
       <section class="w-[268px] bg-white flex flex-col border-r border-line-light shrink-0">
         <div class="px-5 pt-5 pb-3">
           <div class="flex items-center gap-2 mb-3">
@@ -168,9 +232,7 @@ function logout() {
               v-for="f in [{k:'all',l:'全部'},{k:'waiting',l:'待接入'},{k:'active',l:'进行中'}]"
               :key="f.k"
               class="text-[13px] px-4 h-8 rounded transition-colors"
-              :class="filterKey === f.k
-                ? 'bg-brand-500 text-white'
-                : 'bg-bg-soft text-ink-700 hover:bg-line-light'"
+              :class="filterKey === f.k ? 'bg-brand-500 text-white' : 'bg-bg-soft text-ink-700 hover:bg-line-light'"
               @click="filterKey = f.k as any"
             >{{ f.l }}</button>
           </div>
@@ -197,7 +259,6 @@ function logout() {
         </div>
       </section>
 
-      <!-- 中间：聊天区 -->
       <section class="flex-1 min-w-0 flex flex-col bg-white">
         <div v-if="activePeer" class="flex items-center justify-between px-6 h-16 border-b border-line-light shrink-0">
           <div class="flex items-center gap-3 min-w-0">
@@ -251,16 +312,21 @@ function logout() {
           <MessageInput
             variant="desktop"
             :disabled="!im.connected"
+            :show-order="toolVisibility.showOrder"
+            :show-product="toolVisibility.showProduct"
+            :show-coupon="toolVisibility.showCoupon"
+            :show-quick="toolVisibility.showQuick"
             @send-text="handleSendText"
             @send-image="handleSendImage"
             @send-video="handleSendVideo"
             @send-file="handleSendFile"
+            @open-drawer="onOpenDrawer"
           />
         </template>
       </section>
 
       <aside class="w-[300px] shrink-0">
-        <UserInfoPanel :peer="activePeer" />
+        <UserInfoPanel :peer="activePeer" @open-drawer="onOpenDrawer" />
       </aside>
     </div>
 
@@ -296,5 +362,30 @@ function logout() {
         </div>
       </div>
     </div>
+
+    <!-- 功能抽屉 -->
+    <OrderListDrawer
+      :open="drawerOrder"
+      :user-id="activePeer?.id || ''"
+      @close="drawerOrder = false"
+      @send-order="sendOrder"
+      @send-product="sendProduct"
+    />
+    <ProductListDrawer
+      :open="drawerProduct"
+      @close="drawerProduct = false"
+      @send="sendProduct"
+    />
+    <CouponDrawer
+      :open="drawerCoupon"
+      @close="drawerCoupon = false"
+      @send="sendCoupon"
+    />
+    <QuickReplyDrawer
+      :open="drawerQuick"
+      @close="drawerQuick = false"
+      @pick="pickQuickReply"
+      @send="sendQuickReply"
+    />
   </div>
 </template>

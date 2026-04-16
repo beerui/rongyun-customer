@@ -88,6 +88,20 @@ export async function clearUnread(targetId: string): Promise<void> {
   await RC.clearMessagesUnreadStatus({ conversationType: rcType(), targetId })
 }
 
+/** 发送自定义卡片消息（商品/订单/优惠券），通过 content.customType 区分 */
+export async function sendCustomCard(
+  targetId: string,
+  customType: 'product' | 'order' | 'coupon',
+  data: Record<string, any>,
+): Promise<Message> {
+  const payload = { customType, data, content: JSON.stringify(data) }
+  // 融云未内建这些类型；用 TextMessage 承载一段 JSON，靠 content.customType 由前端解析渲染
+  const message = new (RC as any).TextMessage(payload)
+  const res = await RC.sendMessage({ conversationType: rcType(), targetId }, message)
+  if (res.code !== 0) throw new Error(`send custom card failed: ${res.code}`)
+  return parseRcMessage(res.data)
+}
+
 export async function getConversationList(): Promise<Conversation[]> {
   const res = await RC.getConversationList({ count: 200, startTime: 0, order: 0 })
   if (res.code !== 0) throw new Error(`conv list failed: ${res.code}`)
