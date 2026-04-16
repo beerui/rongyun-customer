@@ -1,6 +1,7 @@
-export type MessageType = 'text' | 'image' | 'file' | 'custom'
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'custom'
 
 export type ImagePayload = { url: string; width?: number; height?: number }
+export type VideoPayload = { url: string; name?: string; size?: number; duration?: number }
 export type FilePayload = { url: string; name: string; size: number }
 export type CustomPayload = Record<string, unknown>
 

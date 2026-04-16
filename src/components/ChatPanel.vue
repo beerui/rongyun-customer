@@ -10,7 +10,6 @@ defineProps<{
   title?: string
   subtitle?: string
   variant?: 'desktop' | 'mobile'
-  aiSuggestion?: string
   showStart?: boolean
   startTime?: string
 }>()
@@ -28,10 +27,9 @@ const statusText = computed(() => {
 })
 
 function handleSendText(text: string) { im.sendTextMessage(text) }
-function handleSendImage(file: File) {
-  const url = URL.createObjectURL(file)
-  im.sendImageMessage(url)
-}
+function handleSendImage(file: File) { im.sendImageFile(file) }
+function handleSendVideo(file: File) { im.sendVideoFile(file) }
+function handleSendFile(file: File)  { im.sendFileMessage(file) }
 </script>
 
 <template>
@@ -54,14 +52,15 @@ function handleSendImage(file: File) {
       <MessageList
         :messages="im.messages"
         :my-user-id="auth.userId"
-        @retry="() => {}"
+        @retry="(id) => im.retry(id)"
       />
       <MessageInput
         :variant="variant || 'desktop'"
         :disabled="!im.connected"
-        :ai-suggestion="aiSuggestion"
         @send-text="handleSendText"
         @send-image="handleSendImage"
+        @send-video="handleSendVideo"
+        @send-file="handleSendFile"
       />
     </template>
   </div>

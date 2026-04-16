@@ -16,7 +16,13 @@ async function ensureOpen() {
 }
 
 onMounted(async () => {
-  if (!im.connected && auth.rcToken) await im.connect(auth.rcToken)
+  // 访客端：进入时获取 IM 凭证（若未获取）
+  if (auth.role === 'guest' || !auth.rcToken) {
+    try { await auth.bootstrapUser() } catch (e) { console.warn('bootstrapUser failed', e) }
+  }
+  if (auth.rcToken && !im.connected) {
+    im.connect(auth.rcToken).catch((e) => console.warn('RC connect failed:', e))
+  }
   await ensureOpen()
 })
 

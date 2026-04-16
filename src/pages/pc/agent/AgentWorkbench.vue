@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import { useConversationsStore } from '@/stores/conversations'
+import { suspendConversation, transferConversation, endConversation, fetchAgentsForTransfer } from '@/apis/customer'
 import ConversationItem from '@/components/ConversationItem.vue'
 import MessageList from '@/components/MessageList.vue'
 import MessageInput from '@/components/MessageInput.vue'
@@ -17,16 +18,12 @@ const conv = useConversationsStore()
 const keyword = ref('')
 const filterKey = ref<'all' | 'waiting' | 'active'>('all')
 
-// demo 数据：在无后端时用来对照设计稿
 const demoConvs = [
-  { targetId: 'u_wen',  title: '温温', avatarBg: '#E8FFEA', tag: '退款申请', lastMessage: '我要申请退货退款.......', timeLabel: '5分钟',  active: true  },
+  { targetId: 'u_wen',  title: '温温', avatarBg: '#E8FFEA', tag: '退款申请', lastMessage: '我要申请退货退款.......', timeLabel: '5分钟' },
   { targetId: 'u_zs',   title: '张三', avatarBg: '#FFF7E8', tag: '物流异常', lastMessage: '我一直没收到货啊......',    timeLabel: '12分钟' },
   { targetId: 'u_ls',   title: '李四', avatarBg: '#FFECE8', tag: '物流查询', lastMessage: '我的快递到哪里了？',        timeLabel: '30分钟' },
   { targetId: 'u_wq1',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
   { targetId: 'u_wq2',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
-  { targetId: 'u_wq3',  title: '王强', avatarBg: '#E6F4FF', tag: '物流查询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
-  { targetId: 'u_wq4',  title: '王强', avatarBg: '#E6F4FF', tag: '账户异常', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
-  { targetId: 'u_wq5',  title: '王强', avatarBg: '#E6F4FF', tag: '优惠问题', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
 ]
 
 const filtered = computed(() => {
@@ -45,19 +42,77 @@ const activePeer = computed(() => {
   return c ? { id: c.targetId, name: c.title, avatar: c.avatar, avatarBg: c.avatarBg, tag: c.tag } : undefined
 })
 
-const stats = {
-  today: '23',
-  satisfaction: '99.6%',
-  avgDuration: '4m12s',
-  solveRate: '91.6%',
-}
+const stats = { today: '23', satisfaction: '99.6%', avgDuration: '4m12s', solveRate: '91.6%' }
 
 async function selectConv(targetId: string) {
   await im.openConversation(targetId)
 }
 
+// --- 会话操作：挂起 / 转接 / 结束 ---
+
+const showTransfer = ref(false)
+const transferAgents = ref<Array<{ id: string; name: string; avatar?: string; online?: boolean }>>([])
+const transferKeyword = ref('')
+const busy = ref<'' | 'suspend' | 'transfer' | 'end'>('')
+
+async function onSuspend() {
+  if (!activePeer.value || busy.value) return
+  if (!confirm(`确定挂起与 ${activePeer.value.name} 的会话？`)) return
+  busy.value = 'suspend'
+  try {
+    await suspendConversation(activePeer.value.id)
+    alert('已挂起')
+  } catch (e: any) {
+    alert(`挂起失败：${e?.message || '未知错误'}`)
+  } finally { busy.value = '' }
+}
+
+async function openTransfer() {
+  if (!activePeer.value || busy.value) return
+  showTransfer.value = true
+  transferKeyword.value = ''
+  try {
+    transferAgents.value = await fetchAgentsForTransfer()
+  } catch {
+    transferAgents.value = [
+      { id: 'agent2', name: '小伊', online: true },
+      { id: 'agent3', name: '客服3', online: false },
+    ]
+  }
+}
+
+async function onTransferTo(agentId: string) {
+  if (!activePeer.value) return
+  busy.value = 'transfer'
+  try {
+    await transferConversation(activePeer.value.id, agentId)
+    showTransfer.value = false
+    alert('已转接')
+  } catch (e: any) {
+    alert(`转接失败：${e?.message || '未知错误'}`)
+  } finally { busy.value = '' }
+}
+
+async function onEnd() {
+  if (!activePeer.value || busy.value) return
+  if (!confirm(`确定结束与 ${activePeer.value.name} 的会话？`)) return
+  busy.value = 'end'
+  try {
+    await endConversation(activePeer.value.id)
+    alert('会话已结束')
+  } catch (e: any) {
+    alert(`结束失败：${e?.message || '未知错误'}`)
+  } finally { busy.value = '' }
+}
+
+const filteredAgents = computed(() =>
+  transferAgents.value.filter((a) => !transferKeyword.value || a.name.includes(transferKeyword.value)),
+)
+
 onMounted(async () => {
-  if (!im.connected && auth.rcToken) await im.connect(auth.rcToken)
+  if (!im.connected && auth.rcToken) {
+    im.connect(auth.rcToken).catch((e) => console.warn('RC connect failed:', e))
+  }
   try { await conv.load() } catch {}
   conv.watch()
 })
@@ -65,7 +120,9 @@ onMounted(async () => {
 onUnmounted(() => { conv.unwatch() })
 
 function handleSendText(t: string) { im.sendTextMessage(t) }
-function handleSendImage(f: File) { im.sendImageMessage(URL.createObjectURL(f)) }
+function handleSendImage(f: File) { im.sendImageFile(f) }
+function handleSendVideo(f: File) { im.sendVideoFile(f) }
+function handleSendFile(f: File)  { im.sendFileMessage(f) }
 
 function logout() {
   im.disconnect()
@@ -133,7 +190,7 @@ function logout() {
             v-for="c in filtered"
             :key="c.targetId"
             :item="c as any"
-            :active="(c as any).active ?? (c.targetId === im.currentTargetId)"
+            :active="c.targetId === (im.currentTargetId || filtered[0]?.targetId)"
             :time-label="(c as any).timeLabel"
             @click="selectConv(c.targetId)"
           />
@@ -142,7 +199,6 @@ function logout() {
 
       <!-- 中间：聊天区 -->
       <section class="flex-1 min-w-0 flex flex-col bg-white">
-        <!-- 会话头（当前用户信息 + 操作） -->
         <div v-if="activePeer" class="flex items-center justify-between px-6 h-16 border-b border-line-light shrink-0">
           <div class="flex items-center gap-3 min-w-0">
             <Avatar :name="activePeer.name" :size="38" :bg="activePeer.avatarBg || '#E8FFEA'" />
@@ -159,9 +215,21 @@ function logout() {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500">转接</button>
-            <button class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500">挂起</button>
-            <button class="h-8 px-3 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs">结束会话</button>
+            <button
+              class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500 disabled:opacity-50"
+              :disabled="!!busy"
+              @click="openTransfer"
+            >{{ busy === 'transfer' ? '转接中…' : '转接' }}</button>
+            <button
+              class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500 disabled:opacity-50"
+              :disabled="!!busy"
+              @click="onSuspend"
+            >{{ busy === 'suspend' ? '挂起中…' : '挂起' }}</button>
+            <button
+              class="h-8 px-3 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs disabled:opacity-50"
+              :disabled="!!busy"
+              @click="onEnd"
+            >{{ busy === 'end' ? '结束中…' : '结束会话' }}</button>
           </div>
         </div>
 
@@ -169,7 +237,6 @@ function logout() {
           <EmptyState title="选择一个会话开始聊天" />
         </div>
         <template v-else>
-          <!-- 消息区 -->
           <div class="flex-1 min-h-0 flex flex-col">
             <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
               今天 12:32 会话开始
@@ -177,7 +244,7 @@ function logout() {
             <MessageList
               :messages="im.messages"
               :my-user-id="auth.userId"
-              @retry="() => {}"
+              @retry="(id: string) => im.retry(id)"
             />
           </div>
 
@@ -186,14 +253,48 @@ function logout() {
             :disabled="!im.connected"
             @send-text="handleSendText"
             @send-image="handleSendImage"
+            @send-video="handleSendVideo"
+            @send-file="handleSendFile"
           />
         </template>
       </section>
 
-      <!-- 右侧：用户信息面板 -->
       <aside class="w-[300px] shrink-0">
         <UserInfoPanel :peer="activePeer" />
       </aside>
+    </div>
+
+    <!-- 转接弹窗 -->
+    <div v-if="showTransfer" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" @click.self="showTransfer = false">
+      <div class="w-[420px] bg-white rounded-lg shadow-card">
+        <div class="px-5 py-3 border-b border-line-light flex items-center justify-between">
+          <div class="text-sm font-semibold text-ink-900">转接到其他客服</div>
+          <button class="text-ink-600 hover:text-ink-900" @click="showTransfer = false">✕</button>
+        </div>
+        <div class="px-5 py-3">
+          <input
+            v-model="transferKeyword"
+            placeholder="搜索客服名称"
+            class="w-full h-8 rounded border border-line-light px-3 text-xs focus:outline-none focus:border-brand-500"
+          />
+        </div>
+        <div class="max-h-[320px] overflow-y-auto scrollbar-thin">
+          <div v-if="!filteredAgents.length" class="text-center py-8 text-xs text-ink-600">暂无可选客服</div>
+          <button
+            v-for="a in filteredAgents"
+            :key="a.id"
+            class="w-full flex items-center gap-3 px-5 py-3 hover:bg-bg-soft disabled:opacity-50"
+            :disabled="!!busy"
+            @click="onTransferTo(a.id)"
+          >
+            <Avatar :name="a.name" :src="a.avatar" :size="36" />
+            <div class="flex-1 text-left">
+              <div class="text-sm text-ink-900">{{ a.name }}</div>
+              <div class="text-[11px] text-ink-600">{{ a.online ? '在线' : '离线' }}</div>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

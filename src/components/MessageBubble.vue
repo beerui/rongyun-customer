@@ -8,6 +8,20 @@ defineProps<{
 }>()
 
 defineEmits<{ (e: 'retry', id: string): void }>()
+
+function formatSize(size?: number) {
+  if (!size) return ''
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(2)} MB`
+}
+
+function formatDuration(s?: number) {
+  if (!s) return ''
+  const m = Math.floor(s / 60)
+  const r = Math.floor(s % 60)
+  return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`
+}
 </script>
 
 <template>
@@ -31,18 +45,42 @@ defineEmits<{ (e: 'retry', id: string): void }>()
         {{ message.content }}
       </div>
 
-      <div v-else-if="message.type === 'image'" class="rounded-md overflow-hidden max-w-[260px]">
+      <!-- 图片 -->
+      <a
+        v-else-if="message.type === 'image'"
+        :href="(message.content as any).url"
+        target="_blank"
+        class="rounded-md overflow-hidden max-w-[260px] block"
+      >
         <img :src="(message.content as any).url" class="block w-full" alt="" />
+      </a>
+
+      <!-- 视频 -->
+      <div v-else-if="message.type === 'video'" class="rounded-md overflow-hidden bg-black max-w-[320px]">
+        <video
+          :src="(message.content as any).url"
+          class="block w-full max-h-[240px]"
+          controls
+          preload="metadata"
+        />
+        <div class="flex items-center justify-between text-[11px] text-white/80 bg-black/60 px-2 py-1">
+          <span class="truncate">{{ (message.content as any).name || '视频' }}</span>
+          <span class="shrink-0 ml-2">{{ formatDuration((message.content as any).duration) }}</span>
+        </div>
       </div>
 
+      <!-- 文件 -->
       <a
         v-else-if="message.type === 'file'"
         :href="(message.content as any).url"
         target="_blank"
-        class="flex items-center gap-2 px-2.5 py-2 rounded-md bg-[#F7F8FC] text-xs text-ink-700"
+        class="flex items-center gap-2 px-3 py-2 rounded-md bg-[#F7F8FC] text-xs text-ink-700 max-w-[260px]"
       >
-        <span>📎</span>
-        <span class="truncate max-w-[160px]">{{ (message.content as any).name }}</span>
+        <span class="text-lg">📎</span>
+        <div class="flex flex-col min-w-0">
+          <span class="truncate">{{ (message.content as any).name }}</span>
+          <span class="text-[10px] text-ink-600">{{ formatSize((message.content as any).size) }}</span>
+        </div>
       </a>
 
       <div v-else class="px-2.5 py-2 rounded-md bg-bg-soft text-[11px] text-ink-600">

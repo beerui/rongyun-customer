@@ -5,13 +5,24 @@ function detectType(objectName: string): MessageType {
     case 'RC:TxtMsg': return 'text'
     case 'RC:ImgMsg': return 'image'
     case 'RC:FileMsg': return 'file'
+    case 'RC:SightMsg': return 'video'
     default: return 'custom'
   }
 }
 
 function parseContent(type: MessageType, content: any): any {
   if (type === 'text') return content?.content ?? ''
-  if (type === 'image') return { url: content?.imageUri || content?.content || '' }
+  if (type === 'image') return {
+    url: content?.imageUri || content?.content || '',
+    width: content?.width,
+    height: content?.height,
+  }
+  if (type === 'video') return {
+    url: content?.sightUrl || content?.content || '',
+    duration: content?.duration,
+    name: content?.name,
+    size: content?.size,
+  }
   if (type === 'file') return {
     url: content?.fileUrl ?? '',
     name: content?.name ?? '',

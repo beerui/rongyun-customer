@@ -17,15 +17,14 @@ export interface AgentImCredential {
   peers: Array<{ id: string; name: string; avatar?: string }>
 }
 
-/** 后端真实响应 shape */
 interface AgentLoginRaw {
   id: number
   userId: string
   account: string
   nickname: string
   avatar?: string
-  token: string        // 业务 JWT
-  ryToken: string      // 融云 token
+  token: string
+  ryToken: string
   online?: number
   status?: number
 }
@@ -41,8 +40,43 @@ function normalizeAgent(raw: AgentLoginRaw): AgentImCredential {
   }
 }
 
-export const fetchUserImCredential = () =>
-  http.post<any, UserImCredential>('/api/customer/getRyToken', {})
+/** 获取或生成访客 UUID（持久化到 localStorage） */
+function getOrCreateGuestUuid(): string {
+  let uuid = localStorage.getItem('guest_uuid')
+  if (!uuid) {
+    uuid = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    localStorage.setItem('guest_uuid', uuid)
+  }
+  return uuid
+}
+
+/**
+ * 访客获取融云 token。
+ * 后端 getRyToken 暂未就绪（1015 错误），返回 mock 凭证保证 UI 可跑通；
+ * 后端修复后自动走真实响应，不需再改前端。
+ */
+export const fetchUserImCredential = async (): Promise<UserImCredential> => {
+  const uuid = getOrCreateGuestUuid()
+  try {
+    const raw: any = await http.post('/api/customer/getRyToken', { uuid })
+    return {
+      rcToken: raw.ryToken,
+      userId: String(raw.userId),
+      name: raw.nickname || `访客${uuid.slice(-4)}`,
+      avatar: raw.avatar,
+      peerId: String(raw.customerId || ''),
+    }
+  } catch (e) {
+    console.warn('[mock] getRyToken unavailable, using mock visitor credential:', e)
+    return {
+      rcToken: `mock-visitor-${uuid}`,
+      userId: `visitor_${uuid.slice(-8)}`,
+      name: `访客${uuid.slice(-4)}`,
+      avatar: '',
+      peerId: 'agent_default',
+    }
+  }
+}
 
 export const agentLogin = async (account: string, password: string): Promise<AgentImCredential> => {
   const raw = await http.post<any, AgentLoginRaw>('/api/customer/login', { account, password })
