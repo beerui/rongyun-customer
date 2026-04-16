@@ -2,7 +2,10 @@
 import { onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
-import ChatPanel from '@/components/ChatPanel.vue'
+import Avatar from '@/components/Avatar.vue'
+import MessageList from '@/components/MessageList.vue'
+import MessageInput from '@/components/MessageInput.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import PlatformIntro from './PlatformIntro.vue'
 
 const auth = useAuthStore()
@@ -16,7 +19,6 @@ async function ensureOpen() {
 }
 
 onMounted(async () => {
-  // 访客端：进入时获取 IM 凭证（若未获取）
   if (auth.role === 'guest' || !auth.rcToken) {
     try { await auth.bootstrapUser() } catch (e) { console.warn('bootstrapUser failed', e) }
   }
@@ -27,21 +29,69 @@ onMounted(async () => {
 })
 
 watch(() => [im.connected, auth.peerId], ensureOpen)
+
+function handleSendText(t: string) { im.sendTextMessage(t) }
+function handleSendImage(f: File) { im.sendImageFile(f) }
+function handleSendVideo(f: File) { im.sendVideoFile(f) }
+function handleSendFile(f: File)  { im.sendFileMessage(f) }
 </script>
 
 <template>
-  <div class="h-screen w-screen flex bg-bg-app">
-    <aside class="w-[380px] border-r border-line-light bg-white flex flex-col">
-      <ChatPanel
-        title="在线客服"
-        subtitle="平台客服为您服务"
-        variant="desktop"
-        :show-start="true"
-        start-time="今天"
-      />
-    </aside>
-    <main class="flex-1 min-w-0">
-      <PlatformIntro />
-    </main>
+  <div class="h-screen w-screen flex flex-col bg-bg-app min-w-[960px]">
+    <!-- 顶部红色栏（与工作台一致） -->
+    <header class="h-20 bg-brand-500 flex items-center px-5 shrink-0 text-white">
+      <div class="text-[20px] font-semibold">在线客服</div>
+      <div class="flex items-center gap-1.5 ml-8 text-[14px]">
+        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/25">
+          <span class="block w-2 h-2 rounded-full bg-white"></span>
+        </span>
+        <span>{{ auth.name || '访客' }}</span>
+      </div>
+      <div class="flex-1" />
+      <div class="text-[13px] text-white/90">7×12h 在线客服 · 平均响应 30 秒</div>
+    </header>
+
+    <div class="flex-1 flex min-h-0">
+      <!-- 中间：聊天区（无左侧会话列表） -->
+      <section class="flex-1 min-w-0 flex flex-col bg-white">
+        <div class="flex items-center gap-3 px-6 h-16 border-b border-line-light shrink-0">
+          <Avatar name="客" :size="38" :bg="'#FEF5F5'" />
+          <div class="min-w-0">
+            <div class="text-base font-semibold text-ink-900">平台客服</div>
+            <div class="text-[12px] text-ink-600 mt-0.5">您好，有什么可以帮您？</div>
+          </div>
+        </div>
+
+        <div v-if="!im.currentTargetId" class="flex-1 flex items-center justify-center bg-bg-app">
+          <EmptyState title="正在接入客服…" desc="请稍候" />
+        </div>
+        <template v-else>
+          <div class="flex-1 min-h-0 flex flex-col">
+            <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
+              今天 会话开始
+            </div>
+            <MessageList
+              :messages="im.messages"
+              :my-user-id="auth.userId"
+              @retry="(id: string) => im.retry(id)"
+            />
+          </div>
+
+          <MessageInput
+            variant="desktop"
+            :disabled="!im.connected"
+            @send-text="handleSendText"
+            @send-image="handleSendImage"
+            @send-video="handleSendVideo"
+            @send-file="handleSendFile"
+          />
+        </template>
+      </section>
+
+      <!-- 右侧：平台介绍卡片区 -->
+      <aside class="w-[360px] shrink-0 bg-white border-l border-line-light overflow-y-auto scrollbar-thin">
+        <PlatformIntro />
+      </aside>
+    </div>
   </div>
 </template>

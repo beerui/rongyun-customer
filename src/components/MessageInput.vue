@@ -20,6 +20,7 @@ const imageInput = ref<HTMLInputElement>()
 const videoInput = ref<HTMLInputElement>()
 const fileInput = ref<HTMLInputElement>()
 const showEmoji = ref(false)
+const showMobilePlus = ref(false)
 
 function handleSend() {
   const t = text.value.trim()
@@ -87,34 +88,65 @@ function onToolClick(action: string) {
 </script>
 
 <template>
-  <div v-if="variant === 'mobile'" class="border-t border-line-light bg-white p-2 relative">
-    <div class="flex items-end gap-2">
-      <button class="shrink-0 px-2 text-ink-600" @click="showEmoji = !showEmoji">😊</button>
-      <button class="shrink-0 px-2 text-ink-600" @click="pickImage">🖼️</button>
-      <button class="shrink-0 px-2 text-ink-600" @click="pickVideo">🎞️</button>
+  <div v-if="variant === 'mobile'" class="border-t border-line-light bg-white relative">
+    <div class="flex items-center gap-2 px-2 py-2">
+      <button
+        class="shrink-0 w-9 h-9 rounded-full border border-line-light text-lg text-ink-700 flex items-center justify-center hover:bg-bg-soft"
+        :class="{ 'bg-bg-soft': showMobilePlus }"
+        @click="showMobilePlus = !showMobilePlus; showEmoji = false"
+      >+</button>
+      <button
+        class="shrink-0 w-9 h-9 rounded-full border border-line-light text-lg flex items-center justify-center hover:bg-bg-soft"
+        :class="{ 'bg-bg-soft': showEmoji }"
+        @click="showEmoji = !showEmoji; showMobilePlus = false"
+      >😊</button>
       <textarea
         ref="textareaRef"
         v-model="text"
         :disabled="disabled"
         :placeholder="disabled ? '未连接…' : '请输入消息'"
         :rows="1"
-        class="flex-1 resize-none rounded-md border border-line-light px-3 py-2 text-sm bg-white focus:outline-none focus:border-brand-500 disabled:bg-bg-soft"
+        class="flex-1 min-w-0 resize-none rounded-full border border-line-light px-4 py-2 text-sm bg-bg-soft focus:outline-none focus:border-brand-500 focus:bg-white disabled:opacity-60"
         @keydown="handleKeydown"
+        @focus="showMobilePlus = false; showEmoji = false"
       />
       <button
-        class="shrink-0 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-sm px-4 py-2 disabled:opacity-50"
+        class="shrink-0 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-sm h-9 px-4 disabled:opacity-50"
         :disabled="disabled || !text.trim()"
         @click="handleSend"
       >发送</button>
     </div>
-    <div v-if="showEmoji" class="absolute left-0 right-0 bottom-full bg-white border-t border-line-light p-2 grid grid-cols-10 gap-1 max-h-48 overflow-y-auto">
+
+    <!-- 表情面板 -->
+    <div v-if="showEmoji" class="border-t border-line-light p-2 grid grid-cols-8 gap-1 max-h-56 overflow-y-auto scrollbar-thin">
       <button
         v-for="e in emojiList"
         :key="e.shortcut"
-        class="text-xl hover:bg-bg-soft rounded"
+        class="text-2xl hover:bg-bg-soft rounded py-1"
         @click="insertEmoji(e.emoji)"
       >{{ e.emoji }}</button>
     </div>
+
+    <!-- + 展开：图片 / 视频 / 文件（大按钮网格） -->
+    <div v-if="showMobilePlus" class="border-t border-line-light p-4 grid grid-cols-4 gap-3">
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickImage(); showMobilePlus = false">
+        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🖼️</span>
+        <span class="text-[11px] text-ink-700">图片</span>
+      </button>
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickVideo(); showMobilePlus = false">
+        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🎞️</span>
+        <span class="text-[11px] text-ink-700">视频</span>
+      </button>
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickFile(); showMobilePlus = false">
+        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📎</span>
+        <span class="text-[11px] text-ink-700">文件</span>
+      </button>
+      <button class="flex flex-col items-center gap-1.5 py-2 opacity-50">
+        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📦</span>
+        <span class="text-[11px] text-ink-700">订单</span>
+      </button>
+    </div>
+
     <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="onImageChange" />
     <input ref="videoInput" type="file" accept="video/*" class="hidden" @change="onVideoChange" />
     <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
