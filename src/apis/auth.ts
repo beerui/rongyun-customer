@@ -5,7 +5,6 @@ export interface UserImCredential {
   userId: string
   name: string
   avatar?: string
-  /** 对端 ID：private 模式下为客服 userId；group 模式下为 groupId */
   peerId: string
 }
 
@@ -14,14 +13,38 @@ export interface AgentImCredential {
   agentId: string
   name: string
   avatar?: string
+  authToken: string
   peers: Array<{ id: string; name: string; avatar?: string }>
-  authToken?: string
 }
 
-/** 用户端进站获取融云凭证 */
+/** 后端真实响应 shape */
+interface AgentLoginRaw {
+  id: number
+  userId: string
+  account: string
+  nickname: string
+  avatar?: string
+  token: string        // 业务 JWT
+  ryToken: string      // 融云 token
+  online?: number
+  status?: number
+}
+
+function normalizeAgent(raw: AgentLoginRaw): AgentImCredential {
+  return {
+    rcToken: raw.ryToken,
+    agentId: String(raw.userId ?? raw.id),
+    name: raw.nickname || raw.account,
+    avatar: raw.avatar,
+    authToken: raw.token,
+    peers: [],
+  }
+}
+
 export const fetchUserImCredential = () =>
   http.post<any, UserImCredential>('/api/customer/getRyToken', {})
 
-/** 客服登录 */
-export const agentLogin = (account: string, password: string) =>
-  http.post<any, AgentImCredential>('/api/customer/login', { account, password })
+export const agentLogin = async (account: string, password: string): Promise<AgentImCredential> => {
+  const raw = await http.post<any, AgentLoginRaw>('/api/customer/login', { account, password })
+  return normalizeAgent(raw)
+}

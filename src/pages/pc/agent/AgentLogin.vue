@@ -8,10 +8,20 @@ const router = useRouter()
 const auth = useAuthStore()
 const im = useImStore()
 
-const account = ref('')
-const password = ref('')
+const account = ref('lianp')
+const password = ref('123456')
 const loading = ref(false)
 const err = ref('')
+
+const presets = [
+  { account: 'lianp',  password: '123456', label: '客服 1' },
+  { account: 'xiaoyi', password: '123456', label: '客服 2' },
+]
+
+function fillPreset(p: { account: string; password: string }) {
+  account.value = p.account
+  password.value = p.password
+}
 
 async function handleLogin() {
   err.value = ''
@@ -22,8 +32,11 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.loginAgent(account.value, password.value)
-    await im.connect(auth.rcToken)
+    // 登录成功立即跳转；融云连接在后台进行，失败也不阻塞
     router.replace('/agent')
+    im.connect(auth.rcToken).catch((e) => {
+      console.warn('RC connect failed, workbench will show disconnected banner:', e)
+    })
   } catch (e: any) {
     err.value = e?.message || '登录失败'
   } finally {
@@ -37,7 +50,16 @@ async function handleLogin() {
     <div class="w-[420px] bg-white rounded-2xl shadow-card p-10">
       <div class="w-12 h-12 rounded-xl bg-brand-500 flex items-center justify-center text-white text-xl mb-4">💬</div>
       <h1 class="text-[20px] font-semibold text-ink-900 mb-1">智能客服工作台</h1>
-      <p class="text-xs text-ink-600 mb-8">请使用客服账号登录</p>
+      <p class="text-xs text-ink-600 mb-6">请使用客服账号登录</p>
+
+      <div class="flex gap-2 mb-5">
+        <button
+          v-for="p in presets"
+          :key="p.account"
+          class="flex-1 text-[11px] px-2 py-1.5 rounded border border-line-light text-ink-700 hover:border-brand-500 hover:text-brand-500"
+          @click="fillPreset(p)"
+        >{{ p.label }} · {{ p.account }}</button>
+      </div>
 
       <label class="block mb-4">
         <span class="text-xs text-ink-700">账号</span>

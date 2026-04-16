@@ -24,8 +24,10 @@ http.interceptors.response.use(
   (res) => {
     const body = res.data
     if (body && typeof body === 'object' && 'code' in body) {
-      if (body.code !== 0 && body.code !== 200 && body.code !== '0' && body.code !== '200') {
-        return Promise.reject(new Error(body.message || body.msg || `API error ${body.code}`))
+      const code = body.code
+      const ok = code === 0 || code === 200 || code === 100 || code === '0' || code === '200' || code === '100'
+      if (!ok) {
+        return Promise.reject(new Error(body.message || body.msg || `API error ${code}`))
       }
       return body.data ?? body
     }
