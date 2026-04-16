@@ -24,17 +24,16 @@ watch(() => [im.connected, auth.peerId], ensureOpen)
 </script>
 
 <template>
-  <div class="h-screen w-screen flex bg-[#f5f7fa]">
-    <!-- 左侧聊天窗（隐藏分组列表，仅单会话） -->
-    <aside class="w-[380px] border-r bg-white flex flex-col">
+  <div class="h-screen w-screen flex bg-bg-app">
+    <aside class="w-[380px] border-r border-line-light bg-white flex flex-col">
       <ChatPanel
         title="在线客服"
         subtitle="平台客服为您服务"
         variant="desktop"
+        :show-start="true"
+        start-time="今天"
       />
     </aside>
-
-    <!-- 右侧平台介绍 -->
     <main class="flex-1 min-w-0">
       <PlatformIntro />
     </main>

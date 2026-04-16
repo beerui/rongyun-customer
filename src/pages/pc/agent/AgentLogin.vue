@@ -33,37 +33,38 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-white">
-    <div class="w-[400px] bg-white rounded-xl shadow-lg p-8">
-      <h1 class="text-xl font-semibold text-gray-800 mb-1">客服工作台</h1>
-      <p class="text-sm text-gray-500 mb-6">请使用客服账号登录</p>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-white to-bg-app">
+    <div class="w-[420px] bg-white rounded-2xl shadow-card p-10">
+      <div class="w-12 h-12 rounded-xl bg-brand-500 flex items-center justify-center text-white text-xl mb-4">💬</div>
+      <h1 class="text-[20px] font-semibold text-ink-900 mb-1">智能客服工作台</h1>
+      <p class="text-xs text-ink-600 mb-8">请使用客服账号登录</p>
 
       <label class="block mb-4">
-        <span class="text-xs text-gray-600">账号</span>
+        <span class="text-xs text-ink-700">账号</span>
         <input
           v-model="account"
-          class="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-500"
+          class="mt-1.5 w-full rounded-md border border-line-light px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
           placeholder="客服账号"
         />
       </label>
-      <label class="block mb-4">
-        <span class="text-xs text-gray-600">密码</span>
+      <label class="block mb-5">
+        <span class="text-xs text-ink-700">密码</span>
         <input
           v-model="password"
           type="password"
-          class="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-500"
+          class="mt-1.5 w-full rounded-md border border-line-light px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
           placeholder="登录密码"
           @keydown.enter="handleLogin"
         />
       </label>
 
-      <div v-if="err" class="text-red-500 text-xs mb-3">{{ err }}</div>
+      <div v-if="err" class="text-brand-600 text-xs mb-3">{{ err }}</div>
 
       <button
-        class="w-full rounded-md bg-brand-500 hover:bg-brand-600 text-white text-sm py-2.5 disabled:opacity-60"
+        class="w-full rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-sm py-2.5 font-medium disabled:opacity-60"
         :disabled="loading"
         @click="handleLogin"
-      >{{ loading ? '登录中…' : '登录' }}</button>
+      >{{ loading ? '登录中…' : '登 录' }}</button>
     </div>
   </div>
 </template>

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 const props = withDefaults(
-  defineProps<{ variant?: 'desktop' | 'mobile'; disabled?: boolean }>(),
+  defineProps<{ variant?: 'desktop' | 'mobile'; disabled?: boolean; aiSuggestion?: string }>(),
   { variant: 'desktop', disabled: false },
 )
 
@@ -28,40 +28,63 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-function pickImage() {
-  fileInput.value?.click()
-}
-
+function pickImage() { fileInput.value?.click() }
 function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (file) emit('send-image', file)
+  const f = (e.target as HTMLInputElement).files?.[0]
+  if (f) emit('send-image', f)
   ;(e.target as HTMLInputElement).value = ''
 }
+
+function useAi() {
+  if (props.aiSuggestion) text.value = props.aiSuggestion
+}
+
+const tools = [
+  { icon: '😊', label: '表情' },
+  { icon: '🖼️', label: '图片', action: 'image' },
+  { icon: '📎', label: '文件' },
+  { icon: '📦', label: '订单卡片' },
+  { icon: '🎟️', label: '优惠券' },
+  { icon: '⚡', label: '快捷话术' },
+]
 </script>
 
 <template>
-  <div class="border-t bg-white" :class="variant === 'mobile' ? 'p-2' : 'p-3'">
+  <div class="border-t border-line-light bg-white" :class="variant === 'mobile' ? 'p-2' : 'px-4 pt-2 pb-3'">
+    <!-- AI 建议条 -->
     <div
-      v-if="variant === 'desktop'"
-      class="flex gap-2 mb-2 text-gray-500 text-lg"
+      v-if="variant === 'desktop' && aiSuggestion"
+      class="flex items-center gap-2 mb-2 px-3 py-2 rounded-md bg-gradient-to-r from-brand-50 to-white border border-brand-100"
     >
-      <button class="hover:text-brand-600" @click="pickImage" title="图片">🖼️</button>
-      <button class="hover:text-brand-600" title="表情">😊</button>
-      <button class="hover:text-brand-600" title="文件">📎</button>
+      <span class="text-brand-500 text-xs">✨ AI 建议</span>
+      <span class="flex-1 text-xs text-ink-700 truncate">{{ aiSuggestion }}</span>
+      <button class="text-xs text-brand-600 hover:underline shrink-0" @click="useAi">一键采用</button>
+    </div>
+
+    <div v-if="variant === 'desktop'" class="flex gap-4 mb-2 text-ink-600">
+      <button
+        v-for="t in tools"
+        :key="t.label"
+        class="flex items-center gap-1 text-xs hover:text-brand-500"
+        @click="t.action === 'image' ? pickImage() : null"
+      >
+        <span class="text-base">{{ t.icon }}</span>
+        <span>{{ t.label }}</span>
+      </button>
     </div>
 
     <div class="flex items-end gap-2">
       <textarea
         v-model="text"
         :disabled="disabled"
-        :placeholder="disabled ? '未连接…' : '输入消息，Enter 发送，Shift+Enter 换行'"
+        :placeholder="disabled ? '未连接…' : (variant === 'desktop' ? '输入回复内容，或点击上方「一键采用」AI建议...' : '请输入消息')"
         :rows="variant === 'mobile' ? 1 : 3"
-        class="flex-1 resize-none rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-500 disabled:bg-gray-50"
+        class="flex-1 resize-none rounded-md border border-line-light px-3 py-2 text-sm bg-white focus:outline-none focus:border-brand-500 disabled:bg-bg-soft"
         @keydown="handleKeydown"
       />
       <button
         v-if="variant === 'mobile'"
-        class="shrink-0 px-2 text-gray-500"
+        class="shrink-0 px-2 text-ink-600"
         @click="pickImage"
       >🖼️</button>
       <button
