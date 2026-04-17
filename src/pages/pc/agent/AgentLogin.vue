@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
+import { requestNotifyPermission } from '@/utils/notify'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -32,7 +33,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.loginAgent(account.value, password.value)
-    // 登录成功立即跳转；融云连接在后台进行，失败也不阻塞
+    requestNotifyPermission().catch(() => {})
     router.replace('/agent')
     im.connect(auth.rcToken).catch((e) => {
       console.warn('RC connect failed, workbench will show disconnected banner:', e)

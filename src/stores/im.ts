@@ -3,10 +3,11 @@ import { ref, computed } from 'vue'
 import {
   initIM, connectIM, disconnectIM,
   onMessage, onConnectionStatus,
-  getHistory, sendText, sendImage, sendVideo, sendFile, sendCustomCard, clearUnread,
+  getHistory, sendText, sendImage, sendVideo, sendFile, sendCustomCard, clearUnread, recallMessage,
   type Message, type ConnectionStatus,
 } from '@/im'
 import { uploadImage, uploadVideo, uploadFile as upFile } from '@/utils/upload'
+import { playBeep, browserNotify, flashTitle, bindVisibilityReset } from '@/utils/notify'
 
 const APPKEY = import.meta.env.VITE_RC_APPKEY
 
@@ -14,7 +15,9 @@ export const useImStore = defineStore('im', () => {
   const status = ref<ConnectionStatus>('disconnected')
   const currentTargetId = ref('')
   const messages = ref<Message[]>([])
+  const unreadTotal = ref(0)
   const unsubs: Array<() => void> = []
+  bindVisibilityReset()
 
   const connected = computed(() => status.value === 'connected')
   const isMock = computed(() => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false)
@@ -41,7 +44,19 @@ export const useImStore = defineStore('im', () => {
     unsubs.push(
       onConnectionStatus((s) => { status.value = s }),
       onMessage((msg) => {
-        if (msg.targetId !== currentTargetId.value) return
+        const fromSelf = msg.senderId === 'me' || msg.status === 'sent' && (messages.value.some((m) => m.id === msg.id))
+        const isCurrent = msg.targetId === currentTargetId.value
+        const hidden = typeof document !== 'undefined' && document.hidden
+
+        if (!fromSelf && (!isCurrent || hidden)) {
+          unreadTotal.value += 1
+          playBeep()
+          const preview = typeof msg.content === 'string' ? msg.content : `[${msg.type}]`
+          browserNotify(msg.senderName || '新消息', preview.slice(0, 60))
+          flashTitle(unreadTotal.value)
+        }
+
+        if (!isCurrent) return
         messages.value.push(msg)
         clearUnread(msg.targetId).catch(() => {})
       }),
@@ -55,6 +70,7 @@ export const useImStore = defineStore('im', () => {
   async function openConversation(targetId: string) {
     currentTargetId.value = targetId
     messages.value = []
+    unreadTotal.value = 0
     try {
       const history = await getHistory(targetId, { count: 50 })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
@@ -181,6 +197,20 @@ export const useImStore = defineStore('im', () => {
     console.warn('retry for non-text messages requires re-picking the file')
   }
 
+  /** 撤回自己发送的消息（2 分钟内）；mock 会话或无 raw 时只做本地标记 */
+  async function recall(messageId: string) {
+    const m = messages.value.find((x) => x.id === messageId)
+    if (!m) return
+    const within2Min = Date.now() - m.sentTime <= 120_000
+    if (!within2Min) throw new Error('消息发送超过 2 分钟，无法撤回')
+    try {
+      if (m.raw) await recallMessage(m.raw)
+    } catch (e) {
+      console.warn('RC recall failed, fallback to local mark', e)
+    }
+    replace(messageId, (orig) => ({ ...orig, recalled: true }))
+  }
+
   function disconnect() {
     unbindEvents()
     disconnectIM()
@@ -190,9 +220,9 @@ export const useImStore = defineStore('im', () => {
   }
 
   return {
-    status, connected, currentTargetId, messages, isMock,
+    status, connected, currentTargetId, messages, isMock, unreadTotal,
     connect, disconnect, openConversation,
-    sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry,
+    sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry, recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
   }
 })

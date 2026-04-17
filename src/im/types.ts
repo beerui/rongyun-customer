@@ -43,6 +43,7 @@ export interface Message {
   content: string | ImagePayload | FilePayload | CustomPayload
   sentTime: number
   status: 'sending' | 'sent' | 'failed'
+  recalled?: boolean
   raw?: unknown
 }
 
