@@ -189,6 +189,9 @@ function handleSendText(t: string) { im.sendTextMessage(t) }
 function handleSendImage(f: File) { im.sendImageFile(f) }
 function handleSendVideo(f: File) { im.sendVideoFile(f) }
 function handleSendFile(f: File)  { im.sendFileMessage(f) }
+function handleRecall(id: string) {
+  im.recall(id).catch((e: Error) => window.alert(e.message))
+}
 
 function logout() {
   im.disconnect()
@@ -306,6 +309,7 @@ function logout() {
               :messages="im.messages"
               :my-user-id="auth.userId"
               @retry="(id: string) => im.retry(id)"
+              @recall="handleRecall"
             />
           </div>
 

@@ -88,6 +88,12 @@ export async function clearUnread(targetId: string): Promise<void> {
   await RC.clearMessagesUnreadStatus({ conversationType: rcType(), targetId })
 }
 
+/** 撤回消息（融云原生）：2 分钟限制由调用方把关 */
+export async function recallMessage(raw: any): Promise<void> {
+  const res = await (RC as any).recallMessage(raw)
+  if (res?.code !== 0 && res?.code != null) throw new Error(`recall failed: ${res.code}`)
+}
+
 /** 发送自定义卡片消息（商品/订单/优惠券），通过 content.customType 区分 */
 export async function sendCustomCard(
   targetId: string,

@@ -22,3 +22,11 @@ export const fetchAgentsForTransfer = () =>
     '/api/customer/agents',
     {},
   )
+
+/** 在线翻译：将文本翻译到目标语言（默认中文） */
+export const translateText = (text: string, targetLang = 'zh') =>
+  http.post<any, { data?: string; translated?: string } | string>(
+    '/api/business/translate/translate',
+    { text, targetLang },
+    { timeout: 50_000 },
+  )
