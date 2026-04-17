@@ -4,6 +4,7 @@ import type { Message } from '@/im'
 import Avatar from './Avatar.vue'
 import { safeUrl } from '@/utils/sanitize'
 import { translateText } from '@/apis/customer'
+import { TRANSLATE_LANGS, getDefaultLang, setDefaultLang } from '@/utils/translate-langs'
 
 const props = defineProps<{
   message: Message
@@ -48,21 +49,46 @@ function onRecall() {
 const translating = ref(false)
 const translated = ref('')
 const translateErr = ref('')
+const targetLang = ref(getDefaultLang())
+const langMenuOpen = ref(false)
 
-async function onTranslate() {
-  if (translating.value || translated.value) return
+async function onTranslate(lang?: string) {
+  if (translating.value) return
+  const useLang = lang ?? targetLang.value
   translating.value = true
   translateErr.value = ''
   try {
-    const res: any = await translateText(String(props.message.content))
+    const res: any = await translateText(String(props.message.content), useLang)
     const text = typeof res === 'string' ? res : res?.translated ?? res?.data ?? ''
     if (!text) throw new Error('翻译接口未返回文本')
     translated.value = text
+    if (lang && lang !== targetLang.value) {
+      targetLang.value = lang
+      setDefaultLang(lang)
+    }
   } catch (e: any) {
     translateErr.value = e?.message || '翻译失败'
   } finally {
     translating.value = false
   }
+}
+
+function toggleLangMenu(e: MouseEvent) {
+  e.stopPropagation()
+  langMenuOpen.value = !langMenuOpen.value
+  if (langMenuOpen.value) {
+    const close = () => {
+      langMenuOpen.value = false
+      document.removeEventListener('click', close)
+    }
+    setTimeout(() => document.addEventListener('click', close), 0)
+  }
+}
+
+async function onPickLang(code: string) {
+  langMenuOpen.value = false
+  translated.value = ''
+  await onTranslate(code)
 }
 
 const canTranslate = computed(
@@ -241,12 +267,30 @@ function formatDuration(s?: number) {
         >发送失败，重试</button>
       </div>
 
-      <button
-        v-if="canTranslate && !translated"
-        class="mt-1 text-[10px] text-ink-500 hover:text-brand-500"
-        :disabled="translating"
-        @click="onTranslate"
-      >{{ translating ? '翻译中…' : '翻译' }}</button>
+      <div v-if="canTranslate && !translated" class="relative mt-1 inline-flex items-center gap-1">
+        <button
+          class="text-[10px] text-ink-500 hover:text-brand-500"
+          :disabled="translating"
+          @click="() => onTranslate()"
+        >{{ translating ? '翻译中…' : `翻译 → ${TRANSLATE_LANGS.find(l => l.code === targetLang)?.label || targetLang}` }}</button>
+        <button
+          class="text-[10px] text-ink-400 hover:text-brand-500 px-1"
+          @click="toggleLangMenu"
+        >▾</button>
+        <div
+          v-if="langMenuOpen"
+          class="absolute left-0 top-full mt-1 bg-white border border-line-light rounded shadow-card py-1 z-20 min-w-[100px]"
+          @click.stop
+        >
+          <button
+            v-for="l in TRANSLATE_LANGS"
+            :key="l.code"
+            class="w-full text-left px-3 py-1 text-[11px] text-ink-800 hover:bg-bg-soft"
+            :class="l.code === targetLang ? 'text-brand-500' : ''"
+            @click="onPickLang(l.code)"
+          >{{ l.label }}</button>
+        </div>
+      </div>
     </div>
   </div>
 
