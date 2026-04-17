@@ -1,5 +1,8 @@
 import type { Message, Conversation, MessageType } from './types'
 
+const RECALL_CMD = 'RC:RcCmd'
+const RECALL_NTF = 'RC:RcNtf'
+
 function detectType(objectName: string, content: any): MessageType {
   switch (objectName) {
     case 'RC:TxtMsg': return 'text'
@@ -42,6 +45,25 @@ function parseContent(type: MessageType, content: any): any {
 export function parseRcMessage(raw: any): Message {
   const objectName = raw?.messageType || raw?.objectName || 'RC:TxtMsg'
   const content = raw?.content ?? {}
+
+  // 撤回：RC:RcCmd（实时撤回命令）或 RC:RcNtf（历史中的撤回通知占位）
+  // 两者的 content.messageUId 都指向被撤回的原消息
+  const isRecall = objectName === RECALL_CMD || objectName === RECALL_NTF
+  if (isRecall) {
+    const targetUId = String(content?.messageUId ?? '')
+    return {
+      id: String(raw?.messageUId ?? raw?.messageId ?? `recall_${targetUId}`),
+      targetId: String(raw?.targetId ?? content?.targetId ?? ''),
+      senderId: String(raw?.senderUserId ?? raw?.fromUserId ?? ''),
+      type: 'text',
+      content: '',
+      sentTime: Number(raw?.sentTime ?? content?.sentTime ?? Date.now()),
+      status: 'sent',
+      recalled: true,
+      raw: { ...raw, _recallTargetUId: targetUId, _isRecallCmd: objectName === RECALL_CMD },
+    }
+  }
+
   const type = detectType(objectName, content)
   return {
     id: String(raw?.messageUId ?? raw?.messageId ?? `${raw?.sentTime ?? Date.now()}_${Math.random()}`),
