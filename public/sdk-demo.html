@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>DajiCS SDK Demo (host)</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui; max-width: 720px; margin: 40px auto; padding: 0 20px; }
+    h1 { font-size: 20px; }
+    button { padding: 8px 16px; margin-right: 8px; margin-top: 8px; cursor: pointer; }
+    code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
+    pre { background: #f3f4f6; padding: 12px; border-radius: 6px; overflow: auto; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>DajiCS SDK 本地联调 Demo</h1>
+  <p>当前页模拟第三方宿主站点（seo-daji-web）。SDK 通过 <code>window.DajiCS</code> 对外暴露。</p>
+  <p><small>⚠ 首次使用先跑 <code>pnpm build:sdk && cp dist/sdk/daji-cs.iife.js public/</code>。</small></p>
+
+  <div class="card">
+    <strong>1. 基础打开（无商品卡）</strong>
+    <p>只传身份 query，直接新开 <code>/chat</code>。</p>
+    <button id="btn-basic">打开客服</button>
+  </div>
+
+  <div class="card">
+    <strong>2. 预投商品卡 + 打开</strong>
+    <p>先 POST <code>/sendRyMessage</code>（本地会失败，预期看到 warn，仍然开窗）。</p>
+    <button id="btn-card">带商品卡打开</button>
+  </div>
+
+  <div class="card">
+    <strong>3. 兜底入口</strong>
+    <p>跳过预投，直接开窗。</p>
+    <button id="btn-safe">openSafe</button>
+  </div>
+
+  <h3>期望</h3>
+  <ul>
+    <li>新 tab 打开 <code>/chat?daji_userId=...&daji_supplierId=...</code></li>
+    <li><code>ChatEntry.vue</code> 读 query → 写 auth_token / language → bootstrapUser → replace 到 <code>/</code></li>
+    <li>URL 最终回落到 <code>/</code>，进入用户客服窗口</li>
+  </ul>
+
+  <script src="/daji-cs.iife.js"></script>
+  <script>
+    DajiCS.boot({
+      baseUrl: location.origin,   // 本地：同站；线上应为大集客服域名
+      apiBase: location.origin,   // 本地：同站；/sendRyMessage 会 404，不影响流程
+    })
+
+    const common = {
+      userId: 'visitor_demo_001',
+      userName: 'Demo 访客',
+      userType: 1,
+      language: 'zh',
+      token: 'demo-host-token',
+      priceType: 'retail',
+      supplierId: 'agent_default',
+    }
+
+    document.getElementById('btn-basic').onclick = () => DajiCS.open({ ...common })
+
+    document.getElementById('btn-card').onclick = () =>
+      DajiCS.open({
+        ...common,
+        card: {
+          title: '测试商品 - 精品大枣 5kg',
+          imgUrl: 'https://placehold.co/120x120?text=SKU',
+          spuId: 'SPU_9999',
+          intr: '新鲜直供',
+          jumpUrl: 'https://example.com/product/9999',
+        },
+      })
+
+    document.getElementById('btn-safe').onclick = () => DajiCS.openSafe({ ...common })
+
+    console.log('DajiCS version:', DajiCS.version)
+  </script>
+</body>
+</html>

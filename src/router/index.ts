@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { isMobile } from '@/utils/device'
 
 const UserChat = () => import('@/pages/pc/user/UserChat.vue')
+const ChatEntry = () => import('@/pages/pc/user/ChatEntry.vue')
 const AgentLogin = () => import('@/pages/pc/agent/AgentLogin.vue')
 const AgentWorkbench = () => import('@/pages/pc/agent/AgentWorkbench.vue')
 const MobileChat = () => import('@/pages/mobile/user/MobileChat.vue')
@@ -9,6 +10,7 @@ const MobileIntro = () => import('@/pages/mobile/user/MobileIntro.vue')
 
 const routes: RouteRecordRaw[] = [
   { path: '/', component: UserChat },
+  { path: '/chat', component: ChatEntry },
   { path: '/agent/login', component: AgentLogin },
   { path: '/agent', component: AgentWorkbench, meta: { requiresAgent: true } },
   { path: '/m', component: MobileChat },
