@@ -6,3 +6,4 @@ dist
 *.log
 .vscode
 .idea
+public/daji-cs.iife.js
