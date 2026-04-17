@@ -10,4 +10,14 @@ export default defineConfig({
     },
   },
   server: { port: 5173, host: true },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'rc-vendor': ['@rongcloud/imlib-next', '@rongcloud/engine'],
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
+        },
+      },
+    },
+  },
 })

@@ -44,6 +44,21 @@ export const useImStore = defineStore('im', () => {
     unsubs.push(
       onConnectionStatus((s) => { status.value = s }),
       onMessage((msg) => {
+        // 撤回通知：定位原消息打标记；找不到则作为占位插入
+        if (msg.recalled && msg.raw) {
+          const targetUId = String((msg.raw as any)._recallTargetUId || '')
+          if (targetUId) {
+            const existing = messages.value.find((m) => m.id === targetUId)
+            if (existing) {
+              replace(targetUId, (orig) => ({ ...orig, recalled: true }))
+              return
+            }
+          }
+          // 落不到原消息：可能是历史加载前到达的 RcNtf；直接插占位
+          if (msg.targetId === currentTargetId.value) messages.value.push(msg)
+          return
+        }
+
         const fromSelf = msg.senderId === 'me' || msg.status === 'sent' && (messages.value.some((m) => m.id === msg.id))
         const isCurrent = msg.targetId === currentTargetId.value
         const hidden = typeof document !== 'undefined' && document.hidden
