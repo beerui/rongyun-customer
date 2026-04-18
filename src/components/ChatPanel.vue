@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useImStore } from '@/stores/im'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 import MessageList from './MessageList.vue'
 import MessageInput from './MessageInput.vue'
 import EmptyState from './EmptyState.vue'
@@ -16,6 +17,7 @@ defineProps<{
 
 const im = useImStore()
 const auth = useAuthStore()
+const toast = useToastStore()
 
 const statusText = computed(() => {
   switch (im.status) {
@@ -46,7 +48,7 @@ function handleSendImage(file: File) { im.sendImageFile(file) }
 function handleSendVideo(file: File) { im.sendVideoFile(file) }
 function handleSendFile(file: File)  { im.sendFileMessage(file) }
 function handleRecall(id: string) {
-  im.recall(id).catch((e: Error) => window.alert(e.message))
+  im.recall(id).catch((e: Error) => toast.error(e.message))
 }
 </script>
 

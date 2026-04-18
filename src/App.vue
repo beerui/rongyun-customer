@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import ImageLightbox from '@/components/ImageLightbox.vue'
+import Toast from '@/components/Toast.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
@@ -20,4 +21,5 @@ onMounted(async () => {
 <template>
   <router-view />
   <ImageLightbox />
+  <Toast />
 </template>
