@@ -4,17 +4,17 @@ const RECALL_CMD = 'RC:RcCmd'
 const RECALL_NTF = 'RC:RcNtf'
 
 function detectType(objectName: string, content: any): MessageType {
+  // 自定义卡片是借 TextMessage 承载的，优先看 customType
+  const ct = content?.customType
+  if (ct === 'product') return 'product'
+  if (ct === 'order')   return 'order'
+  if (ct === 'coupon')  return 'coupon'
   switch (objectName) {
     case 'RC:TxtMsg': return 'text'
     case 'RC:ImgMsg': return 'image'
     case 'RC:FileMsg': return 'file'
     case 'RC:SightMsg': return 'video'
   }
-  // 自定义消息：通过 content.customType 区分
-  const ct = content?.customType
-  if (ct === 'product') return 'product'
-  if (ct === 'order')   return 'order'
-  if (ct === 'coupon')  return 'coupon'
   return 'custom'
 }
 
@@ -37,7 +37,12 @@ function parseContent(type: MessageType, content: any): any {
     size: Number(content?.size ?? 0),
   }
   if (type === 'product' || type === 'order' || type === 'coupon') {
-    return content?.data ?? content
+    if (content?.data) return content.data
+    // RC TextMessage 有时只保留 content 字段（JSON 字符串），需要反序列化
+    if (typeof content?.content === 'string') {
+      try { return JSON.parse(content.content) } catch { /* ignore */ }
+    }
+    return content
   }
   return content
 }
