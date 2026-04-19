@@ -40,6 +40,16 @@
     <button id="btn-reset">reset()</button>
   </div>
 
+  <div class="card">
+    <strong>4. 悬浮 Launcher（C 阶段新增）</strong>
+    <p>挂载后右下角出现气泡，点击展开 iframe 浮窗（移动端全屏）。</p>
+    <button id="btn-launcher-mount">挂载 Launcher</button>
+    <button id="btn-launcher-unmount">卸载</button>
+    <button id="btn-launcher-toggle">toggle 展开/收起</button>
+    <button id="btn-unread-plus">模拟未读 +1</button>
+    <button id="btn-unread-reset">未读归零</button>
+  </div>
+
   <h3>事件日志 <span class="tag">B 阶段新增</span></h3>
   <pre id="log">（等待事件…）</pre>
 
@@ -80,6 +90,12 @@
       'presend:start',
       'presend:success',
       'presend:error',
+      'launcher:mount',
+      'launcher:click',
+      'launcher:unmount',
+      'widget:open',
+      'widget:close',
+      'unread:change',
       'error',
     ]
     events.forEach((ev) => {
@@ -111,6 +127,21 @@
       DajiCS.reset()
       append('reset() done — 需重新 boot 才能 open')
     }
+
+    // Launcher
+    let unread = 0
+    document.getElementById('btn-launcher-mount').onclick = () =>
+      DajiCS.mountLauncher({
+        position: 'bottom-right',
+        primary: '#FA3E3E',
+        title: '大集在线客服',
+        mode: 'iframe',
+        openWith: common,
+      })
+    document.getElementById('btn-launcher-unmount').onclick = () => DajiCS.unmountLauncher()
+    document.getElementById('btn-launcher-toggle').onclick = () => DajiCS.toggleWidget()
+    document.getElementById('btn-unread-plus').onclick = () => DajiCS.setUnreadCount(++unread)
+    document.getElementById('btn-unread-reset').onclick = () => { unread = 0; DajiCS.setUnreadCount(0) }
 
     console.log('DajiCS version:', DajiCS.version)
   </script>

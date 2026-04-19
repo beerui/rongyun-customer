@@ -30,6 +30,18 @@ export type DajiCSEventMap = {
   /** 会话被客服结束 */
   'conversation:end': { reason?: string }
 
+  /** Launcher 气泡挂载完成 */
+  'launcher:mount': { position: 'bottom-right' | 'bottom-left' }
+  /** 用户点击 Launcher 气泡 */
+  'launcher:click': { mode: 'iframe' | 'tab' }
+  /** Launcher 气泡被卸载 */
+  'launcher:unmount': void
+
+  /** iframe Widget 打开 */
+  'widget:open': { url: string }
+  /** iframe Widget 关闭 */
+  'widget:close': { reason: 'user' | 'minimize' | 'programmatic' }
+
   /** 其它未分类错误（boot / 内部状态异常等） */
   'error': { source: string; error: unknown }
 }

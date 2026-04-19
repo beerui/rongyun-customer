@@ -63,6 +63,11 @@ function buildUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
   return `${root}/chat${qs ? '?' + qs : ''}`
 }
 
+/** 公共：根据当前 boot 配置构造 /chat URL（供 launcher iframe 模式使用） */
+export function buildChatUrl(opts: OpenOptions): string {
+  return buildUrl(ensureBooted(), opts)
+}
+
 function windowKey(opts: OpenOptions): string {
   return `${opts.userId ?? ''}|${opts.supplierId ?? ''}`
 }
