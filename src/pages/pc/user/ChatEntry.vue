@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { setDefaultLang } from '@/utils/translate-langs'
+import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +36,14 @@ onMounted(async () => {
   // 强制指定目标客服（宿主通过 supplierId 指定）
   if (q.daji_supplierId) {
     auth.peerId = String(q.daji_supplierId)
+  }
+
+  // 若是 iframe 嵌入（SDK Launcher 模式），通知 parent 已就绪
+  if (isEmbedded()) {
+    sendToParent('daji:ready', {
+      userId: q.daji_userId ?? '',
+      supplierId: q.daji_supplierId ?? '',
+    })
   }
 
   // 进入 PC/移动端 UserChat，router guard 会自动适配

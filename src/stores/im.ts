@@ -8,6 +8,7 @@ import {
 } from '@/im'
 import { uploadImage, uploadVideo, uploadFile as upFile } from '@/utils/upload'
 import { playBeep, browserNotify, flashTitle, bindVisibilityReset } from '@/utils/notify'
+import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const APPKEY = import.meta.env.VITE_RC_APPKEY
 
@@ -69,6 +70,14 @@ export const useImStore = defineStore('im', () => {
           const preview = typeof msg.content === 'string' ? msg.content : `[${msg.type}]`
           browserNotify(msg.senderName || '新消息', preview.slice(0, 60))
           flashTitle(unreadTotal.value)
+          // SDK Launcher iframe 模式：把未读数与消息预览推给 parent
+          if (isEmbedded()) {
+            sendToParent('daji:unread', { count: unreadTotal.value })
+            sendToParent('daji:message', {
+              from: msg.senderName || '',
+              preview: preview.slice(0, 60),
+            })
+          }
         }
 
         if (!isCurrent) return
@@ -86,6 +95,7 @@ export const useImStore = defineStore('im', () => {
     currentTargetId.value = targetId
     messages.value = []
     unreadTotal.value = 0
+    if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
       const history = await getHistory(targetId, { count: 50 })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)

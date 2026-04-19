@@ -7,6 +7,11 @@ export interface DajiCSBootOptions {
   version?: string
   /** 调试模式：打印内部日志（重试 / 窗口复用等） */
   debug?: boolean
+  /**
+   * postMessage 白名单 origin 列表（除 baseUrl origin 外额外允许）。
+   * 仅此白名单内的 origin 能通过 bridge 向 SDK 发消息。
+   */
+  allowedOrigins?: string[]
 }
 
 export interface ProductCard {
