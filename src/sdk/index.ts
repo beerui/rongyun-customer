@@ -1,4 +1,4 @@
-import { boot, open, openSafe, close, reset, ready, isReadyNow, buildChatUrl, __version__ } from './open'
+import { boot, open, openSafe, close, reset, ready, isReadyNow, buildChatUrl, getOpenWindow, __version__ } from './open'
 import { on, off, once } from './events'
 import { mountLauncher, unmountLauncher, setUnreadCount, toggleWidget, getLauncherElement } from './launcher/launcher'
 import { openWidget, closeWidget, isWidgetOpen, getWidgetIframe } from './launcher/widget'
@@ -23,6 +23,7 @@ const api = {
   closeWidget,
   isWidgetOpen,
   buildChatUrl,
+  getOpenWindow,
   version: __version__,
 }
 
@@ -51,6 +52,7 @@ export {
   isWidgetOpen,
   getWidgetIframe,
   buildChatUrl,
+  getOpenWindow,
   __version__ as version,
 }
 export { HttpError, TimeoutError, fetchWithRetry, defaultShouldRetry } from './utils/fetch-with-retry'

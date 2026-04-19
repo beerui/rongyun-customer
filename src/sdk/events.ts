@@ -10,7 +10,7 @@ export type DajiCSEventMap = {
   'ready': void
 
   /** 成功新开了客服窗口 */
-  'window:open': { key: string; url: string; window: Window | null }
+  'window:open': { key: string; url: string }
   /** 复用了已开的客服窗口 */
   'window:focus': { key: string; url: string }
   /** 窗口被用户关闭（轮询探测，最多延迟 1s） */

@@ -3,6 +3,7 @@ import { buildQuery } from './query'
 import { preSendProductCard } from './pre-send'
 import { emit, clearAllListeners } from './events'
 import { signalReady, resetReady, ready as readyPromise, isReadyNow } from './ready'
+import { triggerReset } from './lifecycle'
 
 const DEFAULT_FEATURES = 'width=1000,height=600,scrollbars=yes,resizable=yes'
 const VERSION = '0.1.0'
@@ -43,13 +44,19 @@ export function boot(options: DajiCSBootOptions): void {
   emit('ready', undefined)
 }
 
-/** 显式重置配置（测试 / 需要切换环境时使用） */
-export function reset(): void {
+/**
+ * 重置 SDK 内部状态：config / 已开窗口 / ready / 关闭轮询。
+ *
+ * 默认**不清除用户事件订阅**（职责分离：listeners 由订阅方自己管理）。
+ * 如需彻底清零（如 SPA 卸载 SDK 时），传 `{ clearListeners: true }`。
+ */
+export function reset(options?: { clearListeners?: boolean }): void {
   config = null
   openedWindows.clear()
   stopClosePoll()
   resetReady()
-  clearAllListeners()
+  triggerReset()
+  if (options?.clearListeners) clearAllListeners()
 }
 
 function ensureBooted(): DajiCSBootOptions {
@@ -120,7 +127,7 @@ function openWindowSmart(key: string, url: string, features?: string): Window | 
   if (win) {
     openedWindows.set(key, win)
     startClosePoll()
-    emit('window:open', { key, url, window: win })
+    emit('window:open', { key, url })
   } else {
     emit('error', { source: 'window.open', error: new Error('window.open returned null (popup blocked?)') })
   }
@@ -160,6 +167,22 @@ export function close(opts: Pick<OpenOptions, 'userId' | 'supplierId'>): void {
     emit('window:close', { key })
   }
   if (openedWindows.size === 0) stopClosePoll()
+}
+
+/**
+ * 按需获取已打开客服窗口的 Window 句柄（用户×客服 key）。
+ * 未开 / 已被关闭 / 跨域导致无法访问 → 返回 null。
+ *
+ * 注意：事件 payload 不再包含 Window 对象（payload 必须可序列化，便于埋点上报）。
+ * 如果宿主想要直接操作 Window（如 postMessage / focus），请使用此方法按需取。
+ */
+export function getOpenWindow(
+  opts: Pick<OpenOptions, 'userId' | 'supplierId'>,
+): Window | null {
+  const key = windowKey(opts as OpenOptions)
+  const win = openedWindows.get(key)
+  if (win && !win.closed) return win
+  return null
 }
 
 export { readyPromise as ready, isReadyNow }
