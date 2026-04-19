@@ -5,6 +5,8 @@ import Avatar from './Avatar.vue'
 import { safeUrl } from '@/utils/sanitize'
 import { translateText } from '@/apis/customer'
 import { TRANSLATE_LANGS, getDefaultLang, setDefaultLang } from '@/utils/translate-langs'
+import { useImStore } from '@/stores/im'
+import { useLightboxStore } from '@/stores/lightbox'
 
 const props = defineProps<{
   message: Message
@@ -15,6 +17,17 @@ const emit = defineEmits<{
   (e: 'retry', id: string): void
   (e: 'recall', id: string): void
 }>()
+
+const im = useImStore()
+const lightbox = useLightboxStore()
+
+function openImage(url: string) {
+  const list = im.messages
+    .filter((m) => m.type === 'image' && !m.recalled)
+    .map((m) => safeUrl((m.content as any)?.url))
+    .filter((u) => u && u !== '#')
+  lightbox.open(safeUrl(url), list)
+}
 
 const menuOpen = ref(false)
 const menuX = ref(0)
@@ -151,15 +164,14 @@ function formatDuration(s?: number) {
       </div>
 
       <!-- 图片 -->
-      <a
+      <button
         v-else-if="message.type === 'image'"
-        :href="safeUrl((message.content as any).url)"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="rounded-md overflow-hidden max-w-[260px] block"
+        type="button"
+        class="rounded-md overflow-hidden max-w-[260px] block p-0 bg-transparent border-0 cursor-zoom-in"
+        @click="openImage((message.content as any).url)"
       >
         <img :src="safeUrl((message.content as any).url)" class="block w-full" alt="" />
-      </a>
+      </button>
 
       <!-- 视频 -->
       <div v-else-if="message.type === 'video'" class="rounded-md overflow-hidden bg-black max-w-[320px]">
