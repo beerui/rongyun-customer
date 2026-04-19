@@ -1,14 +1,18 @@
 import type { DajiCSBootOptions, OpenOptions } from './types'
 import { buildQuery } from './query'
 import { preSendProductCard } from './pre-send'
+import { emit, clearAllListeners } from './events'
+import { signalReady, resetReady, ready as readyPromise, isReadyNow } from './ready'
 
 const DEFAULT_FEATURES = 'width=1000,height=600,scrollbars=yes,resizable=yes'
 const VERSION = '0.1.0'
+const CLOSE_POLL_INTERVAL_MS = 1000
 
 let config: DajiCSBootOptions | null = null
 
 /** 已打开的客服窗口缓存：key = `${userId}|${supplierId}` */
 const openedWindows: Map<string, Window> = new Map()
+let closePollTimer: ReturnType<typeof setInterval> | null = null
 
 function log(...args: unknown[]): void {
   if (config?.debug) console.log('[DajiCS]', ...args)
@@ -35,12 +39,17 @@ export function boot(options: DajiCSBootOptions): void {
   }
   config = { ...options, version: options.version ?? VERSION }
   log('booted', config)
+  signalReady()
+  emit('ready', undefined)
 }
 
 /** 显式重置配置（测试 / 需要切换环境时使用） */
 export function reset(): void {
   config = null
   openedWindows.clear()
+  stopClosePoll()
+  resetReady()
+  clearAllListeners()
 }
 
 function ensureBooted(): DajiCSBootOptions {
@@ -58,11 +67,30 @@ function windowKey(opts: OpenOptions): string {
   return `${opts.userId ?? ''}|${opts.supplierId ?? ''}`
 }
 
-/**
- * 开窗策略：
- * - 相同 (userId, supplierId) 的窗口已存在且未被用户关闭 → 聚焦已有窗口
- * - 否则开新窗口并缓存句柄
- */
+function startClosePoll(): void {
+  if (closePollTimer || typeof window === 'undefined') return
+  closePollTimer = setInterval(() => {
+    if (openedWindows.size === 0) {
+      stopClosePoll()
+      return
+    }
+    for (const [key, win] of openedWindows) {
+      if (win.closed) {
+        openedWindows.delete(key)
+        emit('window:close', { key })
+        log('window closed', key)
+      }
+    }
+  }, CLOSE_POLL_INTERVAL_MS)
+}
+
+function stopClosePoll(): void {
+  if (closePollTimer) {
+    clearInterval(closePollTimer)
+    closePollTimer = null
+  }
+}
+
 function openWindowSmart(key: string, url: string, features?: string): Window | null {
   if (typeof window === 'undefined') return null
   const existing = openedWindows.get(key)
@@ -70,21 +98,27 @@ function openWindowSmart(key: string, url: string, features?: string): Window | 
     try {
       existing.focus()
     } catch {
-      // focus 失败视为已失效，清掉缓存往下开新窗
       openedWindows.delete(key)
     }
     if (openedWindows.has(key)) {
       try {
         if (existing.location.href !== url) existing.location.href = url
       } catch {
-        // 跨域读/写 location 会抛 — 窗口已 focus，保留旧上下文即可
+        // 跨域不可读/写 location，已 focus 就算成功
       }
       log('reusing existing window', key)
+      emit('window:focus', { key, url })
       return existing
     }
   }
   const win = window.open(url, '_blank', features || DEFAULT_FEATURES)
-  if (win) openedWindows.set(key, win)
+  if (win) {
+    openedWindows.set(key, win)
+    startClosePoll()
+    emit('window:open', { key, url, window: win })
+  } else {
+    emit('error', { source: 'window.open', error: new Error('window.open returned null (popup blocked?)') })
+  }
   return win
 }
 
@@ -95,8 +129,7 @@ export async function open(opts: OpenOptions): Promise<void> {
 
   if (opts.card) {
     try {
-      const { clientMsgId } = await preSendProductCard(cfg.apiBase, opts, opts.card, cfg.debug)
-      log('pre-sent product card', clientMsgId)
+      await preSendProductCard(cfg.apiBase, opts, opts.card, cfg.debug)
     } catch (e) {
       warn('pre-send product card failed, opening window anyway:', e)
     }
@@ -118,7 +151,11 @@ export function close(opts: Pick<OpenOptions, 'userId' | 'supplierId'>): void {
   if (win && !win.closed) {
     try { win.close() } catch { /* ignore */ }
   }
-  openedWindows.delete(key)
+  if (openedWindows.delete(key)) {
+    emit('window:close', { key })
+  }
+  if (openedWindows.size === 0) stopClosePoll()
 }
 
+export { readyPromise as ready, isReadyNow }
 export const __version__ = VERSION
