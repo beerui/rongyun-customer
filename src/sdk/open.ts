@@ -43,13 +43,18 @@ export function boot(options: DajiCSBootOptions): void {
   emit('ready', undefined)
 }
 
-/** 显式重置配置（测试 / 需要切换环境时使用） */
-export function reset(): void {
+/**
+ * 重置 SDK 内部状态：config / 已开窗口 / ready / 关闭轮询。
+ *
+ * 默认**不清除用户事件订阅**（职责分离：listeners 由订阅方自己管理）。
+ * 如需彻底清零（如 SPA 卸载 SDK 时），传 `{ clearListeners: true }`。
+ */
+export function reset(options?: { clearListeners?: boolean }): void {
   config = null
   openedWindows.clear()
   stopClosePoll()
   resetReady()
-  clearAllListeners()
+  if (options?.clearListeners) clearAllListeners()
 }
 
 function ensureBooted(): DajiCSBootOptions {

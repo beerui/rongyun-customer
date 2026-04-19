@@ -55,11 +55,12 @@
 
   <script src="/daji-cs.iife.js"></script>
   <script>
-    DajiCS.boot({
+    const bootConfig = {
       baseUrl: location.origin,
       apiBase: location.origin,
       debug: true,
-    })
+    }
+    DajiCS.boot(bootConfig)
 
     const common = {
       userId: 'visitor_demo_001',
@@ -125,7 +126,8 @@
       DajiCS.close({ userId: common.userId, supplierId: common.supplierId })
     document.getElementById('btn-reset').onclick = () => {
       DajiCS.reset()
-      append('reset() done — 需重新 boot 才能 open')
+      DajiCS.boot(bootConfig)
+      append('reset() done — 已自动重新 boot')
     }
 
     // Launcher
