@@ -5,6 +5,8 @@ export interface DajiCSBootOptions {
   apiBase: string
   /** 可选：SDK 版本号，随 query 下发，排查用 */
   version?: string
+  /** 调试模式：打印内部日志（重试 / 窗口复用等） */
+  debug?: boolean
 }
 
 export interface ProductCard {
