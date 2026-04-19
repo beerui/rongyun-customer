@@ -4,6 +4,7 @@ import { preSendProductCard } from './pre-send'
 import { emit, clearAllListeners } from './events'
 import { signalReady, resetReady, ready as readyPromise, isReadyNow } from './ready'
 import { triggerReset } from './lifecycle'
+import { startBridge } from './launcher/bridge'
 
 const DEFAULT_FEATURES = 'width=1000,height=600,scrollbars=yes,resizable=yes'
 const VERSION = '0.1.0'
@@ -40,6 +41,10 @@ export function boot(options: DajiCSBootOptions): void {
   }
   config = { ...options, version: options.version ?? VERSION }
   log('booted', config)
+  startBridge(config.baseUrl, config.allowedOrigins, {
+    autoClose: config.autoCloseOnEnd,
+    closeDelay: config.endCloseDelay,
+  })
   signalReady()
   emit('ready', undefined)
 }

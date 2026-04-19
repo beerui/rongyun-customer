@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import Avatar from '@/components/Avatar.vue'
@@ -7,9 +7,13 @@ import MessageList from '@/components/MessageList.vue'
 import MessageInput from '@/components/MessageInput.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PlatformIntro from './PlatformIntro.vue'
+import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const auth = useAuthStore()
 const im = useImStore()
+
+// 仅在 iframe 嵌入场景下（SDK Launcher Widget 模式）显示"收起 / 结束对话"两枚按钮
+const embedded = computed(() => isEmbedded())
 
 async function ensureOpen() {
   if (!auth.peerId) return
@@ -34,6 +38,15 @@ function handleSendText(t: string) { im.sendTextMessage(t) }
 function handleSendImage(f: File) { im.sendImageFile(f) }
 function handleSendVideo(f: File) { im.sendVideoFile(f) }
 function handleSendFile(f: File)  { im.sendFileMessage(f) }
+
+function handleMinimize() {
+  sendToParent('daji:close')
+}
+
+function handleEnd() {
+  if (!window.confirm('确认结束本次会话？')) return
+  im.endConversation('user')
+}
 </script>
 
 <template>
@@ -48,7 +61,20 @@ function handleSendFile(f: File)  { im.sendFileMessage(f) }
         <span>{{ auth.name || '访客' }}</span>
       </div>
       <div class="flex-1" />
-      <div class="text-[13px] text-white/90">7×12h 在线客服 · 平均响应 30 秒</div>
+      <div class="text-[13px] text-white/90 mr-4">7×12h 在线客服 · 平均响应 30 秒</div>
+      <div v-if="embedded" class="flex items-center gap-2">
+        <button
+          type="button"
+          class="h-8 px-3 text-[13px] rounded border border-white/40 hover:bg-white/15"
+          @click="handleEnd"
+        >结束对话</button>
+        <button
+          type="button"
+          class="h-8 px-3 text-[13px] rounded border border-white/40 hover:bg-white/15"
+          @click="handleMinimize"
+          title="收起到宿主站点"
+        >收起</button>
+      </div>
     </header>
 
     <div class="flex-1 flex min-h-0">

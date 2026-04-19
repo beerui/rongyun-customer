@@ -7,6 +7,19 @@ export interface DajiCSBootOptions {
   version?: string
   /** 调试模式：打印内部日志（重试 / 窗口复用等） */
   debug?: boolean
+  /**
+   * postMessage 白名单 origin 列表（除 baseUrl origin 外额外允许）。
+   * 仅此白名单内的 origin 能通过 bridge 向 SDK 发消息。
+   */
+  allowedOrigins?: string[]
+  /**
+   * 收到 conversation:end 后是否自动关闭 widget。默认 true。
+   * 关闭前会在 widget 顶部显示一条"会话已结束"横幅，延迟 endCloseDelay 毫秒后再关。
+   * 若宿主希望自行控制关窗时机（例如弹自定义满意度问卷），设 false 并订阅 on('conversation:end')。
+   */
+  autoCloseOnEnd?: boolean
+  /** autoCloseOnEnd 生效时，横幅显示到关窗的延迟（ms）。默认 3000 */
+  endCloseDelay?: number
 }
 
 export interface ProductCard {

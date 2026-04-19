@@ -50,6 +50,16 @@
     <button id="btn-unread-reset">未读归零</button>
   </div>
 
+  <div class="card">
+    <strong>5. 会话结束 + 身份补发（C3 阶段新增）</strong>
+    <p>先挂载 Launcher 并展开 widget，再点以下按钮触发。</p>
+    <button id="btn-sim-end-agent">模拟 agent 结束会话（3s 后自动关窗）</button>
+    <button id="btn-sim-end-user">模拟访客结束（不同文案）</button>
+    <button id="btn-sim-close">模拟 iframe 主动 close</button>
+    <button id="btn-refresh-identity">refreshIdentity（下发新 token）</button>
+    <button id="btn-bridge-info">查看 bridge 状态</button>
+  </div>
+
   <h3>事件日志 <span class="tag">B 阶段新增</span></h3>
   <pre id="log">（等待事件…）</pre>
 
@@ -97,6 +107,8 @@
       'widget:open',
       'widget:close',
       'unread:change',
+      'message:incoming',
+      'conversation:end',
       'error',
     ]
     events.forEach((ev) => {
@@ -144,6 +156,26 @@
     document.getElementById('btn-launcher-toggle').onclick = () => DajiCS.toggleWidget()
     document.getElementById('btn-unread-plus').onclick = () => DajiCS.setUnreadCount(++unread)
     document.getElementById('btn-unread-reset').onclick = () => { unread = 0; DajiCS.setUnreadCount(0) }
+
+    // C3 验证：模拟 iframe → parent 的协议消息（demo 同源，origin 在白名单里）
+    function fakeFromIframe(type, payload) {
+      window.postMessage(
+        { source: 'daji-cs', version: '0.1.0', type, payload: payload || null },
+        location.origin,
+      )
+    }
+    document.getElementById('btn-sim-end-agent').onclick = () =>
+      fakeFromIframe('daji:conversation-end', { reason: 'agent' })
+    document.getElementById('btn-sim-end-user').onclick = () =>
+      fakeFromIframe('daji:conversation-end', { reason: 'user' })
+    document.getElementById('btn-sim-close').onclick = () =>
+      fakeFromIframe('daji:close')
+    document.getElementById('btn-refresh-identity').onclick = () => {
+      const ok = DajiCS.refreshIdentity({ token: 'new-host-token-' + Date.now(), language: 'zh' })
+      append('refreshIdentity sent: ' + ok)
+    }
+    document.getElementById('btn-bridge-info').onclick = () =>
+      append('bridge active=' + DajiCS.isBridgeActive() + ' origins=' + JSON.stringify(DajiCS.getAllowedOrigins()))
 
     console.log('DajiCS version:', DajiCS.version)
   </script>

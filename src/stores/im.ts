@@ -8,6 +8,7 @@ import {
 } from '@/im'
 import { uploadImage, uploadVideo, uploadFile as upFile } from '@/utils/upload'
 import { playBeep, browserNotify, flashTitle, bindVisibilityReset } from '@/utils/notify'
+import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const APPKEY = import.meta.env.VITE_RC_APPKEY
 
@@ -59,6 +60,14 @@ export const useImStore = defineStore('im', () => {
           return
         }
 
+        // 会话结束控制消息：不进入消息列表，透传给 SDK 宿主（如有）
+        const rawContent = (msg.raw as any)?.content
+        if (rawContent?.customType === 'conversation-end') {
+          const reason = String(rawContent?.reason ?? 'agent')
+          if (isEmbedded()) sendToParent('daji:conversation-end', { reason })
+          return
+        }
+
         const fromSelf = msg.senderId === 'me' || msg.status === 'sent' && (messages.value.some((m) => m.id === msg.id))
         const isCurrent = msg.targetId === currentTargetId.value
         const hidden = typeof document !== 'undefined' && document.hidden
@@ -69,6 +78,14 @@ export const useImStore = defineStore('im', () => {
           const preview = typeof msg.content === 'string' ? msg.content : `[${msg.type}]`
           browserNotify(msg.senderName || '新消息', preview.slice(0, 60))
           flashTitle(unreadTotal.value)
+          // SDK Launcher iframe 模式：把未读数与消息预览推给 parent
+          if (isEmbedded()) {
+            sendToParent('daji:unread', { count: unreadTotal.value })
+            sendToParent('daji:message', {
+              from: msg.senderName || '',
+              preview: preview.slice(0, 60),
+            })
+          }
         }
 
         if (!isCurrent) return
@@ -86,6 +103,7 @@ export const useImStore = defineStore('im', () => {
     currentTargetId.value = targetId
     messages.value = []
     unreadTotal.value = 0
+    if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
       const history = await getHistory(targetId, { count: 50 })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
@@ -234,9 +252,17 @@ export const useImStore = defineStore('im', () => {
     currentTargetId.value = ''
   }
 
+  /**
+   * 访客主动结束会话：通知 parent（SDK）触发 conversation:end 流程。
+   * 非 iframe 场景 no-op（独立 tab / 直接访问 /chat 不适用）。
+   */
+  function endConversation(reason: 'user' | 'timeout' | 'agent' = 'user') {
+    if (isEmbedded()) sendToParent('daji:conversation-end', { reason })
+  }
+
   return {
     status, connected, currentTargetId, messages, isMock, unreadTotal,
-    connect, disconnect, openConversation,
+    connect, disconnect, openConversation, endConversation,
     sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry, recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
   }
