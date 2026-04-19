@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import { useConversationsStore } from '@/stores/conversations'
 import { useComposerStore } from '@/stores/composer'
+import { useToastStore } from '@/stores/toast'
 import {
   suspendConversation,
   transferConversation,
@@ -26,6 +27,7 @@ const auth = useAuthStore()
 const im = useImStore()
 const conv = useConversationsStore()
 const composer = useComposerStore()
+const toast = useToastStore()
 
 const keyword = ref('')
 const filterKey = ref<'all' | 'waiting' | 'active'>('all')
@@ -91,7 +93,7 @@ async function onSuspend() {
   busy.value = 'suspend'
   try {
     await suspendConversation(activePeer.value.id).catch(() => {})
-    alert('已挂起（模拟）')
+    toast.success('已挂起（模拟）')
   } finally { busy.value = '' }
 }
 
@@ -116,7 +118,7 @@ async function onTransferTo(agentId: string) {
   try {
     await transferConversation(activePeer.value.id, agentId).catch(() => {})
     showTransfer.value = false
-    alert('已转接（模拟）')
+    toast.success('已转接（模拟）')
   } finally { busy.value = '' }
 }
 
@@ -126,7 +128,7 @@ async function onEnd() {
   busy.value = 'end'
   try {
     await endConversation(activePeer.value.id).catch(() => {})
-    alert('会话已结束（模拟）')
+    toast.success('会话已结束（模拟）')
   } finally { busy.value = '' }
 }
 
@@ -190,7 +192,7 @@ function handleSendImage(f: File) { im.sendImageFile(f) }
 function handleSendVideo(f: File) { im.sendVideoFile(f) }
 function handleSendFile(f: File)  { im.sendFileMessage(f) }
 function handleRecall(id: string) {
-  im.recall(id).catch((e: Error) => window.alert(e.message))
+  im.recall(id).catch((e: Error) => toast.error(e.message))
 }
 
 function logout() {
