@@ -7,37 +7,25 @@ const PRE_SEND_MAX_RETRIES = 2
 /**
  * 生成 clientMsgId 用于幂等预投。
  *
- * ★ 这是一个需要你决策的函数。三种策略权衡如下：
+ * 当前策略：用户 × 客服 × 商品 × 30 秒时间窗口。
+ * `cs_${userId}_${supplierId}_${spuId}_${floor(Date.now()/30000)}`
  *
- * ── 策略 1：纯 UUID v4（默认实现，最简单） ──────────────────────
- *   每次调用都返回不同 id
- *   ✓ 防：网络抖动导致的自动重试重复落库（服务端看到同 id 直接丢第二条）
- *   ✗ 不防：用户手动点「打开客服」3 次 → 3 条商品卡（id 都不同）
+ * 含义：同一用户在 30 秒内重复预投同一商品卡到同一客服，clientMsgId 一致。
+ * 服务端配合 `SETNX clientMsgId EX 60`（或 DB 唯一索引）即可去重：
+ *   - 网络抖动自动重试 → 同 id → 只落库一条
+ *   - 用户手动点击 3 次"咨询" → 同 id → 只落库一条
+ *   - SPA 路由切换触发二次 open() → 同 id → 只落库一条
  *
- * ── 策略 2：用户 × 商品 × 时间窗口（推荐） ───────────────────────
- *   `${userId}_${supplierId}_${spuId}_${floor(Date.now()/30000)}`
- *   ✓ 防：同一用户 30 秒内重复预投同一商品（含手动重复点击、SPA 路由切换触发的二次 open()）
- *   ✓ 服务端配合 Redis `SETNX clientMsgId EX 60` 可彻底去重
- *   ✗ 用户确实想在 30 秒内连发两次同款卡会被吞（业务极少见）
- *
- * ── 策略 3：参数内容 hash（最强幂等） ────────────────────────────
- *   sha256(userId + supplierId + spuId + title) 截前 16 字符
- *   ✓ 完全相同的参数永远同一个 id，跨会话跨设备都幂等
- *   ✗ 没有时间维度，用户"永远"无法再次发同款卡（需手动改参数）
- *
- * 当前仓库场景（宿主 seo-daji-web 点"咨询"按钮 → 预投商品卡 → 新开客服 tab）：
- * - 用户不会刻意多次预投同商品
- * - 但按钮防抖不完善 / SPA 路由来回切换会触发多次 open()
- * - 推荐：策略 2（30 秒时间窗口）
- *
- * TODO[你来决策]：默认给的是策略 1（UUID），请根据业务换成策略 2 或 3。
+ * 若业务需要"30 秒内确实可以连发两张同款卡"，可替换为：
+ *   - UUID v4（`crypto.randomUUID()`）— 最弱幂等，仅防网络重试
+ *   - 内容 hash（sha256 截断）— 最强幂等，但永不允许再发同款
  */
-function generateClientMsgId(_opts: OpenOptions, _card: ProductCard): string {
-  // 默认：策略 1 - UUID v4
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-  return 'cs_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
+function generateClientMsgId(opts: OpenOptions, card: ProductCard): string {
+  const userId = String(opts.userId ?? 'anon')
+  const supplierId = String(opts.supplierId ?? '')
+  const spuId = String(card.spuId ?? '')
+  const window30s = Math.floor(Date.now() / 30000)
+  return `cs_${userId}_${supplierId}_${spuId}_${window30s}`
 }
 
 /**
