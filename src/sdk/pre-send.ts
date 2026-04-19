@@ -1,5 +1,6 @@
 import type { OpenOptions, ProductCard } from './types'
 import { fetchWithRetry } from './utils/fetch-with-retry'
+import { emit } from './events'
 
 const PRE_SEND_TIMEOUT_MS = 6000
 const PRE_SEND_MAX_RETRIES = 2
@@ -41,6 +42,7 @@ export async function preSendProductCard(
   debug = false,
 ): Promise<{ clientMsgId: string }> {
   const clientMsgId = generateClientMsgId(opts, card)
+  emit('presend:start', { clientMsgId, card, opts })
 
   const payload = {
     clientMsgId,
@@ -68,21 +70,26 @@ export async function preSendProductCard(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (opts.token) headers.Authorization = String(opts.token)
 
-  const res = await fetchWithRetry(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-    credentials: 'include',
-    timeout: PRE_SEND_TIMEOUT_MS,
-    maxRetries: PRE_SEND_MAX_RETRIES,
-    debug,
-  })
+  try {
+    const res = await fetchWithRetry(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      credentials: 'include',
+      timeout: PRE_SEND_TIMEOUT_MS,
+      maxRetries: PRE_SEND_MAX_RETRIES,
+      debug,
+    })
 
-  const body = await res.json().catch(() => null)
-  const code = body?.code
-  if (code !== undefined && code !== 0 && code !== 200 && code !== '0' && code !== '200') {
-    throw new Error(body?.message || body?.msg || `sendRyMessage code=${code}`)
+    const body = await res.json().catch(() => null)
+    const code = body?.code
+    if (code !== undefined && code !== 0 && code !== 200 && code !== '0' && code !== '200') {
+      throw new Error(body?.message || body?.msg || `sendRyMessage code=${code}`)
+    }
+    emit('presend:success', { clientMsgId })
+    return { clientMsgId }
+  } catch (error) {
+    emit('presend:error', { clientMsgId, error })
+    throw error
   }
-
-  return { clientMsgId }
 }
