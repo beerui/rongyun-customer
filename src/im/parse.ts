@@ -9,6 +9,8 @@ function detectType(objectName: string, content: any): MessageType {
   if (ct === 'product') return 'product'
   if (ct === 'order')   return 'order'
   if (ct === 'coupon')  return 'coupon'
+  // 会话控制类（conversation-end 等）统一落到 custom，由 im store 自行识别处理
+  if (ct === 'conversation-end') return 'custom'
   switch (objectName) {
     case 'RC:TxtMsg': return 'text'
     case 'RC:ImgMsg': return 'image'

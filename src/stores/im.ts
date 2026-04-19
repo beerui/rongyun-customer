@@ -60,6 +60,14 @@ export const useImStore = defineStore('im', () => {
           return
         }
 
+        // 会话结束控制消息：不进入消息列表，透传给 SDK 宿主（如有）
+        const rawContent = (msg.raw as any)?.content
+        if (rawContent?.customType === 'conversation-end') {
+          const reason = String(rawContent?.reason ?? 'agent')
+          if (isEmbedded()) sendToParent('daji:conversation-end', { reason })
+          return
+        }
+
         const fromSelf = msg.senderId === 'me' || msg.status === 'sent' && (messages.value.some((m) => m.id === msg.id))
         const isCurrent = msg.targetId === currentTargetId.value
         const hidden = typeof document !== 'undefined' && document.hidden
@@ -244,9 +252,17 @@ export const useImStore = defineStore('im', () => {
     currentTargetId.value = ''
   }
 
+  /**
+   * 访客主动结束会话：通知 parent（SDK）触发 conversation:end 流程。
+   * 非 iframe 场景 no-op（独立 tab / 直接访问 /chat 不适用）。
+   */
+  function endConversation(reason: 'user' | 'timeout' | 'agent' = 'user') {
+    if (isEmbedded()) sendToParent('daji:conversation-end', { reason })
+  }
+
   return {
     status, connected, currentTargetId, messages, isMock, unreadTotal,
-    connect, disconnect, openConversation,
+    connect, disconnect, openConversation, endConversation,
     sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry, recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
   }

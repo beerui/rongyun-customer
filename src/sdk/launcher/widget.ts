@@ -4,6 +4,8 @@ import { STYLE_ID, CSS } from './styles'
 let styleEl: HTMLStyleElement | null = null
 let widgetEl: HTMLDivElement | null = null
 let iframeEl: HTMLIFrameElement | null = null
+let endBannerEl: HTMLDivElement | null = null
+let endBannerTimer: ReturnType<typeof setTimeout> | null = null
 let isOpen = false
 
 export type WidgetPosition = 'bottom-right' | 'bottom-left'
@@ -97,6 +99,7 @@ export function closeWidget(reason: 'user' | 'minimize' | 'programmatic' = 'user
   if (!widgetEl || !isOpen) return
   widgetEl.setAttribute('data-open', 'false')
   isOpen = false
+  hideEndBanner()
   emit('widget:close', { reason })
 }
 
@@ -105,6 +108,7 @@ export function destroyWidget(): void {
   if (widgetEl) widgetEl.remove()
   widgetEl = null
   iframeEl = null
+  endBannerEl = null
 }
 
 export function getWidgetIframe(): HTMLIFrameElement | null {
@@ -113,4 +117,39 @@ export function getWidgetIframe(): HTMLIFrameElement | null {
 
 export function isWidgetOpen(): boolean {
   return isOpen
+}
+
+/**
+ * 在 widget 顶部显示一条"会话已结束"横幅。autoHideMs 为隐藏延迟。
+ * 仅对已存在的 widget 有效——未开窗时无操作。
+ */
+export function showEndBanner(message = '会话已结束', autoHideMs?: number): void {
+  if (!widgetEl) return
+  if (endBannerTimer) {
+    clearTimeout(endBannerTimer)
+    endBannerTimer = null
+  }
+  if (!endBannerEl) {
+    endBannerEl = document.createElement('div')
+    endBannerEl.className = 'daji-cs-widget-end-banner'
+    widgetEl.appendChild(endBannerEl)
+  }
+  endBannerEl.textContent = message
+  requestAnimationFrame(() => {
+    endBannerEl?.setAttribute('data-visible', 'true')
+  })
+  if (autoHideMs && autoHideMs > 0) {
+    endBannerTimer = setTimeout(() => {
+      endBannerEl?.setAttribute('data-visible', 'false')
+      endBannerTimer = null
+    }, autoHideMs)
+  }
+}
+
+export function hideEndBanner(): void {
+  if (endBannerTimer) {
+    clearTimeout(endBannerTimer)
+    endBannerTimer = null
+  }
+  endBannerEl?.setAttribute('data-visible', 'false')
 }

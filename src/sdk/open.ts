@@ -41,7 +41,10 @@ export function boot(options: DajiCSBootOptions): void {
   }
   config = { ...options, version: options.version ?? VERSION }
   log('booted', config)
-  startBridge(config.baseUrl, config.allowedOrigins)
+  startBridge(config.baseUrl, config.allowedOrigins, {
+    autoClose: config.autoCloseOnEnd,
+    closeDelay: config.endCloseDelay,
+  })
   signalReady()
   emit('ready', undefined)
 }

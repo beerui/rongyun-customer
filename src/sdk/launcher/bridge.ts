@@ -12,7 +12,7 @@
 
 import { emit } from '../events'
 import { onReset } from '../lifecycle'
-import { closeWidget, getWidgetIframe } from './widget'
+import { closeWidget, getWidgetIframe, showEndBanner } from './widget'
 
 export const DAJI_MSG_SOURCE = 'daji-cs'
 export const DAJI_MSG_VERSION = '0.1.0'
@@ -34,9 +34,19 @@ export interface DajiMessage<T = unknown> {
   payload: T
 }
 
+/** startBridge 的"会话结束"策略选项 */
+export interface EndPolicy {
+  /** 是否自动关闭 widget。默认 true */
+  autoClose?: boolean
+  /** 自动关闭前的横幅显示时长（ms）。默认 3000 */
+  closeDelay?: number
+}
+
 let msgListener: ((event: MessageEvent) => void) | null = null
 const allowedOrigins = new Set<string>()
 let offResetUnsub: (() => void) | null = null
+let endPolicy: Required<EndPolicy> = { autoClose: true, closeDelay: 3000 }
+let endCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 function deriveOrigin(url: string): string | null {
   try {
@@ -73,6 +83,7 @@ function dispatch(msg: DajiMessage): void {
     case 'daji:conversation-end': {
       const reason = (msg.payload as { reason?: string })?.reason
       emit('conversation:end', { reason })
+      if (endPolicy.autoClose) scheduleEndAutoClose(reason)
       break
     }
     case 'daji:close':
@@ -88,10 +99,16 @@ function dispatch(msg: DajiMessage): void {
  * 启动 postMessage 监听。幂等：重复调用先停旧的。
  * @param baseUrl SDK 指向的客服站点根 —— 它的 origin 自动加入白名单
  * @param additional 额外允许的 origin 列表（允许 URL 或 origin 字符串）
+ * @param policy   "会话结束"策略（默认 autoClose=true, closeDelay=3000）
  */
-export function startBridge(baseUrl: string, additional?: string[]): void {
+export function startBridge(baseUrl: string, additional?: string[], policy?: EndPolicy): void {
   if (typeof window === 'undefined') return
   stopBridge()
+
+  endPolicy = {
+    autoClose: policy?.autoClose ?? true,
+    closeDelay: Math.max(0, policy?.closeDelay ?? 3000),
+  }
 
   const base = deriveOrigin(baseUrl)
   if (base) allowedOrigins.add(base)
@@ -119,8 +136,26 @@ export function stopBridge(): void {
   }
   msgListener = null
   allowedOrigins.clear()
+  if (endCloseTimer) {
+    clearTimeout(endCloseTimer)
+    endCloseTimer = null
+  }
   offResetUnsub?.()
   offResetUnsub = null
+}
+
+function scheduleEndAutoClose(reason?: string): void {
+  if (endCloseTimer) clearTimeout(endCloseTimer)
+  const msg = reason === 'user' ? '您已结束本次会话' : '会话已结束，感谢您的咨询'
+  showEndBanner(msg, endPolicy.closeDelay)
+  if (endPolicy.closeDelay === 0) {
+    closeWidget('programmatic')
+    return
+  }
+  endCloseTimer = setTimeout(() => {
+    endCloseTimer = null
+    closeWidget('programmatic')
+  }, endPolicy.closeDelay)
 }
 
 /** 当前是否有活跃 bridge（调试用） */

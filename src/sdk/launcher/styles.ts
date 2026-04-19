@@ -101,6 +101,27 @@ export const CSS = `
   background: #fff;
 }
 
+.daji-cs-widget-end-banner {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.daji-cs-widget-end-banner[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 640px) {
   .daji-cs-widget[data-position],
   .daji-cs-widget {
