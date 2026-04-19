@@ -2,6 +2,7 @@ import type { OpenOptions } from '../types'
 import { emit, on } from '../events'
 import type { Unsubscribe } from '../utils/event-emitter'
 import { open, buildChatUrl } from '../open'
+import { onReset } from '../lifecycle'
 import { injectStyles, openWidget, closeWidget, isWidgetOpen, updateTheme, destroyWidget } from './widget'
 
 export type LauncherPosition = 'bottom-right' | 'bottom-left'
@@ -27,6 +28,7 @@ interface LauncherInternal {
   badge: HTMLSpanElement
   opts: LauncherOptions
   unreadUnsub: Unsubscribe
+  offReset: () => void
 }
 
 let instance: LauncherInternal | null = null
@@ -81,31 +83,38 @@ export function mountLauncher(options: LauncherOptions): void {
   })
 
   document.body.appendChild(root)
-  instance = { root, badge, opts: options, unreadUnsub }
+  const offReset = onReset(() => unmountLauncher())
+  instance = { root, badge, opts: options, unreadUnsub, offReset }
   emit('launcher:mount', { position: options.position ?? 'bottom-right' })
 }
 
 async function handleLauncherClick(options: LauncherOptions): Promise<void> {
   const mode = options.mode ?? 'iframe'
-  if (mode === 'tab') {
-    await open(options.openWith)
-    return
+  try {
+    if (mode === 'tab') {
+      await open(options.openWith)
+      return
+    }
+    if (isWidgetOpen()) {
+      closeWidget('user')
+      return
+    }
+    const url = buildChatUrl(options.openWith)
+    openWidget(url, {
+      position: options.position ?? 'bottom-right',
+      primary: options.primary,
+      title: options.title ?? '在线客服',
+    })
+  } catch (err) {
+    // 典型场景：config 被 reset 清空后点击 launcher
+    emit('error', { source: 'launcher:click', error: err })
   }
-  if (isWidgetOpen()) {
-    closeWidget('user')
-    return
-  }
-  const url = buildChatUrl(options.openWith)
-  openWidget(url, {
-    position: options.position ?? 'bottom-right',
-    primary: options.primary,
-    title: options.title ?? '在线客服',
-  })
 }
 
 export function unmountLauncher(): void {
   if (!instance) return
   instance.unreadUnsub()
+  instance.offReset()
   instance.root.remove()
   destroyWidget()
   emit('launcher:unmount', undefined)

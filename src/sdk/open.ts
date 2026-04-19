@@ -3,6 +3,7 @@ import { buildQuery } from './query'
 import { preSendProductCard } from './pre-send'
 import { emit, clearAllListeners } from './events'
 import { signalReady, resetReady, ready as readyPromise, isReadyNow } from './ready'
+import { triggerReset } from './lifecycle'
 
 const DEFAULT_FEATURES = 'width=1000,height=600,scrollbars=yes,resizable=yes'
 const VERSION = '0.1.0'
@@ -54,6 +55,7 @@ export function reset(options?: { clearListeners?: boolean }): void {
   openedWindows.clear()
   stopClosePoll()
   resetReady()
+  triggerReset()
   if (options?.clearListeners) clearAllListeners()
 }
 
