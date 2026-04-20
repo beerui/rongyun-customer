@@ -13,16 +13,22 @@ import {
   type DajiCSEventType,
 } from '@daji/cs-sdk'
 
-// 1) 初始化：类型检查会帮你发现拼写错误、遗漏必选项等
+// 1) 初始化：baseUrl / apiBase 由 .env.[mode] 注入（dev/staging/production 三套）
+const baseUrl = import.meta.env.VITE_CS_BASE_URL
+const apiBase = import.meta.env.VITE_CS_API_BASE
+if (!baseUrl || !apiBase) {
+  throw new Error('[demo] 缺少 VITE_CS_BASE_URL / VITE_CS_API_BASE，请检查 .env 文件')
+}
+
 const bootCfg: DajiCSBootOptions = {
-  baseUrl: 'https://cs.chinamarket.cn',
-  apiBase: 'https://api.chinamarket.cn',
+  baseUrl,
+  apiBase,
   debug: true,
   autoCloseOnEnd: true,
   endCloseDelay: 3000,
 }
 boot(bootCfg)
-console.log('[demo] DajiCS version:', version)
+console.log('[demo] DajiCS version:', version, 'mode:', import.meta.env.MODE)
 
 // 2) 事件监控器（HUD）
 const logEl = document.getElementById('log') as HTMLPreElement

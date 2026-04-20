@@ -15,11 +15,29 @@ pnpm install
 pnpm dev
 ```
 
-打开 http://localhost:5174 即可看到：
+打开 http://localhost:5210 即可看到：
 
 - 模拟商品列表页，点击任一商品"咨询客服"触发 `DajiCS.open` + 预投商品卡 + 开新窗
 - 右上角 HUD 实时打印所有 SDK 事件（带时间戳）
 - 底部工具栏：挂载/卸载 Launcher、toggle widget、模拟未读变化、刷新身份、模拟会话结束
+
+## 环境变量
+
+SDK 的 `baseUrl` / `apiBase` 通过 `.env.[mode]` 注入，按 Vite 惯例区分环境：
+
+| 文件 | 用途 | 触发命令 |
+|---|---|---|
+| `.env.development` | 本地 dev（默认） | `pnpm dev` |
+| `.env.staging` | 预发 | `pnpm build:staging` |
+| `.env.production` | 生产 | `pnpm build` |
+| `.env.example` | 模板 | — |
+
+变量：
+
+```bash
+VITE_CS_BASE_URL=<客服站点根，SDK 会据此拼 iframe src + origin 白名单>
+VITE_CS_API_BASE=<后端 API 根，SDK 调 sendRyMessage 等接口使用>
+```
 
 ## 验证点
 

@@ -57,6 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginAgent(account: string, password: string) {
     const cred = await apiAgentLogin(account, password)
+    console.log('loginAgent', cred)
     localStorage.setItem('auth_token', cred.authToken || '')
     applyAgent(cred)
     saveAgentSession({

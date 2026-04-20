@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
 
-const READY_TOKEN = import.meta.env.VITE_READY_TOKEN
 
 export const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE,
@@ -8,7 +7,7 @@ export const http: AxiosInstance = axios.create({
 })
 
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token') || READY_TOKEN || ''
+  const token = localStorage.getItem('auth_token') || ''
   const imToken = localStorage.getItem('ImToken') || ''
   if (token) {
     config.headers.Authorization = token

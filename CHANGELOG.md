@@ -62,5 +62,5 @@
 - 共享组件：ChatPanel / MessageList / MessageBubble / MessageInput / ConversationItem / Avatar / EmptyState
 - 三端页面：PC 客服工作台 / PC 用户端 / H5 用户端
 - 路由 UA 分流 + 客服路由守卫
-- 后端接入：login / getRyToken（真实后端 `customer-service-dev.sdpjw.cn`）
+- 后端接入：login / getRyToken（真实后端 `dev-gateway.chinamarket.cn`）
 - MasterGo MCP 接入，按 DSL 还原设计

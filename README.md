@@ -82,7 +82,6 @@ setConversationKind('group')
 | `VITE_RC_APPKEY`     | 融云 AppKey                               |
 | `VITE_API_BASE`      | 客服后端域名                              |
 | `VITE_OSS_BASE`      | OSS 域名（未使用时可空）                  |
-| `VITE_READY_TOKEN`   | 未登录态调 API 的备用 JWT                 |
 
 ## 默认测试账号
 
