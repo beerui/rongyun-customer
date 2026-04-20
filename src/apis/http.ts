@@ -8,15 +8,10 @@ export const http: AxiosInstance = axios.create({
 })
 
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token') || READY_TOKEN || ''
-  const imToken = localStorage.getItem('ImToken') || ''
-  if (token) {
-    config.headers.Authorization = token
-    ;(config.headers as any).accessToken = token
-  }
+  const imToken = localStorage.getItem('auth_token') || READY_TOKEN || ''
   if (imToken) (config.headers as any).ImToken = imToken
-  ;(config.headers as any).scene = token ? 'sc' : 'agents'
-  ;(config.headers as any).channel = token ? 'sc' : 'agents'
+  // if (imToken) (config.headers as any).accessToken = imToken
+  // if (imToken) (config.headers as any).Authorization = imToken
   return config
 })
 

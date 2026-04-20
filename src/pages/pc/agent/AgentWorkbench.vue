@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import { useConversationsStore } from '@/stores/conversations'
@@ -39,28 +39,35 @@ const filterKey = ref<'all' | 'waiting' | 'active'>('all')
  *   商品咨询 / 优惠问题 → 商品相关 → 显示"商品列表"
  *   其它 → 两个都显示
  */
-const demoConvs = [
-  { targetId: 'u_wen',  title: '温温', avatarBg: '#E8FFEA', tag: '退款申请', lastMessage: '我要申请退货退款.......', timeLabel: '5分钟' },
-  { targetId: 'u_zs',   title: '张三', avatarBg: '#FFF7E8', tag: '物流异常', lastMessage: '我一直没收到货啊......',    timeLabel: '12分钟' },
-  { targetId: 'u_ls',   title: '李四', avatarBg: '#FFECE8', tag: '物流查询', lastMessage: '我的快递到哪里了？',        timeLabel: '30分钟' },
-  { targetId: 'u_wq1',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
-  { targetId: 'u_wq2',  title: '赵敏', avatarBg: '#E6F4FF', tag: '优惠问题', lastMessage: '新人券怎么领？',            timeLabel: '1小时' },
-]
+// const demoConvs = [
+//   { targetId: 'u_wen',  title: '温温', avatarBg: '#E8FFEA', tag: '退款申请', lastMessage: '我要申请退货退款.......', timeLabel: '5分钟' },
+//   { targetId: 'u_zs',   title: '张三', avatarBg: '#FFF7E8', tag: '物流异常', lastMessage: '我一直没收到货啊......',    timeLabel: '12分钟' },
+//   { targetId: 'u_ls',   title: '李四', avatarBg: '#FFECE8', tag: '物流查询', lastMessage: '我的快递到哪里了？',        timeLabel: '30分钟' },
+//   { targetId: 'u_wq1',  title: '王强', avatarBg: '#E6F4FF', tag: '商品咨询', lastMessage: '这个有没有红色的？',        timeLabel: '45分钟' },
+//   { targetId: 'u_wq2',  title: '赵敏', avatarBg: '#E6F4FF', tag: '优惠问题', lastMessage: '新人券怎么领？',            timeLabel: '1小时' },
+// ]
 
 const filtered = computed(() => {
   const base = conv.list.length
-    ? conv.list.map((c, i) => ({
+    ? conv.list.map((c) => ({
         ...c,
-        tag: (demoConvs[i % demoConvs.length] as any).tag,
-        avatarBg: (demoConvs[i % demoConvs.length] as any).avatarBg,
         timeLabel: '',
       }))
-    : demoConvs.map((c) => ({ ...c, unread: 0, lastTime: 0 } as any))
-  return base.filter((c: any) => !keyword.value || c.title.includes(keyword.value))
+    : []
+  // 待接入 / 进行中：简单策略——看"最后一条消息是否由当前客服发出"。
+  // 代价：客服回复后用户又追问会退回"待接入"，但不用额外拉历史，初版够用。
+  // 后续若要"客服只要回过一次就算进行中"，可在 im store 维护 repliedSet 并在此处读取。
+  const selfId = auth.userId
+  const afterStage = base.filter((c) => {
+    if (filterKey.value === 'waiting') return c.lastMessageSenderId !== selfId
+    if (filterKey.value === 'active')  return !!selfId && c.lastMessageSenderId === selfId
+    return true
+  })
+  return afterStage.filter((c) => !keyword.value || c.title.includes(keyword.value))
 })
 
 const activePeer = computed(() => {
-  const id = im.currentTargetId || filtered.value[0]?.targetId
+  const id = im.currentTargetId
   const c: any = filtered.value.find((x: any) => x.targetId === id)
   return c ? { id: c.targetId, name: c.title, avatar: c.avatar, avatarBg: c.avatarBg, tag: c.tag } : undefined
 })
@@ -179,10 +186,29 @@ async function sendQuickReply(t: string) {
 
 onMounted(async () => {
   if (!im.connected && auth.rcToken) {
-    im.connect(auth.rcToken).catch((e) => console.warn('RC connect failed:', e))
+    try {
+      // 必须等待 connect 连接成功后，再往下执行
+      await im.connect(auth.rcToken)
+    } catch (e) {
+      console.warn('RC connect failed:', e)
+      return // 如果连接失败，就不要去拉取列表了
+    }
   }
   try { await conv.load() } catch {}
   conv.watch()
+  // 默认选中筛选后的第一条：否则 activePeer 仅做视觉高亮，
+  // im.currentTargetId 仍为空，导致发送被 sendTextMessage 的 `if (!targetId)` 静默吞掉。
+  if (!im.currentTargetId && filtered.value[0]) {
+    await selectConv(filtered.value[0].targetId)
+  }
+})
+
+// 切换筛选 tab 后，若当前选中会话不在新筛选结果里，自动落到新列表的第一条，避免右侧出现空会话。
+watch(filterKey, async () => {
+  const list = filtered.value
+  if (!list.length) return
+  const stillIn = list.some((c: any) => c.targetId === im.currentTargetId)
+  if (!stillIn) await selectConv(list[0].targetId)
 })
 
 onUnmounted(() => { conv.unwatch() })
@@ -257,7 +283,7 @@ function logout() {
             v-for="c in filtered"
             :key="c.targetId"
             :item="c as any"
-            :active="c.targetId === (im.currentTargetId || filtered[0]?.targetId)"
+            :active="c.targetId === im.currentTargetId"
             :time-label="(c as any).timeLabel"
             @click="selectConv(c.targetId)"
           />

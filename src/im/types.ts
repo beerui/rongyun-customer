@@ -52,6 +52,8 @@ export interface Conversation {
   title: string
   avatar?: string
   lastMessage?: string
+  /** 最后一条消息的发送者 ID；用于客服端筛选"待接入 / 进行中" */
+  lastMessageSenderId?: string
   lastTime?: number
   unread: number
 }

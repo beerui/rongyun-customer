@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, computed } from 'vue'
+import { ref, nextTick, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { emojiList } from '@/utils/emoji'
 import { useComposerStore } from '@/stores/composer'
 
@@ -32,6 +32,20 @@ const videoInput = ref<HTMLInputElement>()
 const fileInput = ref<HTMLInputElement>()
 const showEmoji = ref(false)
 const showMobilePlus = ref(false)
+const emojiPopRef = ref<HTMLElement>()
+
+// 点击弹框与「表情」按钮之外的区域，自动关闭弹框。
+// 注意：触发按钮自己有 toggle 逻辑，不能被文档监听抢先关闭——通过 data-action="emoji" 识别并忽略。
+function onDocumentClick(e: MouseEvent) {
+  if (!showEmoji.value) return
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  if (emojiPopRef.value?.contains(target)) return
+  if (target.closest('[data-action="emoji"]')) return
+  showEmoji.value = false
+}
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 
 // 外部通过 composer.insert() 填入文本时同步到本地输入框
 watch(() => composer.version, () => {
@@ -122,6 +136,7 @@ function onToolClick(action: string) {
       <button
         class="shrink-0 w-9 h-9 rounded-full border border-line-light text-lg flex items-center justify-center hover:bg-bg-soft"
         :class="{ 'bg-bg-soft': showEmoji }"
+        data-action="emoji"
         @click="showEmoji = !showEmoji; showMobilePlus = false"
       >😊</button>
       <textarea
@@ -141,7 +156,7 @@ function onToolClick(action: string) {
       >发送</button>
     </div>
 
-    <div v-if="showEmoji" class="border-t border-line-light p-2 grid grid-cols-8 gap-1 max-h-56 overflow-y-auto scrollbar-thin">
+    <div v-if="showEmoji" ref="emojiPopRef" class="border-t border-line-light p-2 grid grid-cols-8 gap-1 max-h-56 overflow-y-auto scrollbar-thin">
       <button
         v-for="e in emojiList"
         :key="e.shortcut"
@@ -209,6 +224,7 @@ function onToolClick(action: string) {
         v-for="t in visibleTools"
         :key="t.label"
         class="flex items-center gap-1.5 text-xs text-ink-700 hover:text-brand-500"
+        :data-action="t.action"
         @click="onToolClick(t.action)"
       >
         <span class="text-sm">{{ t.icon }}</span>
@@ -216,11 +232,15 @@ function onToolClick(action: string) {
       </button>
     </div>
 
-    <div v-if="showEmoji" class="absolute left-0 right-0 bottom-full bg-white border border-line-light shadow-card rounded-md p-3 grid grid-cols-12 gap-1 max-h-56 overflow-y-auto z-10 mx-4 mb-1">
+    <div
+      v-if="showEmoji"
+      ref="emojiPopRef"
+      class="absolute left-4 bottom-full w-80 bg-white border border-line-light shadow-card rounded-md p-2 grid grid-cols-8 gap-1 max-h-48 overflow-y-auto z-10 mb-1 scrollbar-thin"
+    >
       <button
         v-for="e in emojiList"
         :key="e.shortcut"
-        class="text-xl hover:bg-bg-soft rounded py-1"
+        class="text-lg hover:bg-bg-soft rounded py-1"
         @click="insertEmoji(e.emoji); showEmoji = false"
       >{{ e.emoji }}</button>
     </div>

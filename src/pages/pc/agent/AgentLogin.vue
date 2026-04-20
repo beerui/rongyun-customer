@@ -34,10 +34,10 @@ async function handleLogin() {
   try {
     await auth.loginAgent(account.value, password.value)
     requestNotifyPermission().catch(() => {})
-    router.replace('/agent')
     im.connect(auth.rcToken).catch((e) => {
       console.warn('RC connect failed, workbench will show disconnected banner:', e)
     })
+    router.replace('/agent')
   } catch (e: any) {
     err.value = e?.message || '登录失败'
   } finally {

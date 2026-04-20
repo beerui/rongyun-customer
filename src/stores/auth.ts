@@ -40,13 +40,14 @@ export const useAuthStore = defineStore('auth', () => {
     role.value = 'agent'
     userId.value = cred.agentId
     name.value = cred.name
-    avatar.value = cred.avatar ?? ''
+    avatar.value = cred.avatar ?? 'https://randomuser.me/api/portraits/men/32.jpg'
     rcToken.value = cred.rcToken
     peers.value = cred.peers ?? []
   }
 
   async function bootstrapUser() {
     const cred = await fetchUserImCredential()
+    console.log('bootstrapUser', cred)
     role.value = 'user'
     userId.value = cred.userId
     name.value = cred.name

@@ -16,7 +16,7 @@ const im = useImStore()
 const embedded = computed(() => isEmbedded())
 
 async function ensureOpen() {
-  if (!auth.peerId) return
+  if (!auth.peerId || !im.connected) return
   if (im.currentTargetId !== auth.peerId) {
     await im.openConversation(auth.peerId)
   }
@@ -24,11 +24,24 @@ async function ensureOpen() {
 
 onMounted(async () => {
   if (auth.role === 'guest' || !auth.rcToken) {
-    try { await auth.bootstrapUser() } catch (e) { console.warn('bootstrapUser failed', e) }
+    try { 
+      await auth.bootstrapUser() 
+    } catch (e) { 
+      console.warn('bootstrapUser failed', e)
+      return // 获取失败就不要往下走了
+    }
   }
+  
   if (auth.rcToken && !im.connected) {
-    im.connect(auth.rcToken).catch((e) => console.warn('RC connect failed:', e))
+    try {
+      // 加上 await 等待连接完全成功
+      await im.connect(auth.rcToken)
+    } catch (e) {
+      console.warn('RC connect failed:', e)
+      return // 连接失败就不再执行 ensureOpen
+    }
   }
+  
   await ensureOpen()
 })
 

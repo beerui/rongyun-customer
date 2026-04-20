@@ -24,10 +24,6 @@ export const useImStore = defineStore('im', () => {
   const isMock = computed(() => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false)
 
   async function connect(token: string) {
-    if (token.startsWith('mock-')) {
-      status.value = 'connected'
-      return
-    }
     initIM(APPKEY)
     status.value = 'connecting'
     try {

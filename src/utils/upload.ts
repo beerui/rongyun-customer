@@ -1,9 +1,8 @@
-import { http } from '@/apis/http'
+import { OSS_DIR } from '@/constants/common'
+import { uploadToOss } from '@/utils/oss'
 
 /**
- * 上传走后端统一中转：POST /metaman/api/oss/upload/
- * 响应拦截器已自动 unwrap 最外层 {code, data}，这里拿到的是业务层对象。
- * 老约定形如 `{ data: 'https://...' }`；也兼容 `{ url, name, size }`。
+ * 上传：获取 STS 后直传 OSS（对齐 trade-exhibition-mobile `utils/oss.js`）。
  * 失败直接抛错，不做本地预览兜底（由调用方 markFailed 体现失败态）。
  */
 
@@ -17,15 +16,7 @@ export interface UploadResult {
 }
 
 async function remoteUpload(file: File): Promise<{ url: string }> {
-  const form = new FormData()
-  form.append('file', file)
-  const body: any = await http.post('/metaman/api/oss/upload/', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  const url: string | undefined =
-    typeof body === 'string' ? body :
-    body?.url ?? body?.data ?? body?.fileUrl
-  if (!url) throw new Error('上传响应缺少 url 字段')
+  const url = await uploadToOss(file, OSS_DIR.CUSTOMER)
   return { url }
 }
 

@@ -6,6 +6,7 @@ type Unsub = () => void
 
 export function onMessage(handler: (msg: Message) => void): Unsub {
   const fn = (evt: any) => {
+    console.log('onMessage', evt)
     const list: any[] = evt?.messages ?? []
     list.forEach((m) => handler(parseRcMessage(m)))
   }
@@ -15,6 +16,7 @@ export function onMessage(handler: (msg: Message) => void): Unsub {
 
 export function onConversationChange(handler: (list: Conversation[]) => void): Unsub {
   const fn = (evt: any) => {
+    console.log('onConversationChange', evt)
     const list: any[] = evt?.conversationList ?? []
     handler(list.map(parseRcConversation))
   }
@@ -24,6 +26,7 @@ export function onConversationChange(handler: (list: Conversation[]) => void): U
 
 export function onConnectionStatus(handler: (s: ConnectionStatus) => void): Unsub {
   const fn = (evt: any) => {
+    console.log('onConnectionStatus', evt)
     const code = evt?.status
     const map: Record<number, ConnectionStatus> = {
       0: 'connected',
