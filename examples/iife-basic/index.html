@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DajiCS IIFE 最小示例</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", system-ui; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1f2937; }
+    h1 { font-size: 22px; }
+    p { color: #475569; }
+    code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+    .product { display: flex; gap: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 20px 0; }
+    .product img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; }
+    .product button { margin-top: 10px; padding: 8px 18px; background: #FA3E3E; color: #fff; border: 0; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .product button:hover { background: #e43434; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 6px; font-size: 12px; overflow: auto; max-height: 200px; }
+    .status { margin-top: 20px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid #FA3E3E; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>DajiCS IIFE 最小示例</h1>
+  <p>这是一个模拟"第三方商城商品页"的示例。点击商品卡片里的<strong>"咨询客服"</strong>，SDK 会预投商品卡片到客服会话并打开新窗口。右下角的悬浮按钮会展开 iframe Widget。</p>
+
+  <p>运行方式：先从 SDK 包拷 IIFE bundle 到本目录：<br>
+    <code>cp node_modules/@daji/cs-sdk/iife/daji-cs.iife.js .</code><br>
+    或本仓库：<code>cp dist/sdk/iife/daji-cs.iife.js examples/iife-basic/</code><br>
+    然后用任意静态服务器打开：<code>npx serve .</code>
+  </p>
+
+  <div class="product">
+    <img src="https://placehold.co/120x120?text=SKU" alt="商品图" />
+    <div>
+      <div style="font-size: 16px; font-weight: 600;">精品大枣 5kg 礼盒装</div>
+      <div style="color: #dc2626; font-weight: 600; margin-top: 6px;">¥ 128.00</div>
+      <div style="color: #64748b; font-size: 13px;">原价 ¥168 · 限时 8 折</div>
+      <button id="ask">咨询客服</button>
+    </div>
+  </div>
+
+  <div class="status" id="status">等待事件...</div>
+
+  <h3 style="margin-top: 28px; font-size: 14px;">事件日志</h3>
+  <pre id="log"></pre>
+
+  <!-- SDK 入口 -->
+  <script src="./daji-cs.iife.js"></script>
+  <script>
+    // 1) 初始化：baseUrl 指向大集客服站点，apiBase 指向后端 API
+    DajiCS.boot({
+      baseUrl: 'https://cs.chinamarket.cn',  // 替换为实际地址
+      apiBase: 'https://api.chinamarket.cn', // 替换为实际地址
+      debug: true,
+    })
+
+    const statusEl = document.getElementById('status')
+    const logEl = document.getElementById('log')
+    const lines = []
+    function log(line) {
+      const ts = new Date().toLocaleTimeString()
+      lines.push(`[${ts}] ${line}`)
+      if (lines.length > 30) lines.shift()
+      logEl.textContent = lines.join('\n')
+    }
+
+    // 2) 订阅事件
+    DajiCS.on('ready', () => log('SDK ready'))
+    DajiCS.on('window:open', ({ url }) => log('新开窗口: ' + url))
+    DajiCS.on('window:focus', ({ key }) => log('复用窗口: ' + key))
+    DajiCS.on('window:close', ({ key }) => log('窗口关闭: ' + key))
+    DajiCS.on('presend:start', ({ clientMsgId }) => log('预投开始 msgId=' + clientMsgId))
+    DajiCS.on('presend:success', ({ clientMsgId }) => log('预投成功 msgId=' + clientMsgId))
+    DajiCS.on('presend:error', ({ error }) => log('预投失败: ' + (error?.message || error)))
+
+    DajiCS.on('unread:change', ({ count }) => {
+      statusEl.textContent = count > 0 ? `有 ${count} 条未读消息` : '暂无未读消息'
+      document.title = count > 0 ? `(${count}) IIFE 示例` : 'IIFE 示例'
+    })
+
+    DajiCS.on('message:incoming', ({ from, preview }) => {
+      log(`新消息 from=${from}: ${preview}`)
+    })
+
+    DajiCS.on('conversation:end', ({ reason }) => {
+      log(`会话已结束 reason=${reason}`)
+    })
+
+    // 3) 商品页"咨询"按钮：预投商品卡 + 打开客服窗口
+    document.getElementById('ask').addEventListener('click', () => {
+      DajiCS.open({
+        userId: 'demo_visitor_001',
+        userName: '示例访客',
+        supplierId: 'shop_abc',
+        card: {
+          title: '精品大枣 5kg 礼盒装',
+          imgUrl: 'https://placehold.co/120x120?text=SKU',
+          spuId: 'SPU_9999',
+          intr: '新疆原产直供',
+          jumpUrl: 'https://shop.example.com/p/9999',
+        },
+      })
+    })
+
+    // 4) 挂载悬浮 Launcher（右下角气泡 + iframe Widget）
+    DajiCS.mountLauncher({
+      position: 'bottom-right',
+      primary: '#FA3E3E',
+      title: '在线客服',
+      mode: 'iframe',
+      openWith: {
+        userId: 'demo_visitor_001',
+        userName: '示例访客',
+        supplierId: 'shop_abc',
+      },
+    })
+  </script>
+</body>
+</html>
