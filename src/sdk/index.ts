@@ -1,4 +1,4 @@
-import { boot, open, openSafe, close, reset, ready, isReadyNow, buildChatUrl, getOpenWindow, __version__ } from './open'
+import { boot, open, openSafe, close, reset, ready, isReadyNow, buildChatUrl, getOpenWindow, version } from './open'
 import { on, off, once } from './events'
 import { mountLauncher, unmountLauncher, setUnreadCount, toggleWidget, getLauncherElement } from './launcher/launcher'
 import { openWidget, closeWidget, isWidgetOpen, getWidgetIframe, showEndBanner, hideEndBanner } from './launcher/widget'
@@ -9,49 +9,13 @@ import { isBridgeActive, getAllowedOrigins, sendToWidgetIframe, sendToOpenWindow
  * 底层等价于 sendToWidgetIframe('daji:identity', payload)。
  * widget 未挂载或 iframe 未就绪时返回 false。
  */
-function refreshIdentity(payload: {
+export function refreshIdentity(payload: {
   token?: string
   language?: string
   userId?: string | number
   supplierId?: string | number
 }): boolean {
   return sendToWidgetIframe('daji:identity', payload)
-}
-
-const api = {
-  boot,
-  open,
-  openSafe,
-  close,
-  reset,
-  ready,
-  isReadyNow,
-  on,
-  off,
-  once,
-  mountLauncher,
-  unmountLauncher,
-  setUnreadCount,
-  toggleWidget,
-  openWidget,
-  closeWidget,
-  isWidgetOpen,
-  buildChatUrl,
-  getOpenWindow,
-  // C2 postMessage 桥
-  sendToWidgetIframe,
-  sendToOpenWindow,
-  isBridgeActive,
-  getAllowedOrigins,
-  // C3 会话结束 + 身份补发
-  showEndBanner,
-  hideEndBanner,
-  refreshIdentity,
-  version: __version__,
-}
-
-if (typeof window !== 'undefined') {
-  ;(window as any).DajiCS = api
 }
 
 export {
@@ -82,10 +46,9 @@ export {
   getAllowedOrigins,
   showEndBanner,
   hideEndBanner,
-  refreshIdentity,
   DAJI_MSG_SOURCE,
   DAJI_MSG_VERSION,
-  __version__ as version,
+  version,
 }
 export { HttpError, TimeoutError, fetchWithRetry, defaultShouldRetry } from './utils/fetch-with-retry'
 export { EventEmitter } from './utils/event-emitter'

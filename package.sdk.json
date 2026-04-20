@@ -1,0 +1,27 @@
+{
+  "name": "@daji/cs-sdk",
+  "version": "0.1.0",
+  "description": "大集客服 SDK — 单文件 IIFE 接入或 ESM/CJS 模块化使用；含悬浮 Launcher、iframe Widget、postMessage 双向桥、会话结束与身份补发。",
+  "keywords": ["customer-service", "chat", "sdk", "rongcloud", "iframe", "postMessage"],
+  "license": "UNLICENSED",
+  "private": false,
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.esm.js",
+  "types": "./types/index.d.ts",
+  "unpkg": "./iife/daji-cs.iife.js",
+  "jsdelivr": "./iife/daji-cs.iife.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./index.esm.js",
+      "require": "./index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["index.esm.js", "index.esm.js.map", "index.cjs", "index.cjs.map", "iife", "types", "package.json", "README.md"],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

@@ -191,4 +191,4 @@ export function getOpenWindow(
 }
 
 export { readyPromise as ready, isReadyNow }
-export const __version__ = VERSION
+export const version = VERSION
