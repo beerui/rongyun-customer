@@ -2,18 +2,25 @@
 import { ref, nextTick, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { emojiList } from '@/utils/emoji'
 import { useComposerStore } from '@/stores/composer'
+import { getToolbarPermissions, type ConversationTag } from '@/constants/chat-toolbar'
 
 const props = withDefaults(
   defineProps<{
     variant?: 'desktop' | 'mobile'
     disabled?: boolean
-    /** 控制各工具按钮的可见性（按当前接入用户的类型判断） */
-    showOrder?: boolean
-    showProduct?: boolean
-    showCoupon?: boolean
-    showQuick?: boolean
+    /** 角色：客服 / 访客 */
+    role?: 'agent' | 'user'
+    /** 会话标签（用于工作台动态权限） */
+    conversationTag?: ConversationTag
+    /** 是否显示存为话术按钮（仅客服端） */
+    showSaveFastReply?: boolean
   }>(),
-  { variant: 'desktop', disabled: false, showOrder: true, showProduct: true, showCoupon: true, showQuick: true },
+  {
+    variant: 'desktop',
+    disabled: false,
+    role: 'user',
+    showSaveFastReply: false,
+  },
 )
 
 const emit = defineEmits<{
@@ -102,15 +109,40 @@ function onFileChange(e: Event) {
 
 interface Tool { label: string; action: string; visible: boolean }
 
+// 统一权限管理：根据 role + conversationTag 自动计算
+const permissions = computed(() => {
+  const auto = getToolbarPermissions({
+    role: props.role,
+    conversationTag: props.conversationTag,
+  })
+
+  return {
+    emoji: auto.emoji,
+    complaint: auto.complaint,
+    agent: auto.agent,
+    order: auto.order,
+    product: auto.product,
+    image: auto.image,
+    video: auto.video,
+    file: auto.file,
+    coupon: auto.coupon,
+    quick: auto.quick,
+    platform: auto.platform,
+  }
+})
+
 const tools = computed<Tool[]>(() => [
-  { label: '表情',     action: 'emoji',   visible: true },
-  { label: '图片',     action: 'image',   visible: true },
-  { label: '视频',     action: 'video',   visible: true },
-  { label: '文件',     action: 'file',    visible: true },
-  { label: '订单列表', action: 'order',   visible: props.showOrder },
-  { label: '商品列表', action: 'product', visible: props.showProduct },
-  { label: '优惠券',   action: 'coupon',  visible: props.showCoupon },
-  { label: '快捷话术', action: 'quick',   visible: props.showQuick },
+  { label: '表情',     action: 'emoji',   visible: permissions.value.emoji },
+  { label: '我要投诉', action: 'complaint', visible: permissions.value.complaint },
+  { label: '转人工',   action: 'agent',   visible: permissions.value.agent },
+  { label: '发订单',   action: 'order',   visible: permissions.value.order },
+  { label: '发商品',   action: 'product', visible: permissions.value.product },
+  { label: '图片',     action: 'image',   visible: permissions.value.image },
+  { label: '视频',     action: 'video',   visible: permissions.value.video },
+  { label: '文件',     action: 'file',    visible: permissions.value.file },  
+  { label: '优惠券',   action: 'coupon',  visible: permissions.value.coupon },
+  { label: '快捷话术', action: 'quick',   visible: permissions.value.quick },
+  { label: '平台客服', action: 'platform', visible: permissions.value.platform },
 ])
 
 const visibleTools = computed(() => tools.value.filter((t) => t.visible))
@@ -179,7 +211,7 @@ function onToolClick(action: string) {
         <span class="text-[11px] text-ink-700">文件</span>
       </button>
       <button
-        v-if="showOrder"
+        v-if="permissions.order"
         class="flex flex-col items-center gap-1.5 py-2"
         @click="emit('open-drawer', 'order'); showMobilePlus = false"
       >
@@ -187,7 +219,7 @@ function onToolClick(action: string) {
         <span class="text-[11px] text-ink-700">订单</span>
       </button>
       <button
-        v-if="showProduct"
+        v-if="permissions.product"
         class="flex flex-col items-center gap-1.5 py-2"
         @click="emit('open-drawer', 'product'); showMobilePlus = false"
       >
@@ -195,7 +227,7 @@ function onToolClick(action: string) {
         <span class="text-[11px] text-ink-700">商品</span>
       </button>
       <button
-        v-if="showCoupon"
+        v-if="permissions.coupon"
         class="flex flex-col items-center gap-1.5 py-2"
         @click="emit('open-drawer', 'coupon'); showMobilePlus = false"
       >
@@ -203,7 +235,7 @@ function onToolClick(action: string) {
         <span class="text-[11px] text-ink-700">优惠券</span>
       </button>
       <button
-        v-if="showQuick"
+        v-if="permissions.quick"
         class="flex flex-col items-center gap-1.5 py-2"
         @click="emit('open-drawer', 'quick'); showMobilePlus = false"
       >
@@ -219,7 +251,7 @@ function onToolClick(action: string) {
 
   <!-- ========== Desktop ========== -->
   <div v-else class="bg-white relative">
-    <div class="flex items-center gap-6 px-6 pt-[20px] border-t border-line-light">
+    <div class="flex items-center gap-6 px-6 pt-[20px]" :class="{ 'border-t border-line-light': role === 'agent' }">
       <button
         v-for="t in visibleTools"
         :key="t.label"
@@ -227,7 +259,7 @@ function onToolClick(action: string) {
         :data-action="t.action"
         @click="onToolClick(t.action)"
       >
-        <span>{{ t.label }}</span>
+        {{ t.label }}
       </button>
     </div>
 
@@ -256,7 +288,7 @@ function onToolClick(action: string) {
           @keydown="handleKeydown"
         />
         <div class="flex items-center justify-end gap-3 mt-2">
-          <button class="text-xs text-ink-700 hover:text-brand-500">存为话术</button>
+          <button v-if="showSaveFastReply" class="text-xs text-ink-700 hover:text-brand-500">存为话术</button>
           <button
             class="rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs px-[20px] py-[10px] disabled:opacity-50"
             :disabled="disabled || !text.trim()"

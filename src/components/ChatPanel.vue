@@ -13,6 +13,7 @@ defineProps<{
   variant?: 'desktop' | 'mobile'
   showStart?: boolean
   startTime?: string
+  role?: 'agent' | 'user'
 }>()
 
 const im = useImStore()
@@ -99,6 +100,7 @@ function handleRecall(id: string) {
       />
       <MessageInput
         :variant="variant || 'desktop'"
+        :role="role || 'user'"
         :disabled="!im.connected"
         @send-text="handleSendText"
         @send-image="handleSendImage"

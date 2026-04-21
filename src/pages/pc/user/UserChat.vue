@@ -8,6 +8,7 @@ import MessageInput from '@/components/MessageInput.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PlatformIntro from './PlatformIntro.vue'
 import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
+import SvgIcon from '@/components/SvgIcon.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
@@ -66,15 +67,12 @@ function handleEnd() {
   <div class="h-screen w-screen flex flex-col bg-bg-app min-w-[960px]">
     <!-- 顶部红色栏（与工作台一致） -->
     <header class="h-20 bg-brand-500 flex items-center px-5 shrink-0 text-white">
-      <div class="text-[20px] font-semibold">在线客服</div>
+      <div class="text-[20px] font-semibold">{{ auth.name || '平台客服' }}</div>
       <div class="flex items-center gap-1.5 ml-8 text-[14px]">
-        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/25">
-          <span class="block w-2 h-2 rounded-full bg-white"></span>
-        </span>
-        <span>{{ auth.name || '访客' }}</span>
+        <SvgIcon name="customer" />
+        <span>为您在线解答(工作时间：工作日 8:30-18:00)</span>
       </div>
       <div class="flex-1" />
-      <div class="text-[13px] text-white/90 mr-4">7×12h 在线客服 · 平均响应 30 秒</div>
       <div v-if="embedded" class="flex items-center gap-2">
         <button
           type="button"
@@ -93,22 +91,22 @@ function handleEnd() {
     <div class="flex-1 flex min-h-0">
       <!-- 中间：聊天区（无左侧会话列表） -->
       <section class="flex-1 min-w-0 flex flex-col bg-white">
-        <div class="flex items-center gap-3 px-6 h-16 border-b border-line-light shrink-0">
+        <!-- <div class="flex items-center gap-3 px-6 h-16 border-b border-line-light shrink-0">
           <Avatar name="客" :size="38" :bg="'#FEF5F5'" />
           <div class="min-w-0">
             <div class="text-base font-semibold text-ink-900">平台客服</div>
             <div class="text-[12px] text-ink-600 mt-0.5">您好，有什么可以帮您？</div>
           </div>
-        </div>
+        </div> -->
 
         <div v-if="!im.currentTargetId" class="flex-1 flex items-center justify-center bg-bg-app">
           <EmptyState title="正在接入客服…" desc="请稍候" />
         </div>
         <template v-else>
           <div class="flex-1 min-h-0 flex flex-col">
-            <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
+            <!-- <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
               今天 会话开始
-            </div>
+            </div> -->
             <MessageList
               :messages="im.messages"
               :my-user-id="auth.userId"
@@ -118,6 +116,7 @@ function handleEnd() {
 
           <MessageInput
             variant="desktop"
+            role="user"
             :disabled="!im.connected"
             @send-text="handleSendText"
             @send-image="handleSendImage"

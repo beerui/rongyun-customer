@@ -72,15 +72,6 @@ const activePeer = computed(() => {
   return c ? { id: c.targetId, name: c.title, avatar: c.avatar, avatarBg: c.avatarBg, tag: c.tag } : undefined
 })
 
-const toolVisibility = computed(() => {
-  const tag = activePeer.value?.tag || ''
-  const orderTags = ['退款申请', '物流异常', '物流查询', '账户异常']
-  const productTags = ['商品咨询', '优惠问题']
-  const showOrder = orderTags.includes(tag) || !productTags.includes(tag)
-  const showProduct = productTags.includes(tag) || !orderTags.includes(tag)
-  return { showOrder, showProduct, showCoupon: true, showQuick: true }
-})
-
 const stats = { today: '23', satisfaction: '99.6%', avgDuration: '4m12s', solveRate: '91.6%' }
 
 async function selectConv(targetId: string) {
@@ -343,11 +334,10 @@ function logout() {
 
           <MessageInput
             variant="desktop"
+            role="agent"
+            :conversation-tag="activePeer?.tag"
             :disabled="!im.connected"
-            :show-order="toolVisibility.showOrder"
-            :show-product="toolVisibility.showProduct"
-            :show-coupon="toolVisibility.showCoupon"
-            :show-quick="toolVisibility.showQuick"
+            show-save-fast-reply
             @send-text="handleSendText"
             @send-image="handleSendImage"
             @send-video="handleSendVideo"
