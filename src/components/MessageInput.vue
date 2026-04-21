@@ -100,17 +100,17 @@ function onFileChange(e: Event) {
   ;(e.target as HTMLInputElement).value = ''
 }
 
-interface Tool { icon: string; label: string; action: string; visible: boolean }
+interface Tool { label: string; action: string; visible: boolean }
 
 const tools = computed<Tool[]>(() => [
-  { icon: '😊',  label: '表情',     action: 'emoji',   visible: true },
-  { icon: '🖼️',  label: '图片',     action: 'image',   visible: true },
-  { icon: '🎞️',  label: '视频',     action: 'video',   visible: true },
-  { icon: '📎',  label: '文件',     action: 'file',    visible: true },
-  { icon: '📦',  label: '订单列表', action: 'order',   visible: props.showOrder },
-  { icon: '🛍️',  label: '商品列表', action: 'product', visible: props.showProduct },
-  { icon: '🎟️',  label: '优惠券',   action: 'coupon',  visible: props.showCoupon },
-  { icon: '⚡',  label: '快捷话术', action: 'quick',   visible: props.showQuick },
+  { label: '表情',     action: 'emoji',   visible: true },
+  { label: '图片',     action: 'image',   visible: true },
+  { label: '视频',     action: 'video',   visible: true },
+  { label: '文件',     action: 'file',    visible: true },
+  { label: '订单列表', action: 'order',   visible: props.showOrder },
+  { label: '商品列表', action: 'product', visible: props.showProduct },
+  { label: '优惠券',   action: 'coupon',  visible: props.showCoupon },
+  { label: '快捷话术', action: 'quick',   visible: props.showQuick },
 ])
 
 const visibleTools = computed(() => tools.value.filter((t) => t.visible))
@@ -219,15 +219,14 @@ function onToolClick(action: string) {
 
   <!-- ========== Desktop ========== -->
   <div v-else class="bg-white relative">
-    <div class="flex items-center gap-6 px-6 h-11 border-t border-line-light">
+    <div class="flex items-center gap-6 px-6 pt-[20px] border-t border-line-light">
       <button
         v-for="t in visibleTools"
         :key="t.label"
-        class="flex items-center gap-1.5 text-xs text-ink-700 hover:text-brand-500"
+        class="flex items-center gap-1.5 text-xs text-ink-700 hover:text-brand-500 border border-line-light rounded-[3px] px-[20px] py-[8px]"
         :data-action="t.action"
         @click="onToolClick(t.action)"
       >
-        <span class="text-sm">{{ t.icon }}</span>
         <span>{{ t.label }}</span>
       </button>
     </div>
@@ -245,23 +244,25 @@ function onToolClick(action: string) {
       >{{ e.emoji }}</button>
     </div>
 
-    <div class="bg-white px-4 py-3 border-t border-line-light">
-      <textarea
-        ref="textareaRef"
-        v-model="text"
-        :disabled="disabled"
-        placeholder="输入回复内容，或点击上方「一键采用」AI建议..."
-        rows="3"
-        class="w-full resize-none text-[13px] bg-transparent focus:outline-none placeholder:text-ink-600/70 disabled:text-ink-600"
-        @keydown="handleKeydown"
-      />
-      <div class="flex items-center justify-end gap-3 mt-2">
-        <button class="text-xs text-ink-700 hover:text-brand-500">存为话术</button>
-        <button
-          class="rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs px-5 py-1.5 disabled:opacity-50"
-          :disabled="disabled || !text.trim()"
-          @click="handleSend"
-        >发送</button>
+    <div class="px-[20px] py-[16px]">
+      <div class="p-[16px] border border-line-light rounded-[5px]">
+        <textarea
+          ref="textareaRef"
+          v-model="text"
+          :disabled="disabled"
+          placeholder="输入回复内容，或点击上方「一键采用」AI建议..."
+          rows="3"
+          class="w-full resize-none text-[13px] bg-transparent focus:outline-none placeholder:text-ink-600/70 disabled:text-ink-600"
+          @keydown="handleKeydown"
+        />
+        <div class="flex items-center justify-end gap-3 mt-2">
+          <button class="text-xs text-ink-700 hover:text-brand-500">存为话术</button>
+          <button
+            class="rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs px-[20px] py-[10px] disabled:opacity-50"
+            :disabled="disabled || !text.trim()"
+            @click="handleSend"
+          >发送</button>
+        </div>
       </div>
     </div>
 
