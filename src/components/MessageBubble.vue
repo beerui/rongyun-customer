@@ -138,11 +138,12 @@ function formatDuration(s?: number) {
         :class="isMine ? 'bg-[#FEF5F5] text-ink-800' : 'bg-[#F7F8FC] text-ink-800'"
       >
         {{ message.content }}
-        <div v-if="translated" class="mt-1.5 pt-1.5 border-t border-dashed border-ink-300/40 text-[12px] text-ink-600">
+        <!-- 翻译结果显示已暂时禁用 -->
+        <!-- <div v-if="translated" class="mt-1.5 pt-1.5 border-t border-dashed border-ink-300/40 text-[12px] text-ink-600">
           <span class="text-ink-500 mr-1">译：</span>
           {{ translated }}
         </div>
-        <div v-if="translateErr" class="mt-1 text-[11px] text-red-500">{{ translateErr }}</div>
+        <div v-if="translateErr" class="mt-1 text-[11px] text-red-500">{{ translateErr }}</div> -->
       </div>
 
       <!-- 图片 -->
@@ -245,7 +246,8 @@ function formatDuration(s?: number) {
         <button v-else class="text-brand-600 hover:underline" @click="$emit('retry', message.id)">发送失败，重试</button>
       </div>
 
-      <div v-if="canTranslate && !translated" class="relative mt-1 inline-flex items-center gap-1">
+      <!-- 翻译功能已暂时禁用 -->
+      <!-- <div v-if="canTranslate && !translated" class="relative mt-1 inline-flex items-center gap-1">
         <button class="text-[10px] text-ink-500 hover:text-brand-500" :disabled="translating" @click="() => onTranslate()">
           {{ translating ? '翻译中…' : `翻译 → ${TRANSLATE_LANGS.find((l) => l.code === targetLang)?.label || targetLang}` }}
         </button>
@@ -265,7 +267,7 @@ function formatDuration(s?: number) {
             {{ l.label }}
           </button>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 
