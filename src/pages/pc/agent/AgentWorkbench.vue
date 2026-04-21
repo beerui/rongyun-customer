@@ -264,10 +264,12 @@ function logout() {
 
     <div class="flex-1 flex min-h-0">
       <section class="w-[268px] bg-white flex flex-col border-r border-line-light shrink-0">
-        <div class="px-5 pt-5 pb-3">
-          <div class="flex items-center gap-2 mb-3">
+        <div class="p-[20px]">
+          <!-- <div class="flex items-center gap-2 mb-3">
             <div class="text-base font-semibold text-ink-900">待处理用户</div>
-            <span class="text-[11px] px-1.5 py-0.5 rounded" style="background: #f9ecd7; color: #954d00">{{ filtered.length }}条待处理</span>
+            <span class="text-[11px] px-1.5 py-0.5 rounded" style="background: #f9ecd7; color: #954d00">
+              {{ filtered.length }}条待处理
+            </span>
           </div>
 
           <div class="flex gap-2 mb-3">
@@ -284,19 +286,18 @@ function logout() {
             >
               {{ f.l }}
             </button>
-          </div>
+          </div> -->
 
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-600 text-xs">🔍</span>
             <input
               v-model="keyword"
               placeholder="搜索用户名/订单号"
-              class="w-full h-8 rounded bg-bg-app border border-transparent pl-8 pr-3 text-xs focus:outline-none focus:border-brand-500 focus:bg-white"
+              class="w-full h-8 rounded-[20px] border border-[rgba(0, 0, 0, 0.2)] px-3 text-xs focus:outline-none focus:border-[#fa3e3e] focus:bg-white"
             />
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto scrollbar-thin">
+        <div class="flex-1 overflow-y-auto scrollbar-thin px-[20px]">
           <ConversationItem
             v-for="c in filtered"
             :key="c.targetId"

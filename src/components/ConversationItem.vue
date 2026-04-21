@@ -9,12 +9,8 @@ defineProps<{
 }>()
 
 const tagColors: Record<string, { bg: string; fg: string }> = {
-  退款申请: { bg: '#F9ECD7', fg: '#954D00' },
-  物流异常: { bg: '#CCE6FF', fg: '#0A447C' },
-  物流查询: { bg: '#E1F6EF', fg: '#3A7467' },
-  商品咨询: { bg: '#DCDCDC', fg: '#333333' },
-  账户异常: { bg: '#FFE1E1', fg: '#802A2A' },
-  优惠问题: { bg: '#E7D3FF', fg: '#5B21B6' },
+  供应商: { bg: '#F9ECD7', fg: '#954D00' },
+  采购商: { bg: '#CCE6FF', fg: '#0A447C' },
 }
 
 function tagStyle(tag?: string) {
@@ -26,10 +22,10 @@ function tagStyle(tag?: string) {
 
 <template>
   <div
-    class="flex items-center gap-2.5 px-5 h-[70px] cursor-pointer transition-colors"
+    class="flex items-center gap-2.5 px-5 h-[70px] cursor-pointer transition-colors rounded-[8px] mb-[10px]"
     :class="active ? 'bg-[#FEF5F5]' : 'hover:bg-bg-soft'"
   >
-    <Avatar :name="item.title" :size="38" :bg="item.avatarBg || '#E6F4FF'" />
+    <!-- <Avatar :name="item.title" :size="38" :bg="item.avatarBg || '#E6F4FF'" /> -->
 
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-1.5 mb-1">
