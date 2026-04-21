@@ -43,7 +43,7 @@ router.beforeEach((to) => {
 
   // 客服路由守卫：没登录就去登录页
   if (to.meta.requiresAgent) {
-    const token = localStorage.getItem('auth_token')
+    const token = localStorage.getItem('agent_auth_token')
     if (!token) return '/agent/login'
   }
 

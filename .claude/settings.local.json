@@ -11,7 +11,8 @@
       "Bash(git add *)",
       "Bash(.husky/pre-commit *)",
       "Bash(git commit -m 'feat: 统一工具栏按钮权限管理 + 配置项目格式化系统 *)",
-      "Bash(git commit -m 'refactor: 移动端使用 visibleTools 统一渲染工具按钮 *)"
+      "Bash(git commit -m 'refactor: 移动端使用 visibleTools 统一渲染工具按钮 *)",
+      "Bash(git commit *)"
     ]
   }
 }

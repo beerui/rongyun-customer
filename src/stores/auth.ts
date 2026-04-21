@@ -5,6 +5,8 @@ import { type AgentImCredential, agentLogin as apiAgentLogin, fetchUserImCredent
 export type Role = 'guest' | 'user' | 'agent'
 
 const AGENT_SESSION_KEY = 'agent_session'
+const USER_AUTH_TOKEN_KEY = 'user_auth_token'
+const AGENT_AUTH_TOKEN_KEY = 'agent_auth_token'
 
 interface AgentSession {
   rcToken: string
@@ -38,6 +40,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAgent = computed(() => role.value === 'agent')
 
+  function getAuthTokenKey(): string {
+    return location.pathname.startsWith('/agent') ? AGENT_AUTH_TOKEN_KEY : USER_AUTH_TOKEN_KEY
+  }
+
   function applyAgent(cred: AgentImCredential) {
     role.value = 'agent'
     userId.value = cred.agentId
@@ -61,7 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginAgent(account: string, password: string) {
     const cred = await apiAgentLogin(account, password)
     console.log('loginAgent', cred)
-    localStorage.setItem('auth_token', cred.authToken || '')
+    localStorage.setItem(AGENT_AUTH_TOKEN_KEY, cred.authToken || '')
     applyAgent(cred)
     saveAgentSession({
       rcToken: cred.rcToken,
@@ -99,7 +105,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
-    localStorage.removeItem('auth_token')
+    localStorage.removeItem(USER_AUTH_TOKEN_KEY)
+    localStorage.removeItem(AGENT_AUTH_TOKEN_KEY)
     localStorage.removeItem(AGENT_SESSION_KEY)
     role.value = 'guest'
     userId.value = ''
@@ -119,6 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     peerId,
     peers,
     isAgent,
+    getAuthTokenKey,
     bootstrap,
     bootstrapUser,
     loginAgent,
