@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useImStore } from '@/stores/im'
 import ImageLightbox from '@/components/ImageLightbox.vue'
 import Toast from '@/components/Toast.vue'
-import { onParentMessage, isEmbedded } from '@/utils/embed-bridge'
+import { useAuthStore } from '@/stores/auth'
+import { useImStore } from '@/stores/im'
+import { isEmbedded, onParentMessage } from '@/utils/embed-bridge'
 
 const auth = useAuthStore()
 const im = useImStore()

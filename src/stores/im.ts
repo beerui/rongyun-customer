@@ -1,14 +1,25 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
+import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
+import { bindVisibilityReset, browserNotify, flashTitle, playBeep } from '@/utils/notify'
+import { uploadFile as upFile, uploadImage, uploadVideo } from '@/utils/upload'
 import {
-  initIM, connectIM, disconnectIM,
-  onMessage, onConnectionStatus,
-  getHistory, sendText, sendImage, sendVideo, sendFile, sendCustomCard, clearUnread, recallMessage,
-  type Message, type ConnectionStatus,
+  type ConnectionStatus,
+  type Message,
+  clearUnread,
+  connectIM,
+  disconnectIM,
+  getHistory,
+  initIM,
+  onConnectionStatus,
+  onMessage,
+  recallMessage,
+  sendCustomCard,
+  sendFile,
+  sendImage,
+  sendText,
+  sendVideo,
 } from '@/im'
-import { uploadImage, uploadVideo, uploadFile as upFile } from '@/utils/upload'
-import { playBeep, browserNotify, flashTitle, bindVisibilityReset } from '@/utils/notify'
-import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const APPKEY = import.meta.env.VITE_RC_APPKEY
 
@@ -21,7 +32,9 @@ export const useImStore = defineStore('im', () => {
   bindVisibilityReset()
 
   const connected = computed(() => status.value === 'connected')
-  const isMock = computed(() => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false)
+  const isMock = computed(
+    () => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false,
+  )
 
   async function connect(token: string) {
     initIM(APPKEY)
@@ -39,7 +52,9 @@ export const useImStore = defineStore('im', () => {
   function bindEvents() {
     unbindEvents()
     unsubs.push(
-      onConnectionStatus((s) => { status.value = s }),
+      onConnectionStatus((s) => {
+        status.value = s
+      }),
       onMessage((msg) => {
         // 撤回通知：定位原消息打标记；找不到则作为占位插入
         if (msg.recalled && msg.raw) {
@@ -64,7 +79,7 @@ export const useImStore = defineStore('im', () => {
           return
         }
 
-        const fromSelf = msg.senderId === 'me' || msg.status === 'sent' && (messages.value.some((m) => m.id === msg.id))
+        const fromSelf = msg.senderId === 'me' || (msg.status === 'sent' && messages.value.some((m) => m.id === msg.id))
         const isCurrent = msg.targetId === currentTargetId.value
         const hidden = typeof document !== 'undefined' && document.hidden
 
@@ -257,9 +272,23 @@ export const useImStore = defineStore('im', () => {
   }
 
   return {
-    status, connected, currentTargetId, messages, isMock, unreadTotal,
-    connect, disconnect, openConversation, endConversation,
-    sendTextMessage, sendImageFile, sendVideoFile, sendFileMessage, sendCard, retry, recall,
+    status,
+    connected,
+    currentTargetId,
+    messages,
+    isMock,
+    unreadTotal,
+    connect,
+    disconnect,
+    openConversation,
+    endConversation,
+    sendTextMessage,
+    sendImageFile,
+    sendVideoFile,
+    sendFileMessage,
+    sendCard,
+    retry,
+    recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
   }
 })

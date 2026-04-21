@@ -2,8 +2,8 @@
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
 import { setDefaultLang } from '@/utils/translate-langs'
-import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,7 +52,5 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex items-center justify-center text-sm text-gray-500">
-    正在接入客服...
-  </div>
+  <div class="h-screen w-screen flex items-center justify-center text-sm text-gray-500">正在接入客服...</div>
 </template>

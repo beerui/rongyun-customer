@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import ChatPanel from '@/components/ChatPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
-import ChatPanel from '@/components/ChatPanel.vue'
 
 const router = useRouter()
 const auth = useAuthStore()

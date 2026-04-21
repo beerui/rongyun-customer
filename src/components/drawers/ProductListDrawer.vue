@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import Drawer from '@/components/Drawer.vue'
-import type { ProductPayload } from '@/im/types'
 import { mockProducts } from '@/utils/mock-data'
-import { ref, computed } from 'vue'
+import type { ProductPayload } from '@/im/types'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{
@@ -11,9 +11,7 @@ const emit = defineEmits<{
 }>()
 
 const keyword = ref('')
-const filtered = computed(() =>
-  mockProducts.filter((p) => !keyword.value || p.title.includes(keyword.value)),
-)
+const filtered = computed(() => mockProducts.filter((p) => !keyword.value || p.title.includes(keyword.value)))
 
 function send(p: ProductPayload) {
   emit('send', p)
@@ -33,11 +31,7 @@ function send(p: ProductPayload) {
       </div>
     </div>
     <div class="p-4 space-y-3">
-      <div
-        v-for="p in filtered"
-        :key="p.productId"
-        class="flex gap-3 rounded-lg border border-line-light p-3 hover:border-brand-500"
-      >
+      <div v-for="p in filtered" :key="p.productId" class="flex gap-3 rounded-lg border border-line-light p-3 hover:border-brand-500">
         <img :src="p.cover" class="w-20 h-20 rounded object-cover shrink-0" alt="" />
         <div class="flex-1 min-w-0">
           <div class="text-sm text-ink-900 line-clamp-2">{{ p.title }}</div>
@@ -48,10 +42,7 @@ function send(p: ProductPayload) {
           </div>
         </div>
         <div class="shrink-0 flex items-center">
-          <button
-            class="h-8 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-xs"
-            @click="send(p)"
-          >发送卡片</button>
+          <button class="h-8 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-xs" @click="send(p)">发送卡片</button>
         </div>
       </div>
     </div>

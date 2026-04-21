@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { onConversationChange, getConversationList, type Conversation } from '@/im'
+import { type Conversation, getConversationList, onConversationChange } from '@/im'
 
 export const useConversationsStore = defineStore('conversations', () => {
   const list = ref<Conversation[]>([])

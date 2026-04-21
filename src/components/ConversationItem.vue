@@ -9,12 +9,12 @@ defineProps<{
 }>()
 
 const tagColors: Record<string, { bg: string; fg: string }> = {
-  '退款申请': { bg: '#F9ECD7', fg: '#954D00' },
-  '物流异常': { bg: '#CCE6FF', fg: '#0A447C' },
-  '物流查询': { bg: '#E1F6EF', fg: '#3A7467' },
-  '商品咨询': { bg: '#DCDCDC', fg: '#333333' },
-  '账户异常': { bg: '#FFE1E1', fg: '#802A2A' },
-  '优惠问题': { bg: '#E7D3FF', fg: '#5B21B6' },
+  退款申请: { bg: '#F9ECD7', fg: '#954D00' },
+  物流异常: { bg: '#CCE6FF', fg: '#0A447C' },
+  物流查询: { bg: '#E1F6EF', fg: '#3A7467' },
+  商品咨询: { bg: '#DCDCDC', fg: '#333333' },
+  账户异常: { bg: '#FFE1E1', fg: '#802A2A' },
+  优惠问题: { bg: '#E7D3FF', fg: '#5B21B6' },
 }
 
 function tagStyle(tag?: string) {
@@ -34,11 +34,9 @@ function tagStyle(tag?: string) {
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-1.5 mb-1">
         <div class="text-[13px] font-semibold text-ink-900 truncate">{{ item.title }}</div>
-        <span
-          v-if="item.tag"
-          class="shrink-0 text-[10px] px-1.5 py-0.5 rounded"
-          :style="tagStyle(item.tag)"
-        >{{ item.tag }}</span>
+        <span v-if="item.tag" class="shrink-0 text-[10px] px-1.5 py-0.5 rounded" :style="tagStyle(item.tag)">
+          {{ item.tag }}
+        </span>
       </div>
       <div class="text-[11px] text-ink-600 truncate">{{ item.lastMessage || '暂无消息' }}</div>
     </div>

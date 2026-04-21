@@ -47,7 +47,10 @@ export function browserNotify(title: string, body: string, icon?: string): void 
   if (!document.hidden) return
   try {
     const n = new Notification(title, { body, icon, silent: true })
-    n.onclick = () => { window.focus(); n.close() }
+    n.onclick = () => {
+      window.focus()
+      n.close()
+    }
     setTimeout(() => n.close(), 5000)
   } catch {
     // some browsers on non-secure contexts throw

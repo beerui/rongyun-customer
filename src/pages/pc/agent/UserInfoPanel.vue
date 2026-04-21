@@ -18,13 +18,13 @@ const tab = ref<'info' | 'ai' | 'tools'>('info')
 const editingUser = ref(false)
 
 const tabs = [
-  { key: 'info',  label: '用户信息' },
-  { key: 'ai',    label: '智能辅助' },
+  { key: 'info', label: '用户信息' },
+  { key: 'ai', label: '智能辅助' },
   { key: 'tools', label: '工具面板' },
 ] as const
 
 const infoRows = ref([
-  { k: '手机号',   v: '182****2245' },
+  { k: '手机号', v: '182****2245' },
   { k: '注册时间', v: '2021-10-22' },
   { k: '所在城市', v: '上海市徐汇区' },
   { k: '历史订单', v: '23笔' },
@@ -35,7 +35,7 @@ const infoRows = ref([
 
 const tags = [
   { label: '活跃用户', bg: '#F6EEFF', fg: '#5B21B6' },
-  { label: '高投诉',   bg: '#F6E1E1', fg: '#802A2A' },
+  { label: '高投诉', bg: '#F6E1E1', fg: '#802A2A' },
   { label: '理性消费', bg: '#DCFFF3', fg: '#1B9E75' },
 ]
 
@@ -72,16 +72,11 @@ function sendNow(t: string) {
         @click="tab = t.key"
       >
         {{ t.label }}
-        <span
-          v-if="tab === t.key"
-          class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500"
-        />
+        <span v-if="tab === t.key" class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500" />
       </button>
     </div>
 
-    <div v-if="!peer" class="flex-1 flex items-center justify-center text-ink-600 text-sm">
-      未选择会话
-    </div>
+    <div v-if="!peer" class="flex-1 flex items-center justify-center text-ink-600 text-sm">未选择会话</div>
 
     <div v-else-if="tab === 'info'" class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
       <div class="rounded-lg bg-bg-app p-4">
@@ -91,10 +86,9 @@ function sendNow(t: string) {
             <Avatar :name="peer.name" :size="38" :bg="peer.avatarBg || '#E8FFEA'" />
             <div class="text-sm text-ink-800">{{ peer.name }}</div>
           </div>
-          <button
-            class="text-xs text-brand-500 hover:text-brand-600"
-            @click="editingUser = !editingUser"
-          >{{ editingUser ? '完成' : '编辑' }}</button>
+          <button class="text-xs text-brand-500 hover:text-brand-600" @click="editingUser = !editingUser">
+            {{ editingUser ? '完成' : '编辑' }}
+          </button>
         </div>
         <div class="space-y-2.5">
           <div v-for="r in infoRows" :key="r.k" class="flex justify-between items-center text-xs">
@@ -113,12 +107,9 @@ function sendNow(t: string) {
       <div class="rounded-lg bg-bg-app p-4">
         <div class="text-[13px] font-semibold text-ink-900 mb-3">用户画像</div>
         <div class="flex flex-wrap gap-2">
-          <span
-            v-for="t in tags"
-            :key="t.label"
-            class="text-[11px] px-2 py-0.5 rounded"
-            :style="{ background: t.bg, color: t.fg }"
-          >{{ t.label }}</span>
+          <span v-for="t in tags" :key="t.label" class="text-[11px] px-2 py-0.5 rounded" :style="{ background: t.bg, color: t.fg }">
+            {{ t.label }}
+          </span>
         </div>
       </div>
 
@@ -144,11 +135,7 @@ function sendNow(t: string) {
         <div>用户可能想咨询：订单物流 / 退换货</div>
       </div>
       <div class="text-xs font-medium text-ink-800 mb-1">推荐回复（点击填入输入框，或直接发送）</div>
-      <div
-        v-for="(t, i) in aiSuggestions"
-        :key="i"
-        class="rounded-md border border-line-light p-2.5 hover:border-brand-500"
-      >
+      <div v-for="(t, i) in aiSuggestions" :key="i" class="rounded-md border border-line-light p-2.5 hover:border-brand-500">
         <div class="text-xs text-ink-700 leading-relaxed mb-2">{{ t }}</div>
         <div class="flex items-center justify-end gap-2">
           <button class="text-[11px] text-ink-600 hover:text-brand-500" @click="fillInput(t)">填入</button>
@@ -163,19 +150,27 @@ function sendNow(t: string) {
         <button
           class="rounded-md border border-line-light p-3 text-xs hover:border-brand-500 hover:text-brand-600"
           @click="emit('open-drawer', 'coupon')"
-        >🎟️ 发放优惠券</button>
+        >
+          🎟️ 发放优惠券
+        </button>
         <button
           class="rounded-md border border-line-light p-3 text-xs hover:border-brand-500 hover:text-brand-600"
           @click="emit('open-drawer', 'order')"
-        >📦 查询订单</button>
+        >
+          📦 查询订单
+        </button>
         <button
           class="rounded-md border border-line-light p-3 text-xs hover:border-brand-500 hover:text-brand-600"
           @click="emit('open-drawer', 'product')"
-        >🛍️ 商品列表</button>
+        >
+          🛍️ 商品列表
+        </button>
         <button
           class="rounded-md border border-line-light p-3 text-xs hover:border-brand-500 hover:text-brand-600"
           @click="emit('open-drawer', 'quick')"
-        >⚡ 快捷话术</button>
+        >
+          ⚡ 快捷话术
+        </button>
       </div>
     </div>
   </div>

@@ -11,7 +11,12 @@
     "build:sdk:iife": "vite build --config vite.sdk.iife.config.ts",
     "build:sdk:meta": "node scripts/gen-sdk-package.mjs",
     "pack:sdk": "pnpm run build:sdk && cd dist/sdk && pnpm pack",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@rongcloud/engine": "^5.18.0",
@@ -22,14 +27,25 @@
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
     "@types/node": "^22.5.0",
     "@vitejs/plugin-vue": "^5.1.2",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.31.0",
+    "eslint-plugin-vue": "^10.5.1",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "postcss": "^8.4.41",
+    "prettier": "^3.3.3",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "vite-plugin-dts": "^4",
+    "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^2.0.29"
   }
 }

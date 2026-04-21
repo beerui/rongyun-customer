@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import Avatar from '@/components/Avatar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import MessageInput from '@/components/MessageInput.vue'
+import MessageList from '@/components/MessageList.vue'
+import SvgIcon from '@/components/SvgIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
-import Avatar from '@/components/Avatar.vue'
-import MessageList from '@/components/MessageList.vue'
-import MessageInput from '@/components/MessageInput.vue'
-import EmptyState from '@/components/EmptyState.vue'
+import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
 import PlatformIntro from './PlatformIntro.vue'
-import { sendToParent, isEmbedded } from '@/utils/embed-bridge'
-import SvgIcon from '@/components/SvgIcon.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
@@ -25,14 +25,14 @@ async function ensureOpen() {
 
 onMounted(async () => {
   if (auth.role === 'guest' || !auth.rcToken) {
-    try { 
-      await auth.bootstrapUser() 
-    } catch (e) { 
+    try {
+      await auth.bootstrapUser()
+    } catch (e) {
       console.warn('bootstrapUser failed', e)
       return // 获取失败就不要往下走了
     }
   }
-  
+
   if (auth.rcToken && !im.connected) {
     try {
       // 加上 await 等待连接完全成功
@@ -42,16 +42,24 @@ onMounted(async () => {
       return // 连接失败就不再执行 ensureOpen
     }
   }
-  
+
   await ensureOpen()
 })
 
 watch(() => [im.connected, auth.peerId], ensureOpen)
 
-function handleSendText(t: string) { im.sendTextMessage(t) }
-function handleSendImage(f: File) { im.sendImageFile(f) }
-function handleSendVideo(f: File) { im.sendVideoFile(f) }
-function handleSendFile(f: File)  { im.sendFileMessage(f) }
+function handleSendText(t: string) {
+  im.sendTextMessage(t)
+}
+function handleSendImage(f: File) {
+  im.sendImageFile(f)
+}
+function handleSendVideo(f: File) {
+  im.sendVideoFile(f)
+}
+function handleSendFile(f: File) {
+  im.sendFileMessage(f)
+}
 
 function handleMinimize() {
   sendToParent('daji:close')
@@ -74,17 +82,17 @@ function handleEnd() {
       </div>
       <div class="flex-1" />
       <div v-if="embedded" class="flex items-center gap-2">
+        <button type="button" class="h-8 px-3 text-[13px] rounded border border-white/40 hover:bg-white/15" @click="handleEnd">
+          结束对话
+        </button>
         <button
           type="button"
           class="h-8 px-3 text-[13px] rounded border border-white/40 hover:bg-white/15"
-          @click="handleEnd"
-        >结束对话</button>
-        <button
-          type="button"
-          class="h-8 px-3 text-[13px] rounded border border-white/40 hover:bg-white/15"
-          @click="handleMinimize"
           title="收起到宿主站点"
-        >收起</button>
+          @click="handleMinimize"
+        >
+          收起
+        </button>
       </div>
     </header>
 
@@ -107,11 +115,7 @@ function handleEnd() {
             <!-- <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
               今天 会话开始
             </div> -->
-            <MessageList
-              :messages="im.messages"
-              :my-user-id="auth.userId"
-              @retry="(id: string) => im.retry(id)"
-            />
+            <MessageList :messages="im.messages" :my-user-id="auth.userId" @retry="(id: string) => im.retry(id)" />
           </div>
 
           <MessageInput

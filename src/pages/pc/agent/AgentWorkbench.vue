@@ -1,27 +1,22 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useImStore } from '@/stores/im'
-import { useConversationsStore } from '@/stores/conversations'
-import { useComposerStore } from '@/stores/composer'
-import { useToastStore } from '@/stores/toast'
-import {
-  suspendConversation,
-  transferConversation,
-  endConversation,
-  fetchAgentsForTransfer,
-} from '@/apis/customer'
-import ConversationItem from '@/components/ConversationItem.vue'
-import MessageList from '@/components/MessageList.vue'
-import MessageInput from '@/components/MessageInput.vue'
-import UserInfoPanel from './UserInfoPanel.vue'
 import Avatar from '@/components/Avatar.vue'
+import ConversationItem from '@/components/ConversationItem.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import MessageInput from '@/components/MessageInput.vue'
+import MessageList from '@/components/MessageList.vue'
+import CouponDrawer from '@/components/drawers/CouponDrawer.vue'
 import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
 import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
-import CouponDrawer from '@/components/drawers/CouponDrawer.vue'
 import QuickReplyDrawer from '@/components/drawers/QuickReplyDrawer.vue'
-import type { ProductPayload, OrderPayload, CouponPayload } from '@/im'
+import { endConversation, fetchAgentsForTransfer, suspendConversation, transferConversation } from '@/apis/customer'
+import { useAuthStore } from '@/stores/auth'
+import { useComposerStore } from '@/stores/composer'
+import { useConversationsStore } from '@/stores/conversations'
+import { useImStore } from '@/stores/im'
+import { useToastStore } from '@/stores/toast'
+import type { CouponPayload, OrderPayload, ProductPayload } from '@/im'
+import UserInfoPanel from './UserInfoPanel.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
@@ -60,7 +55,7 @@ const filtered = computed(() => {
   const selfId = auth.userId
   const afterStage = base.filter((c) => {
     if (filterKey.value === 'waiting') return c.lastMessageSenderId !== selfId
-    if (filterKey.value === 'active')  return !!selfId && c.lastMessageSenderId === selfId
+    if (filterKey.value === 'active') return !!selfId && c.lastMessageSenderId === selfId
     return true
   })
   return afterStage.filter((c) => !keyword.value || c.title.includes(keyword.value))
@@ -92,7 +87,9 @@ async function onSuspend() {
   try {
     await suspendConversation(activePeer.value.id).catch(() => {})
     toast.success('已挂起（模拟）')
-  } finally { busy.value = '' }
+  } finally {
+    busy.value = ''
+  }
 }
 
 async function openTransfer() {
@@ -117,7 +114,9 @@ async function onTransferTo(agentId: string) {
     await transferConversation(activePeer.value.id, agentId).catch(() => {})
     showTransfer.value = false
     toast.success('已转接（模拟）')
-  } finally { busy.value = '' }
+  } finally {
+    busy.value = ''
+  }
 }
 
 async function onEnd() {
@@ -127,12 +126,12 @@ async function onEnd() {
   try {
     await endConversation(activePeer.value.id).catch(() => {})
     toast.success('会话已结束（模拟）')
-  } finally { busy.value = '' }
+  } finally {
+    busy.value = ''
+  }
 }
 
-const filteredAgents = computed(() =>
-  transferAgents.value.filter((a) => !transferKeyword.value || a.name.includes(transferKeyword.value)),
-)
+const filteredAgents = computed(() => transferAgents.value.filter((a) => !transferKeyword.value || a.name.includes(transferKeyword.value)))
 
 // ========== 工具栏抽屉 ==========
 
@@ -142,10 +141,10 @@ const drawerCoupon = ref(false)
 const drawerQuick = ref(false)
 
 function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick') {
-  if (kind === 'order')   drawerOrder.value = true
+  if (kind === 'order') drawerOrder.value = true
   if (kind === 'product') drawerProduct.value = true
-  if (kind === 'coupon')  drawerCoupon.value = true
-  if (kind === 'quick')   drawerQuick.value = true
+  if (kind === 'coupon') drawerCoupon.value = true
+  if (kind === 'quick') drawerQuick.value = true
 }
 
 async function sendProduct(p: ProductPayload) {
@@ -185,7 +184,9 @@ onMounted(async () => {
       return // 如果连接失败，就不要去拉取列表了
     }
   }
-  try { await conv.load() } catch {}
+  try {
+    await conv.load()
+  } catch {}
   conv.watch()
   // 默认选中筛选后的第一条：否则 activePeer 仅做视觉高亮，
   // im.currentTargetId 仍为空，导致发送被 sendTextMessage 的 `if (!targetId)` 静默吞掉。
@@ -202,12 +203,22 @@ watch(filterKey, async () => {
   if (!stillIn) await selectConv(list[0].targetId)
 })
 
-onUnmounted(() => { conv.unwatch() })
+onUnmounted(() => {
+  conv.unwatch()
+})
 
-function handleSendText(t: string) { im.sendTextMessage(t) }
-function handleSendImage(f: File) { im.sendImageFile(f) }
-function handleSendVideo(f: File) { im.sendVideoFile(f) }
-function handleSendFile(f: File)  { im.sendFileMessage(f) }
+function handleSendText(t: string) {
+  im.sendTextMessage(t)
+}
+function handleSendImage(f: File) {
+  im.sendImageFile(f)
+}
+function handleSendVideo(f: File) {
+  im.sendVideoFile(f)
+}
+function handleSendFile(f: File) {
+  im.sendFileMessage(f)
+}
 function handleRecall(id: string) {
   im.recall(id).catch((e: Error) => toast.error(e.message))
 }
@@ -231,10 +242,22 @@ function logout() {
       </div>
       <div class="flex-1" />
       <div class="flex items-center gap-8 text-[14px]">
-        <div>今天接待 <span class="font-semibold">{{ stats.today }}</span></div>
-        <div>满意度 <span class="font-semibold">{{ stats.satisfaction }}</span></div>
-        <div>平均时长 <span class="font-semibold">{{ stats.avgDuration }}</span></div>
-        <div>解决率 <span class="font-semibold">{{ stats.solveRate }}</span></div>
+        <div>
+          今天接待
+          <span class="font-semibold">{{ stats.today }}</span>
+        </div>
+        <div>
+          满意度
+          <span class="font-semibold">{{ stats.satisfaction }}</span>
+        </div>
+        <div>
+          平均时长
+          <span class="font-semibold">{{ stats.avgDuration }}</span>
+        </div>
+        <div>
+          解决率
+          <span class="font-semibold">{{ stats.solveRate }}</span>
+        </div>
       </div>
       <button class="ml-6 text-xs text-white/80 hover:text-white" @click="logout">退出</button>
     </header>
@@ -244,19 +267,23 @@ function logout() {
         <div class="px-5 pt-5 pb-3">
           <div class="flex items-center gap-2 mb-3">
             <div class="text-base font-semibold text-ink-900">待处理用户</div>
-            <span class="text-[11px] px-1.5 py-0.5 rounded" style="background:#F9ECD7;color:#954D00">
-              {{ filtered.length }}条待处理
-            </span>
+            <span class="text-[11px] px-1.5 py-0.5 rounded" style="background: #f9ecd7; color: #954d00">{{ filtered.length }}条待处理</span>
           </div>
 
           <div class="flex gap-2 mb-3">
             <button
-              v-for="f in [{k:'all',l:'全部'},{k:'waiting',l:'待接入'},{k:'active',l:'进行中'}]"
+              v-for="f in [
+                { k: 'all', l: '全部' },
+                { k: 'waiting', l: '待接入' },
+                { k: 'active', l: '进行中' },
+              ]"
               :key="f.k"
               class="text-[13px] px-4 h-8 rounded transition-colors"
               :class="filterKey === f.k ? 'bg-brand-500 text-white' : 'bg-bg-soft text-ink-700 hover:bg-line-light'"
               @click="filterKey = f.k as any"
-            >{{ f.l }}</button>
+            >
+              {{ f.l }}
+            </button>
           </div>
 
           <div class="relative">
@@ -288,11 +315,9 @@ function logout() {
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <div class="text-base font-semibold text-ink-900 truncate">{{ activePeer.name }}</div>
-                <span
-                  v-if="activePeer.tag"
-                  class="shrink-0 text-[10px] px-1.5 py-0.5 rounded"
-                  style="background:#F9ECD7;color:#954D00"
-                >{{ activePeer.tag }}</span>
+                <span v-if="activePeer.tag" class="shrink-0 text-[10px] px-1.5 py-0.5 rounded" style="background: #f9ecd7; color: #954d00">
+                  {{ activePeer.tag }}
+                </span>
               </div>
               <div class="text-[12px] text-ink-600 mt-0.5">会话已进行 8分12秒 · 2025-12-26 12:54:43 · 上海市</div>
             </div>
@@ -302,17 +327,23 @@ function logout() {
               class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500 disabled:opacity-50"
               :disabled="!!busy"
               @click="openTransfer"
-            >{{ busy === 'transfer' ? '转接中…' : '转接' }}</button>
+            >
+              {{ busy === 'transfer' ? '转接中…' : '转接' }}
+            </button>
             <button
               class="h-8 px-3 rounded border border-line-light text-xs text-ink-700 hover:border-brand-500 hover:text-brand-500 disabled:opacity-50"
               :disabled="!!busy"
               @click="onSuspend"
-            >{{ busy === 'suspend' ? '挂起中…' : '挂起' }}</button>
+            >
+              {{ busy === 'suspend' ? '挂起中…' : '挂起' }}
+            </button>
             <button
               class="h-8 px-3 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs disabled:opacity-50"
               :disabled="!!busy"
               @click="onEnd"
-            >{{ busy === 'end' ? '结束中…' : '结束会话' }}</button>
+            >
+              {{ busy === 'end' ? '结束中…' : '结束会话' }}
+            </button>
           </div>
         </div>
 
@@ -321,15 +352,8 @@ function logout() {
         </div>
         <template v-else>
           <div class="flex-1 min-h-0 flex flex-col">
-            <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
-              今天 12:32 会话开始
-            </div>
-            <MessageList
-              :messages="im.messages"
-              :my-user-id="auth.userId"
-              @retry="(id: string) => im.retry(id)"
-              @recall="handleRecall"
-            />
+            <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">今天 12:32 会话开始</div>
+            <MessageList :messages="im.messages" :my-user-id="auth.userId" @retry="(id: string) => im.retry(id)" @recall="handleRecall" />
           </div>
 
           <MessageInput
@@ -393,21 +417,8 @@ function logout() {
       @send-order="sendOrder"
       @send-product="sendProduct"
     />
-    <ProductListDrawer
-      :open="drawerProduct"
-      @close="drawerProduct = false"
-      @send="sendProduct"
-    />
-    <CouponDrawer
-      :open="drawerCoupon"
-      @close="drawerCoupon = false"
-      @send="sendCoupon"
-    />
-    <QuickReplyDrawer
-      :open="drawerQuick"
-      @close="drawerQuick = false"
-      @pick="pickQuickReply"
-      @send="sendQuickReply"
-    />
+    <ProductListDrawer :open="drawerProduct" @close="drawerProduct = false" @send="sendProduct" />
+    <CouponDrawer :open="drawerCoupon" @close="drawerCoupon = false" @send="sendCoupon" />
+    <QuickReplyDrawer :open="drawerQuick" @close="drawerQuick = false" @pick="pickQuickReply" @send="sendQuickReply" />
   </div>
 </template>

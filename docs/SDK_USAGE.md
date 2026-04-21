@@ -14,8 +14,8 @@
 
 ```js
 DajiCS.boot({
-  baseUrl: 'https://cs.chinamarket.cn',    // 大集客服站点根
-  apiBase: 'https://api.chinamarket.cn',   // 后端 API 根（/sendRyMessage 所在）
+  baseUrl: 'https://cs.chinamarket.cn', // 大集客服站点根
+  apiBase: 'https://api.chinamarket.cn', // 后端 API 根（/sendRyMessage 所在）
 })
 ```
 
@@ -25,13 +25,13 @@ DajiCS.boot({
 
 ```js
 DajiCS.open({
-  userId:     userStore.id,
-  userName:   userStore.userName,
-  userType:   userStore.userType,      // 1-5
-  language:   'zh',                    // 或 'en'
-  token:      userStore.token,         // 宿主业务 token
-  priceType:  userStore.priceType,
-  supplierId: targetSupplierId,        // 目标客服 peerId
+  userId: userStore.id,
+  userName: userStore.userName,
+  userType: userStore.userType, // 1-5
+  language: 'zh', // 或 'en'
+  token: userStore.token, // 宿主业务 token
+  priceType: userStore.priceType,
+  supplierId: targetSupplierId, // 目标客服 peerId
 })
 ```
 
@@ -43,11 +43,11 @@ DajiCS.open({
 DajiCS.open({
   ...identity,
   card: {
-    title:   '精品大枣 5kg',
-    imgUrl:  'https://cdn.xxx/sku-9999.jpg',
-    spuId:   'SPU_9999',
-    intr:    '新鲜直供',              // 简介
-    notes:   '满 2 件包邮',            // 备注
+    title: '精品大枣 5kg',
+    imgUrl: 'https://cdn.xxx/sku-9999.jpg',
+    spuId: 'SPU_9999',
+    intr: '新鲜直供', // 简介
+    notes: '满 2 件包邮', // 备注
     jumpUrl: 'https://xxx/product/9999',
   },
 })
@@ -60,22 +60,22 @@ DajiCS.open({
 网络抖动 / apiBase 故障时用：
 
 ```js
-DajiCS.openSafe(options)   // 跳过预投，直接开窗
+DajiCS.openSafe(options) // 跳过预投，直接开窗
 ```
 
 ## 4. 可配置项
 
-| option | 类型 | 说明 |
-|---|---|---|
-| `userId` *（必填）* | string \| number | 宿主用户 id |
-| `userName` | string | 昵称，显示用 |
-| `userType` | number | 用户类型 1-5 |
-| `language` | string | `zh` / `en`，会写入对端默认翻译语言 |
-| `token` | string | 宿主业务 token，下发到客服站点当 `auth_token` 用 |
-| `priceType` | string | 价格体系标识 |
-| `supplierId` *（建议必填）* | string \| number | 目标客服 peerId |
-| `card` | object | 预投商品卡（见 3.2） |
-| `windowFeatures` | string | 覆盖 `window.open` 第三参数 |
+| option                      | 类型             | 说明                                             |
+| --------------------------- | ---------------- | ------------------------------------------------ |
+| `userId` _（必填）_         | string \| number | 宿主用户 id                                      |
+| `userName`                  | string           | 昵称，显示用                                     |
+| `userType`                  | number           | 用户类型 1-5                                     |
+| `language`                  | string           | `zh` / `en`，会写入对端默认翻译语言              |
+| `token`                     | string           | 宿主业务 token，下发到客服站点当 `auth_token` 用 |
+| `priceType`                 | string           | 价格体系标识                                     |
+| `supplierId` _（建议必填）_ | string \| number | 目标客服 peerId                                  |
+| `card`                      | object           | 预投商品卡（见 3.2）                             |
+| `windowFeatures`            | string           | 覆盖 `window.open` 第三参数                      |
 
 ## 5. URL Query 约定
 

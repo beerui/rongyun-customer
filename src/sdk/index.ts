@@ -1,8 +1,15 @@
-import { boot, open, openSafe, close, reset, ready, isReadyNow, buildChatUrl, getOpenWindow, version } from './open'
-import { on, off, once } from './events'
-import { mountLauncher, unmountLauncher, setUnreadCount, toggleWidget, getLauncherElement } from './launcher/launcher'
-import { openWidget, closeWidget, isWidgetOpen, getWidgetIframe, showEndBanner, hideEndBanner } from './launcher/widget'
-import { isBridgeActive, getAllowedOrigins, sendToWidgetIframe, sendToOpenWindow, DAJI_MSG_SOURCE, DAJI_MSG_VERSION } from './launcher/bridge'
+import { off, on, once } from './events'
+import {
+  DAJI_MSG_SOURCE,
+  DAJI_MSG_VERSION,
+  getAllowedOrigins,
+  isBridgeActive,
+  sendToOpenWindow,
+  sendToWidgetIframe,
+} from './launcher/bridge'
+import { getLauncherElement, mountLauncher, setUnreadCount, toggleWidget, unmountLauncher } from './launcher/launcher'
+import { closeWidget, getWidgetIframe, hideEndBanner, isWidgetOpen, openWidget, showEndBanner } from './launcher/widget'
+import { boot, buildChatUrl, close, getOpenWindow, isReadyNow, open, openSafe, ready, reset, version } from './open'
 
 /**
  * 语法糖：向 widget iframe 下发新身份（典型：宿主 token 续期后）。

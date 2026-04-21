@@ -1,5 +1,5 @@
 import { emit } from '../events'
-import { STYLE_ID, CSS } from './styles'
+import { CSS, STYLE_ID } from './styles'
 
 let styleEl: HTMLStyleElement | null = null
 let widgetEl: HTMLDivElement | null = null

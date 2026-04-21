@@ -8,16 +8,17 @@
 
 ## 1. 分发形态
 
-| 形态 | 产物 | 用法 |
-|---|---|---|
+| 形态             | 产物                       | 用法                                               |
+| ---------------- | -------------------------- | -------------------------------------------------- |
 | **IIFE（首选）** | `dist/sdk/daji-cs.iife.js` | 宿主 `<script src>` 注入，暴露全局 `window.DajiCS` |
-| npm | 后续迭代再加 | — |
+| npm              | 后续迭代再加               | —                                                  |
 
 Rollup/Vite 单独 config（不进主站 bundle），全局名 `DajiCS`。
 
 ## 2. 窗口形态
 
 **新 tab**（沿用老方案）：
+
 - `window.open(url, '_blank', 'width=1000,height=600,scrollbars=yes,resizable=yes')`
 - URL 指向大集客服站点 `/chat?...`（已有路由 `/`，会新增 `/chat` 访客入口接受 query）
 
@@ -77,14 +78,14 @@ host page → DajiCS.open(options)
 
 ```json
 {
-  "sendUserId":     "<userId>",
+  "sendUserId": "<userId>",
   "sendUserNickname": "<userName>",
-  "targetUserId":   "<supplierId>",
-  "objectName":     "DAJI:ProductCard",
-  "content":        "{\"customType\":\"product\",\"data\":{\"title\":\"...\",\"imgUrl\":\"...\",\"spuId\":\"...\",\"intr\":\"...\",\"notes\":\"...\",\"jumpUrl\":\"...\"}}",
-  "chatType":       1,
-  "messageType":    100,
-  "from":           "sdk"
+  "targetUserId": "<supplierId>",
+  "objectName": "DAJI:ProductCard",
+  "content": "{\"customType\":\"product\",\"data\":{\"title\":\"...\",\"imgUrl\":\"...\",\"spuId\":\"...\",\"intr\":\"...\",\"notes\":\"...\",\"jumpUrl\":\"...\"}}",
+  "chatType": 1,
+  "messageType": 100,
+  "from": "sdk"
 }
 ```
 
@@ -96,23 +97,24 @@ host page → DajiCS.open(options)
 
 沿用老方案命名，前缀 `daji_`：
 
-| query | 来源 | 说明 |
-|---|---|---|
-| `daji_userId` | options.userId | 访客 id |
-| `daji_userName` | options.userName | |
-| `daji_userType` | options.userType | |
-| `daji_language` | options.language | |
-| `daji_token` | options.token | 宿主业务 token（后端可用来换 rc-token） |
-| `daji_priceType` | options.priceType | |
-| `daji_supplierId` | options.supplierId | 目标客服 peerId |
-| `daji_host` | location.host | 来源站点 |
-| `daji_sdkv` | 固定 | SDK 版本号，排查用 |
+| query             | 来源               | 说明                                    |
+| ----------------- | ------------------ | --------------------------------------- |
+| `daji_userId`     | options.userId     | 访客 id                                 |
+| `daji_userName`   | options.userName   |                                         |
+| `daji_userType`   | options.userType   |                                         |
+| `daji_language`   | options.language   |                                         |
+| `daji_token`      | options.token      | 宿主业务 token（后端可用来换 rc-token） |
+| `daji_priceType`  | options.priceType  |                                         |
+| `daji_supplierId` | options.supplierId | 目标客服 peerId                         |
+| `daji_host`       | location.host      | 来源站点                                |
+| `daji_sdkv`       | 固定               | SDK 版本号，排查用                      |
 
 **安全说明：** v1 URL query 明文带 token（与老方案一致）；v2 规划：宿主调后端换一次性 rc-token，URL 只带短 token。本期不做。
 
 ## 7. 兜底
 
 `DajiCS.openSafe(options)` → 不走 `sendRyMessage`、不拉 `get53Style` 等价物，直接拼 URL 打开。用于：
+
 1. `apiBase` 未配置
 2. `options.card` 为空
 3. 主流程 `open()` 捕获任何异常
@@ -120,6 +122,7 @@ host page → DajiCS.open(options)
 ## 8. 替换节奏
 
 宿主站点（seo-daji-web）通过环境变量切换：
+
 ```js
 const useNewCS = runtimeConfig.public.useDajiNewCS
 if (useNewCS) DajiCS.open(params)

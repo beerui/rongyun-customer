@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
 import path from 'node:path'
+import { defineConfig } from 'vite'
 
 /**
  * SDK 的 IIFE 构建（独立一次）。

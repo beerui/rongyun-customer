@@ -34,8 +34,8 @@ export default {
           soft: '#FAFAFA',
         },
         success: { 500: '#00B42A', 50: '#E8FFEA' },
-        warn:    { 500: '#FAAD14', 700: '#D25F00', 50: '#FFF7E8' },
-        error:   { 500: '#FA3E3E', 700: '#CB272D', 50: '#FFECE8' },
+        warn: { 500: '#FAAD14', 700: '#D25F00', 50: '#FFF7E8' },
+        error: { 500: '#FA3E3E', 700: '#CB272D', 50: '#FFECE8' },
       },
       fontFamily: {
         sans: ['PingFang SC', 'Helvetica Neue', 'Arial', 'sans-serif'],

@@ -1,7 +1,7 @@
 import * as RC from '@rongcloud/imlib-next'
-import type { Message, Conversation, ConversationKind } from './types'
-import { parseRcMessage, parseRcConversation } from './parse'
 import { buildDajiCardMessage } from './custom-messages'
+import { parseRcConversation, parseRcMessage } from './parse'
+import type { Conversation, ConversationKind, Message } from './types'
 
 let currentKind: ConversationKind = 'private'
 
@@ -114,21 +114,19 @@ export async function getConversationList(): Promise<Conversation[]> {
     // 获取会话的时间戳。
     // 传 0 代表从最新（当前时间）开始获取。
     // 分页时，传入上一页最后一条会话的 sentTime。
-    startTime: 0, 
-  
+    startTime: 0,
+
     // 获取的会话数量，单次建议不超过 50，最大支持 200。
     count: 20,
-  
+
     // 拉取顺序。
     // 0: 降序（获取 startTime 之前的会话，即更旧的）。
     // 1: 升序（获取 startTime 之后的会话，即更新的）。
-    order: 0 
-  } as RC.IGetConversationListByTimestampParams;
+    order: 0,
+  } as RC.IGetConversationListByTimestampParams
   const res = await RC.getConversationListByTimestamp(params)
   console.log('res', res)
   if (res.code !== RC.ErrorCode.SUCCESS) throw new Error(`conv list failed: ${res.code}`)
   const list = res.data ?? []
-  return list
-    .filter((c) => c?.conversationType === rcType())
-    .map(parseRcConversation)
+  return list.filter((c) => c?.conversationType === rcType()).map(parseRcConversation)
 }

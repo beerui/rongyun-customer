@@ -58,10 +58,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function mergeSignals(
-  external: AbortSignal | undefined,
-  internal: AbortController,
-): void {
+function mergeSignals(external: AbortSignal | undefined, internal: AbortController): void {
   if (!external) return
   if (external.aborted) {
     internal.abort(external.reason)
@@ -72,10 +69,7 @@ function mergeSignals(
   })
 }
 
-export async function fetchWithRetry(
-  url: string,
-  options: FetchWithRetryOptions = {},
-): Promise<Response> {
+export async function fetchWithRetry(url: string, options: FetchWithRetryOptions = {}): Promise<Response> {
   const {
     timeout = 8000,
     maxRetries = 2,
@@ -104,7 +98,11 @@ export async function fetchWithRetry(
       // 外部 signal 触发的 abort 直接透传，不重试
       if (externalSignal?.aborted) throw err
       // 内部 timeout 包装成 TimeoutError
-      if (err instanceof DOMException && err.name === 'AbortError' && controller.signal.reason instanceof TimeoutError) {
+      if (
+        err instanceof DOMException &&
+        err.name === 'AbortError' &&
+        controller.signal.reason instanceof TimeoutError
+      ) {
         lastError = controller.signal.reason
       } else {
         lastError = err

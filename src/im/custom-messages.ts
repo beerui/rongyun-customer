@@ -26,8 +26,8 @@ export function registerDajiCardMessage() {
   if (Ctor) return Ctor
   Ctor = RC.registerMessageType<DajiCardContent>(
     DAJI_CARD_OBJECT_NAME,
-    true,   // isPersited：持久化，历史消息能拉到
-    true,   // isCounted：计入未读数，和普通消息一样唤起对端注意
+    true, // isPersited：持久化，历史消息能拉到
+    true, // isCounted：计入未读数，和普通消息一样唤起对端注意
   )
   return Ctor
 }

@@ -25,12 +25,12 @@ pnpm dev
 
 SDK 的 `baseUrl` / `apiBase` 通过 `.env.[mode]` 注入，按 Vite 惯例区分环境：
 
-| 文件 | 用途 | 触发命令 |
-|---|---|---|
-| `.env.development` | 本地 dev（默认） | `pnpm dev` |
-| `.env.staging` | 预发 | `pnpm build:staging` |
-| `.env.production` | 生产 | `pnpm build` |
-| `.env.example` | 模板 | — |
+| 文件               | 用途             | 触发命令             |
+| ------------------ | ---------------- | -------------------- |
+| `.env.development` | 本地 dev（默认） | `pnpm dev`           |
+| `.env.staging`     | 预发             | `pnpm build:staging` |
+| `.env.production`  | 生产             | `pnpm build`         |
+| `.env.example`     | 模板             | —                    |
 
 变量：
 

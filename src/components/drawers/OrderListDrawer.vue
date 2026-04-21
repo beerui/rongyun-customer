@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Drawer from '@/components/Drawer.vue'
-import type { OrderPayload, ProductPayload } from '@/im/types'
-import { mockOrdersFor } from '@/utils/mock-data'
 import { computed } from 'vue'
+import Drawer from '@/components/Drawer.vue'
+import { mockOrdersFor } from '@/utils/mock-data'
+import type { OrderPayload, ProductPayload } from '@/im/types'
 
 const props = defineProps<{ open: boolean; userId: string }>()
 const emit = defineEmits<{
@@ -38,11 +38,7 @@ function productFromItem(o: OrderPayload, i: number): ProductPayload {
     <div v-if="!orders.length" class="text-center py-10 text-xs text-ink-600">该用户暂无订单</div>
 
     <div v-else class="p-4 space-y-3">
-      <div
-        v-for="o in orders"
-        :key="o.orderId"
-        class="rounded-lg border border-line-light"
-      >
+      <div v-for="o in orders" :key="o.orderId" class="rounded-lg border border-line-light">
         <div class="flex items-center justify-between px-3 pt-3">
           <div class="text-[11px] text-ink-600">
             <span class="mr-2">{{ o.orderId }}</span>
@@ -54,11 +50,7 @@ function productFromItem(o: OrderPayload, i: number): ProductPayload {
         </div>
 
         <div class="px-3 py-2 space-y-2">
-          <div
-            v-for="(it, i) in o.items"
-            :key="i"
-            class="flex items-center gap-2"
-          >
+          <div v-for="(it, i) in o.items" :key="i" class="flex items-center gap-2">
             <img :src="it.cover" class="w-10 h-10 rounded object-cover shrink-0" alt="" />
             <div class="flex-1 min-w-0">
               <div class="text-xs text-ink-800 truncate">{{ it.title }}</div>
@@ -67,18 +59,20 @@ function productFromItem(o: OrderPayload, i: number): ProductPayload {
             <button
               class="shrink-0 text-[11px] text-brand-500 hover:text-brand-600 hover:underline"
               @click="emit('send-product', productFromItem(o, i))"
-            >发送此商品</button>
+            >
+              发送此商品
+            </button>
           </div>
         </div>
 
         <div class="flex items-center justify-between border-t border-line-light px-3 py-2 bg-bg-app rounded-b-lg">
           <div class="text-[11px] text-ink-600">
-            合计 <span class="text-brand-500 font-semibold text-sm">¥ {{ o.totalAmount }}</span>
+            合计
+            <span class="text-brand-500 font-semibold text-sm">¥ {{ o.totalAmount }}</span>
           </div>
-          <button
-            class="h-7 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-[11px]"
-            @click="emit('send-order', o)"
-          >发送订单卡片</button>
+          <button class="h-7 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-[11px]" @click="emit('send-order', o)">
+            发送订单卡片
+          </button>
         </div>
       </div>
     </div>

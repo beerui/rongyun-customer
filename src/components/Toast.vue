@@ -29,15 +29,13 @@ function bgFor(kind: string) {
           :class="bgFor(it.kind)"
           role="status"
         >
-          <span
-            class="w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold bg-white/60"
-          >{{ iconFor(it.kind) }}</span>
+          <span class="w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold bg-white/60">
+            {{ iconFor(it.kind) }}
+          </span>
           <span class="flex-1 whitespace-pre-wrap break-words">{{ it.message }}</span>
-          <button
-            class="text-current/60 hover:text-current text-base leading-none ml-1"
-            @click="toast.dismiss(it.id)"
-            title="关闭"
-          >×</button>
+          <button class="text-current/60 hover:text-current text-base leading-none ml-1" title="关闭" @click="toast.dismiss(it.id)">
+            ×
+          </button>
         </div>
       </transition-group>
     </div>
@@ -46,7 +44,15 @@ function bgFor(kind: string) {
 
 <style scoped>
 .toast-enter-active,
-.toast-leave-active { transition: all 0.2s ease; }
-.toast-enter-from { opacity: 0; transform: translateY(-6px); }
-.toast-leave-to   { opacity: 0; transform: translateY(-6px); }
+.toast-leave-active {
+  transition: all 0.2s ease;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 </style>

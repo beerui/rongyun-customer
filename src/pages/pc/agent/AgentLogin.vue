@@ -15,7 +15,7 @@ const loading = ref(false)
 const err = ref('')
 
 const presets = [
-  { account: 'lianp',  password: '123456', label: '客服 1' },
+  { account: 'lianp', password: '123456', label: '客服 1' },
   { account: 'xiaoyi', password: '123456', label: '客服 2' },
 ]
 
@@ -59,7 +59,9 @@ async function handleLogin() {
           :key="p.account"
           class="flex-1 text-[11px] px-2 py-1.5 rounded border border-line-light text-ink-700 hover:border-brand-500 hover:text-brand-500"
           @click="fillPreset(p)"
-        >{{ p.label }} · {{ p.account }}</button>
+        >
+          {{ p.label }} · {{ p.account }}
+        </button>
       </div>
 
       <label class="block mb-4">
@@ -87,7 +89,9 @@ async function handleLogin() {
         class="w-full rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-sm py-2.5 font-medium disabled:opacity-60"
         :disabled="loading"
         @click="handleLogin"
-      >{{ loading ? '登录中…' : '登 录' }}</button>
+      >
+        {{ loading ? '登录中…' : '登 录' }}
+      </button>
     </div>
   </div>
 </template>

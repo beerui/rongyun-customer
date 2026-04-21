@@ -1,6 +1,6 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import path from 'node:path'
 
 /**
  * SDK 的 ESM + CJS + .d.ts 构建。

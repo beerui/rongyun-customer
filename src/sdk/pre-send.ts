@@ -1,6 +1,6 @@
+import { emit } from './events'
 import type { OpenOptions, ProductCard } from './types'
 import { fetchWithRetry } from './utils/fetch-with-retry'
-import { emit } from './events'
 
 const PRE_SEND_TIMEOUT_MS = 6000
 const PRE_SEND_MAX_RETRIES = 2

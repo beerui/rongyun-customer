@@ -1,4 +1,4 @@
-import type { ProductPayload, OrderPayload, CouponPayload } from '@/im/types'
+import type { CouponPayload, OrderPayload, ProductPayload } from '@/im/types'
 
 /** 模拟商品（下一步可替换为 `GET /api/customer/products` 返回） */
 export const mockProducts: ProductPayload[] = [
@@ -52,18 +52,14 @@ export function mockOrdersFor(userId: string): OrderPayload[] {
       status: '待发货',
       createdAt: '2026-04-15 14:32',
       totalAmount: 59.8,
-      items: [
-        { title: mockProducts[0].title, cover: mockProducts[0].cover, qty: 2, price: 29.9 },
-      ],
+      items: [{ title: mockProducts[0].title, cover: mockProducts[0].cover, qty: 2, price: 29.9 }],
     },
     {
       orderId: `ORD-2026-${String(1000 + seed).slice(-4)}2`,
       status: '已发货',
       createdAt: '2026-04-10 09:18',
       totalAmount: 128,
-      items: [
-        { title: mockProducts[1].title, cover: mockProducts[1].cover, qty: 1, price: 128 },
-      ],
+      items: [{ title: mockProducts[1].title, cover: mockProducts[1].cover, qty: 1, price: 128 }],
     },
     {
       orderId: `ORD-2026-${String(1000 + seed).slice(-4)}3`,
@@ -80,10 +76,10 @@ export function mockOrdersFor(userId: string): OrderPayload[] {
 }
 
 export const mockCoupons: CouponPayload[] = [
-  { couponId: 'c_10',  title: '满 99 减 10',  amount: 10,  threshold: 99,  expireAt: '2026-04-30' },
-  { couponId: 'c_30',  title: '满 200 减 30', amount: 30,  threshold: 200, expireAt: '2026-04-30' },
-  { couponId: 'c_50',  title: '生鲜专享 50',  amount: 50,  threshold: 300, expireAt: '2026-05-15' },
-  { couponId: 'c_new', title: '新人专享 20',  amount: 20,  threshold: 0,   expireAt: '2026-12-31' },
+  { couponId: 'c_10', title: '满 99 减 10', amount: 10, threshold: 99, expireAt: '2026-04-30' },
+  { couponId: 'c_30', title: '满 200 减 30', amount: 30, threshold: 200, expireAt: '2026-04-30' },
+  { couponId: 'c_50', title: '生鲜专享 50', amount: 50, threshold: 300, expireAt: '2026-05-15' },
+  { couponId: 'c_new', title: '新人专享 20', amount: 20, threshold: 0, expireAt: '2026-12-31' },
 ]
 
 export const quickReplies: string[] = [

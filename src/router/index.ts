@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { type RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 import { isMobile } from '@/utils/device'
 
 const UserChat = () => import('@/pages/pc/user/UserChat.vue')

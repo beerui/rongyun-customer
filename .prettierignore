@@ -1,0 +1,30 @@
+# 依赖
+node_modules
+pnpm-lock.yaml
+package-lock.json
+
+# 构建产物
+dist
+.nuxt
+.output
+
+# 缓存
+.cache
+.temp
+*.log
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+
+# 文档
+CHANGELOG.md
+
+# 自动生成的文件
+docs/superpowers/**
+examples/**/dist

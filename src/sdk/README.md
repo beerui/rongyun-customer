@@ -86,6 +86,7 @@ askBtn.addEventListener('click', () => {
   })
 })
 ```
+
 预投失败不阻塞开窗（`presend:error` 事件 + 窗口正常弹出）。
 
 ### 宿主 token 续期：给已挂载的 iframe widget 下发新身份
@@ -110,57 +111,58 @@ on('conversation:end', ({ reason }) => {
 
 ## API 速查
 
-| 分类 | 函数 | 说明 |
-|---|---|---|
-| 生命周期 | `boot(opts)` | 初始化（必须先调用） |
-|  | `reset(opts?)` | 清状态；默认保留订阅，`{ clearListeners: true }` 彻底清零 |
-|  | `ready()` / `isReadyNow()` | boot 完成的 Promise / 同步查询 |
-| 新开窗口 | `open(opts)` | 可选预投商品卡 → `window.open` |
-|  | `openSafe(opts)` | 跳过预投直接开 |
-|  | `close(opts)` | 关闭指定 user×supplier 窗口 |
-|  | `getOpenWindow(opts)` | 取 Window 句柄（跨域可能 `null`） |
-| 悬浮 UI | `mountLauncher(opts)` | 气泡按钮 + iframe Widget |
-|  | `unmountLauncher()` · `setUnreadCount(n)` · `toggleWidget()` | |
-|  | `openWidget(url)` · `closeWidget()` · `isWidgetOpen()` | |
-| 桥接 | `sendToWidgetIframe(type, payload)` | 向 iframe 下发协议消息 |
-|  | `sendToOpenWindow(win, type, payload)` | 向新开窗口下发 |
-|  | `refreshIdentity({ token, ... })` | 刷新身份（语法糖） |
-| 事件 | `on / once / off(event, fn)` | 订阅 / 取消 |
+| 分类     | 函数                                                         | 说明                                                      |
+| -------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| 生命周期 | `boot(opts)`                                                 | 初始化（必须先调用）                                      |
+|          | `reset(opts?)`                                               | 清状态；默认保留订阅，`{ clearListeners: true }` 彻底清零 |
+|          | `ready()` / `isReadyNow()`                                   | boot 完成的 Promise / 同步查询                            |
+| 新开窗口 | `open(opts)`                                                 | 可选预投商品卡 → `window.open`                            |
+|          | `openSafe(opts)`                                             | 跳过预投直接开                                            |
+|          | `close(opts)`                                                | 关闭指定 user×supplier 窗口                               |
+|          | `getOpenWindow(opts)`                                        | 取 Window 句柄（跨域可能 `null`）                         |
+| 悬浮 UI  | `mountLauncher(opts)`                                        | 气泡按钮 + iframe Widget                                  |
+|          | `unmountLauncher()` · `setUnreadCount(n)` · `toggleWidget()` |                                                           |
+|          | `openWidget(url)` · `closeWidget()` · `isWidgetOpen()`       |                                                           |
+| 桥接     | `sendToWidgetIframe(type, payload)`                          | 向 iframe 下发协议消息                                    |
+|          | `sendToOpenWindow(win, type, payload)`                       | 向新开窗口下发                                            |
+|          | `refreshIdentity({ token, ... })`                            | 刷新身份（语法糖）                                        |
+| 事件     | `on / once / off(event, fn)`                                 | 订阅 / 取消                                               |
 
 完整签名参见 `types/index.d.ts`。
 
 ## 事件一览
 
-| 事件 | payload | 触发时机 |
-|---|---|---|
-| `ready` | `void` | boot 完成（首次） |
-| `window:open` | `{ key, url }` | 新 tab 打开客服 |
-| `window:focus` | `{ key, url }` | 复用已有客服窗口 |
-| `window:close` | `{ key }` | 客服窗口被关（1s 轮询探测）|
-| `presend:start` · `:success` · `:error` | `{ clientMsgId, ... }` | 预投商品卡 |
-| `launcher:mount` · `:click` · `:unmount` | ... | 悬浮气泡 |
-| `widget:open` · `:close` | `{ url }` / `{ reason }` | iframe widget |
-| `unread:change` | `{ count }` | 未读数变化（iframe 内推）|
-| `message:incoming` | `{ from, preview }` | 客服新消息（iframe 内推）|
-| `conversation:end` | `{ reason }` | 会话被结束 |
-| `error` | `{ source, error }` | 内部异常兜底 |
+| 事件                                     | payload                  | 触发时机                    |
+| ---------------------------------------- | ------------------------ | --------------------------- |
+| `ready`                                  | `void`                   | boot 完成（首次）           |
+| `window:open`                            | `{ key, url }`           | 新 tab 打开客服             |
+| `window:focus`                           | `{ key, url }`           | 复用已有客服窗口            |
+| `window:close`                           | `{ key }`                | 客服窗口被关（1s 轮询探测） |
+| `presend:start` · `:success` · `:error`  | `{ clientMsgId, ... }`   | 预投商品卡                  |
+| `launcher:mount` · `:click` · `:unmount` | ...                      | 悬浮气泡                    |
+| `widget:open` · `:close`                 | `{ url }` / `{ reason }` | iframe widget               |
+| `unread:change`                          | `{ count }`              | 未读数变化（iframe 内推）   |
+| `message:incoming`                       | `{ from, preview }`      | 客服新消息（iframe 内推）   |
+| `conversation:end`                       | `{ reason }`             | 会话被结束                  |
+| `error`                                  | `{ source, error }`      | 内部异常兜底                |
 
 ## postMessage 协议
 
 所有消息结构统一：
+
 ```ts
 { source: 'daji-cs', version: '0.1.0', type: 'daji:*', payload: ... }
 ```
 
-| 方向 | type | payload |
-|---|---|---|
-| iframe → parent | `daji:ready` | `{ userId, supplierId }` |
-|  | `daji:unread` | `{ count }` |
-|  | `daji:message` | `{ from, preview }` |
-|  | `daji:conversation-end` | `{ reason }` |
-|  | `daji:close` | `null` |
-| parent → iframe | `daji:identity` | `{ token, language?, userId?, supplierId? }` |
-|  | `daji:ping` | `null` |
+| 方向            | type                    | payload                                      |
+| --------------- | ----------------------- | -------------------------------------------- |
+| iframe → parent | `daji:ready`            | `{ userId, supplierId }`                     |
+|                 | `daji:unread`           | `{ count }`                                  |
+|                 | `daji:message`          | `{ from, preview }`                          |
+|                 | `daji:conversation-end` | `{ reason }`                                 |
+|                 | `daji:close`            | `null`                                       |
+| parent → iframe | `daji:identity`         | `{ token, language?, userId?, supplierId? }` |
+|                 | `daji:ping`             | `null`                                       |
 
 **安全**：收消息时严格校验 `event.origin` 属于白名单（boot 时从 `baseUrl` 推导，用 `allowedOrigins` 补充）。不匹配直接忽略。
 
@@ -168,15 +170,16 @@ on('conversation:end', ({ reason }) => {
 
 ```ts
 interface DajiCSBootOptions {
-  baseUrl: string                  // 客服站点根，如 https://cs.example.cn
-  apiBase: string                  // 后端 API 根（预投商品卡等接口）
-  version?: string                 // 随 query 下发，排查用
-  debug?: boolean                  // 打印内部日志（重试 / 复用窗口等）
-  allowedOrigins?: string[]        // postMessage 白名单（baseUrl origin 已自动加入）
-  autoCloseOnEnd?: boolean         // 收 conversation:end 后是否自动关 widget（默认 true）
-  endCloseDelay?: number           // 自动关的延迟 ms（默认 3000）
+  baseUrl: string // 客服站点根，如 https://cs.example.cn
+  apiBase: string // 后端 API 根（预投商品卡等接口）
+  version?: string // 随 query 下发，排查用
+  debug?: boolean // 打印内部日志（重试 / 复用窗口等）
+  allowedOrigins?: string[] // postMessage 白名单（baseUrl origin 已自动加入）
+  autoCloseOnEnd?: boolean // 收 conversation:end 后是否自动关 widget（默认 true）
+  endCloseDelay?: number // 自动关的延迟 ms（默认 3000）
 }
 ```
 
 ## License
+
 UNLICENSED — 内部发布。

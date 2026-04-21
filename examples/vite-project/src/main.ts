@@ -1,16 +1,16 @@
 import {
-  boot,
-  open,
-  mountLauncher,
-  unmountLauncher,
-  toggleWidget,
-  setUnreadCount,
-  refreshIdentity,
-  on,
-  version,
   type DajiCSBootOptions,
-  type OpenOptions,
   type DajiCSEventType,
+  type OpenOptions,
+  boot,
+  mountLauncher,
+  on,
+  open,
+  refreshIdentity,
+  setUnreadCount,
+  toggleWidget,
+  unmountLauncher,
+  version,
 } from '@daji/cs-sdk'
 
 // 1) 初始化：baseUrl / apiBase 由 .env.[mode] 注入（dev/staging/production 三套）
@@ -42,11 +42,20 @@ function hud(msg: string) {
 
 const allEvents: DajiCSEventType[] = [
   'ready',
-  'window:open', 'window:focus', 'window:close',
-  'presend:start', 'presend:success', 'presend:error',
-  'launcher:mount', 'launcher:click', 'launcher:unmount',
-  'widget:open', 'widget:close',
-  'unread:change', 'message:incoming', 'conversation:end',
+  'window:open',
+  'window:focus',
+  'window:close',
+  'presend:start',
+  'presend:success',
+  'presend:error',
+  'launcher:mount',
+  'launcher:click',
+  'launcher:unmount',
+  'widget:open',
+  'widget:close',
+  'unread:change',
+  'message:incoming',
+  'conversation:end',
   'error',
 ]
 allEvents.forEach((ev) => {
@@ -62,10 +71,34 @@ interface Product {
   cover: string
 }
 const products: Product[] = [
-  { id: 'SPU_9001', title: '新疆灰枣 5kg 礼盒', price: 128, origin: 168, cover: 'https://placehold.co/260x180/FA3E3E/fff?text=Dates' },
-  { id: 'SPU_9002', title: '云南古树普洱生茶 357g', price: 288, origin: 398, cover: 'https://placehold.co/260x180/06b6d4/fff?text=Tea' },
-  { id: 'SPU_9003', title: '内蒙古肥牛卷 500g', price: 78, origin: 98, cover: 'https://placehold.co/260x180/10b981/fff?text=Beef' },
-  { id: 'SPU_9004', title: '山东烟台红富士 10 斤', price: 59, origin: 89, cover: 'https://placehold.co/260x180/f59e0b/fff?text=Apple' },
+  {
+    id: 'SPU_9001',
+    title: '新疆灰枣 5kg 礼盒',
+    price: 128,
+    origin: 168,
+    cover: 'https://placehold.co/260x180/FA3E3E/fff?text=Dates',
+  },
+  {
+    id: 'SPU_9002',
+    title: '云南古树普洱生茶 357g',
+    price: 288,
+    origin: 398,
+    cover: 'https://placehold.co/260x180/06b6d4/fff?text=Tea',
+  },
+  {
+    id: 'SPU_9003',
+    title: '内蒙古肥牛卷 500g',
+    price: 78,
+    origin: 98,
+    cover: 'https://placehold.co/260x180/10b981/fff?text=Beef',
+  },
+  {
+    id: 'SPU_9004',
+    title: '山东烟台红富士 10 斤',
+    price: 59,
+    origin: 89,
+    cover: 'https://placehold.co/260x180/f59e0b/fff?text=Apple',
+  },
 ]
 
 const common: Omit<OpenOptions, 'card'> = {

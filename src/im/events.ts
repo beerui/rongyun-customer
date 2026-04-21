@@ -1,6 +1,6 @@
 import * as RC from '@rongcloud/imlib-next'
-import type { ConnectionStatus, Message, Conversation } from './types'
-import { parseRcMessage, parseRcConversation } from './parse'
+import { parseRcConversation, parseRcMessage } from './parse'
+import type { ConnectionStatus, Conversation, Message } from './types'
 
 type Unsub = () => void
 

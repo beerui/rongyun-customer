@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, computed, onMounted, onBeforeUnmount } from 'vue'
-import { emojiList } from '@/utils/emoji'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { type ConversationTag, getToolbarPermissions } from '@/constants/chat-toolbar'
 import { useComposerStore } from '@/stores/composer'
-import { getToolbarPermissions, type ConversationTag } from '@/constants/chat-toolbar'
+import { emojiList } from '@/utils/emoji'
 
 const props = withDefaults(
   defineProps<{
@@ -55,10 +55,13 @@ onMounted(() => document.addEventListener('click', onDocumentClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 
 // 外部通过 composer.insert() 填入文本时同步到本地输入框
-watch(() => composer.version, () => {
-  text.value = composer.draft
-  nextTick(() => textareaRef.value?.focus())
-})
+watch(
+  () => composer.version,
+  () => {
+    text.value = composer.draft
+    nextTick(() => textareaRef.value?.focus())
+  },
+)
 
 function handleSend() {
   const t = text.value.trim()
@@ -77,7 +80,10 @@ function handleKeydown(e: KeyboardEvent) {
 
 async function insertEmoji(s: string) {
   const ta = textareaRef.value
-  if (!ta) { text.value += s; return }
+  if (!ta) {
+    text.value += s
+    return
+  }
   const start = ta.selectionStart ?? text.value.length
   const end = ta.selectionEnd ?? text.value.length
   text.value = text.value.slice(0, start) + s + text.value.slice(end)
@@ -87,9 +93,20 @@ async function insertEmoji(s: string) {
   ta.setSelectionRange(pos, pos)
 }
 
-function pickImage() { imageInput.value?.click() }
-function pickVideo() { videoInput.value?.click() }
-function pickFile()  { fileInput.value?.click() }
+function insertEmojiAndClose(s: string) {
+  insertEmoji(s)
+  showEmoji.value = false
+}
+
+function pickImage() {
+  imageInput.value?.click()
+}
+function pickVideo() {
+  videoInput.value?.click()
+}
+function pickFile() {
+  fileInput.value?.click()
+}
 
 function onImageChange(e: Event) {
   const f = (e.target as HTMLInputElement).files?.[0]
@@ -107,7 +124,11 @@ function onFileChange(e: Event) {
   ;(e.target as HTMLInputElement).value = ''
 }
 
-interface Tool { label: string; action: string; visible: boolean }
+interface Tool {
+  label: string
+  action: string
+  visible: boolean
+}
 
 // 统一权限管理：根据 role + conversationTag 自动计算
 const permissions = computed(() => {
@@ -132,27 +153,66 @@ const permissions = computed(() => {
 })
 
 const tools = computed<Tool[]>(() => [
-  { label: '表情',     action: 'emoji',   visible: permissions.value.emoji },
+  { label: '表情', action: 'emoji', visible: permissions.value.emoji },
   { label: '我要投诉', action: 'complaint', visible: permissions.value.complaint },
-  { label: '转人工',   action: 'agent',   visible: permissions.value.agent },
-  { label: '发订单',   action: 'order',   visible: permissions.value.order },
-  { label: '发商品',   action: 'product', visible: permissions.value.product },
-  { label: '图片',     action: 'image',   visible: permissions.value.image },
-  { label: '视频',     action: 'video',   visible: permissions.value.video },
-  { label: '文件',     action: 'file',    visible: permissions.value.file },  
-  { label: '优惠券',   action: 'coupon',  visible: permissions.value.coupon },
-  { label: '快捷话术', action: 'quick',   visible: permissions.value.quick },
+  { label: '转人工', action: 'agent', visible: permissions.value.agent },
+  { label: '发订单', action: 'order', visible: permissions.value.order },
+  { label: '发商品', action: 'product', visible: permissions.value.product },
+  { label: '图片', action: 'image', visible: permissions.value.image },
+  { label: '视频', action: 'video', visible: permissions.value.video },
+  { label: '文件', action: 'file', visible: permissions.value.file },
+  { label: '优惠券', action: 'coupon', visible: permissions.value.coupon },
+  { label: '快捷话术', action: 'quick', visible: permissions.value.quick },
   { label: '平台客服', action: 'platform', visible: permissions.value.platform },
 ])
 
 const visibleTools = computed(() => tools.value.filter((t) => t.visible))
 
 function onToolClick(action: string) {
-  if (action === 'emoji') { showEmoji.value = !showEmoji.value; return }
+  if (action === 'emoji') {
+    showEmoji.value = !showEmoji.value
+    return
+  }
   if (action === 'image') return pickImage()
   if (action === 'video') return pickVideo()
-  if (action === 'file')  return pickFile()
+  if (action === 'file') return pickFile()
   emit('open-drawer', action as any)
+}
+
+// 移动端辅助方法
+function toggleMobilePlus() {
+  showMobilePlus.value = !showMobilePlus.value
+  showEmoji.value = false
+}
+
+function toggleMobileEmoji() {
+  showEmoji.value = !showEmoji.value
+  showMobilePlus.value = false
+}
+
+function closeMobileMenus() {
+  showMobilePlus.value = false
+  showEmoji.value = false
+}
+
+function pickImageAndClose() {
+  pickImage()
+  showMobilePlus.value = false
+}
+
+function pickVideoAndClose() {
+  pickVideo()
+  showMobilePlus.value = false
+}
+
+function pickFileAndClose() {
+  pickFile()
+  showMobilePlus.value = false
+}
+
+function openDrawerAndClose(kind: 'order' | 'product' | 'coupon' | 'quick') {
+  emit('open-drawer', kind)
+  showMobilePlus.value = false
 }
 </script>
 
@@ -163,14 +223,18 @@ function onToolClick(action: string) {
       <button
         class="shrink-0 w-9 h-9 rounded-full border border-line-light text-lg text-ink-700 flex items-center justify-center hover:bg-bg-soft"
         :class="{ 'bg-bg-soft': showMobilePlus }"
-        @click="showMobilePlus = !showMobilePlus; showEmoji = false"
-      >+</button>
+        @click="toggleMobilePlus"
+      >
+        +
+      </button>
       <button
         class="shrink-0 w-9 h-9 rounded-full border border-line-light text-lg flex items-center justify-center hover:bg-bg-soft"
         :class="{ 'bg-bg-soft': showEmoji }"
         data-action="emoji"
-        @click="showEmoji = !showEmoji; showMobilePlus = false"
-      >😊</button>
+        @click="toggleMobileEmoji"
+      >
+        😊
+      </button>
       <textarea
         ref="textareaRef"
         v-model="text"
@@ -179,66 +243,53 @@ function onToolClick(action: string) {
         :rows="1"
         class="flex-1 min-w-0 resize-none rounded-full border border-line-light px-4 py-2 text-sm bg-bg-soft focus:outline-none focus:border-brand-500 focus:bg-white disabled:opacity-60"
         @keydown="handleKeydown"
-        @focus="showMobilePlus = false; showEmoji = false"
+        @focus="closeMobileMenus"
       />
       <button
         class="shrink-0 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-sm h-9 px-4 disabled:opacity-50"
         :disabled="disabled || !text.trim()"
         @click="handleSend"
-      >发送</button>
+      >
+        发送
+      </button>
     </div>
 
-    <div v-if="showEmoji" ref="emojiPopRef" class="border-t border-line-light p-2 grid grid-cols-8 gap-1 max-h-56 overflow-y-auto scrollbar-thin">
-      <button
-        v-for="e in emojiList"
-        :key="e.shortcut"
-        class="text-2xl hover:bg-bg-soft rounded py-1"
-        @click="insertEmoji(e.emoji)"
-      >{{ e.emoji }}</button>
+    <div
+      v-if="showEmoji"
+      ref="emojiPopRef"
+      class="border-t border-line-light p-2 grid grid-cols-8 gap-1 max-h-56 overflow-y-auto scrollbar-thin"
+    >
+      <button v-for="e in emojiList" :key="e.shortcut" class="text-2xl hover:bg-bg-soft rounded py-1" @click="insertEmoji(e.emoji)">
+        {{ e.emoji }}
+      </button>
     </div>
 
     <div v-if="showMobilePlus" class="border-t border-line-light p-4 grid grid-cols-4 gap-3">
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickImage(); showMobilePlus = false">
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickImageAndClose">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🖼️</span>
         <span class="text-[11px] text-ink-700">图片</span>
       </button>
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickVideo(); showMobilePlus = false">
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickVideoAndClose">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🎞️</span>
         <span class="text-[11px] text-ink-700">视频</span>
       </button>
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickFile(); showMobilePlus = false">
+      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickFileAndClose">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📎</span>
         <span class="text-[11px] text-ink-700">文件</span>
       </button>
-      <button
-        v-if="permissions.order"
-        class="flex flex-col items-center gap-1.5 py-2"
-        @click="emit('open-drawer', 'order'); showMobilePlus = false"
-      >
+      <button v-if="permissions.order" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('order')">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📦</span>
         <span class="text-[11px] text-ink-700">订单</span>
       </button>
-      <button
-        v-if="permissions.product"
-        class="flex flex-col items-center gap-1.5 py-2"
-        @click="emit('open-drawer', 'product'); showMobilePlus = false"
-      >
+      <button v-if="permissions.product" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('product')">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🛍️</span>
         <span class="text-[11px] text-ink-700">商品</span>
       </button>
-      <button
-        v-if="permissions.coupon"
-        class="flex flex-col items-center gap-1.5 py-2"
-        @click="emit('open-drawer', 'coupon'); showMobilePlus = false"
-      >
+      <button v-if="permissions.coupon" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('coupon')">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🎟️</span>
         <span class="text-[11px] text-ink-700">优惠券</span>
       </button>
-      <button
-        v-if="permissions.quick"
-        class="flex flex-col items-center gap-1.5 py-2"
-        @click="emit('open-drawer', 'quick'); showMobilePlus = false"
-      >
+      <button v-if="permissions.quick" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('quick')">
         <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">⚡</span>
         <span class="text-[11px] text-ink-700">话术</span>
       </button>
@@ -268,12 +319,9 @@ function onToolClick(action: string) {
       ref="emojiPopRef"
       class="absolute left-4 bottom-full w-80 bg-white border border-line-light shadow-card rounded-md p-2 grid grid-cols-8 gap-1 max-h-48 overflow-y-auto z-10 mb-1 scrollbar-thin"
     >
-      <button
-        v-for="e in emojiList"
-        :key="e.shortcut"
-        class="text-lg hover:bg-bg-soft rounded py-1"
-        @click="insertEmoji(e.emoji); showEmoji = false"
-      >{{ e.emoji }}</button>
+      <button v-for="e in emojiList" :key="e.shortcut" class="text-lg hover:bg-bg-soft rounded py-1" @click="insertEmojiAndClose(e.emoji)">
+        {{ e.emoji }}
+      </button>
     </div>
 
     <div class="px-[20px] py-[16px]">
@@ -293,7 +341,9 @@ function onToolClick(action: string) {
             class="rounded-md bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs px-[20px] py-[10px] disabled:opacity-50"
             :disabled="disabled || !text.trim()"
             @click="handleSend"
-          >发送</button>
+          >
+            发送
+          </button>
         </div>
       </div>
     </div>

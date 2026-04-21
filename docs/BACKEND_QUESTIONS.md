@@ -29,7 +29,7 @@
 6. **上传接口**
    - Apifox 定义：`POST /uploadFile`，multipart 字段名 `file`，返回字符串（url）
    - 前端当前：`POST /metaman/api/oss/upload/`
-   哪个是线上真实路径？两边返回结构是否一致（前端兼容了 `body.url / body.data / body.fileUrl / 直接字符串` 四种）。
+     哪个是线上真实路径？两边返回结构是否一致（前端兼容了 `body.url / body.data / body.fileUrl / 直接字符串` 四种）。
 
 7. **未在 Apifox 出现的 6 个前端接口**
    前端有调用但文档里没有，请确认是"未导出文档"还是"未实现"：

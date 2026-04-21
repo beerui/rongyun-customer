@@ -1,10 +1,10 @@
-import type { DajiCSBootOptions, OpenOptions } from './types'
-import { buildQuery } from './query'
-import { preSendProductCard } from './pre-send'
-import { emit, clearAllListeners } from './events'
-import { signalReady, resetReady, ready as readyPromise, isReadyNow } from './ready'
-import { triggerReset } from './lifecycle'
+import { clearAllListeners, emit } from './events'
 import { startBridge } from './launcher/bridge'
+import { triggerReset } from './lifecycle'
+import { preSendProductCard } from './pre-send'
+import { buildQuery } from './query'
+import { isReadyNow, ready as readyPromise, resetReady, signalReady } from './ready'
+import type { DajiCSBootOptions, OpenOptions } from './types'
 
 const DEFAULT_FEATURES = 'width=1000,height=600,scrollbars=yes,resizable=yes'
 const VERSION = '0.1.0'
@@ -29,9 +29,7 @@ export function boot(options: DajiCSBootOptions): void {
   if (!options?.apiBase) throw new Error('DajiCS.boot: apiBase required')
 
   if (config) {
-    const changed =
-      config.baseUrl !== options.baseUrl ||
-      config.apiBase !== options.apiBase
+    const changed = config.baseUrl !== options.baseUrl || config.apiBase !== options.apiBase
     if (changed) {
       warn('boot() called again with different config — ignoring. Call DajiCS.reset() first to re-boot.')
       return
@@ -166,7 +164,11 @@ export function close(opts: Pick<OpenOptions, 'userId' | 'supplierId'>): void {
   const key = windowKey(opts as OpenOptions)
   const win = openedWindows.get(key)
   if (win && !win.closed) {
-    try { win.close() } catch { /* ignore */ }
+    try {
+      win.close()
+    } catch {
+      /* ignore */
+    }
   }
   if (openedWindows.delete(key)) {
     emit('window:close', { key })
@@ -181,9 +183,7 @@ export function close(opts: Pick<OpenOptions, 'userId' | 'supplierId'>): void {
  * 注意：事件 payload 不再包含 Window 对象（payload 必须可序列化，便于埋点上报）。
  * 如果宿主想要直接操作 Window（如 postMessage / focus），请使用此方法按需取。
  */
-export function getOpenWindow(
-  opts: Pick<OpenOptions, 'userId' | 'supplierId'>,
-): Window | null {
+export function getOpenWindow(opts: Pick<OpenOptions, 'userId' | 'supplierId'>): Window | null {
   const key = windowKey(opts as OpenOptions)
   const win = openedWindows.get(key)
   if (win && !win.closed) return win

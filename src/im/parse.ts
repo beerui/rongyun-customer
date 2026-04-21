@@ -1,5 +1,5 @@
-import type { Message, Conversation, MessageType } from './types'
 import { DAJI_CARD_OBJECT_NAME } from './custom-messages'
+import type { Conversation, Message, MessageType } from './types'
 
 const RECALL_CMD = 'RC:RcCmd'
 const RECALL_NTF = 'RC:RcNtf'
@@ -15,38 +15,49 @@ function detectType(objectName: string, content: any): MessageType {
   const ct = content?.customType
   if (ct === 'conversation-end') return 'custom'
   switch (objectName) {
-    case 'RC:TxtMsg': return 'text'
-    case 'RC:ImgMsg': return 'image'
-    case 'RC:FileMsg': return 'file'
-    case 'RC:SightMsg': return 'video'
+    case 'RC:TxtMsg':
+      return 'text'
+    case 'RC:ImgMsg':
+      return 'image'
+    case 'RC:FileMsg':
+      return 'file'
+    case 'RC:SightMsg':
+      return 'video'
   }
   return 'custom'
 }
 
 function parseContent(type: MessageType, content: any): any {
   if (type === 'text') return content?.content ?? ''
-  if (type === 'image') return {
-    url: content?.imageUri || content?.content || '',
-    width: content?.width,
-    height: content?.height,
-  }
-  if (type === 'video') return {
-    url: content?.sightUrl || content?.content || '',
-    duration: content?.duration,
-    name: content?.name,
-    size: content?.size,
-  }
-  if (type === 'file') return {
-    url: content?.fileUrl ?? '',
-    name: content?.name ?? '',
-    size: Number(content?.size ?? 0),
-  }
+  if (type === 'image')
+    return {
+      url: content?.imageUri || content?.content || '',
+      width: content?.width,
+      height: content?.height,
+    }
+  if (type === 'video')
+    return {
+      url: content?.sightUrl || content?.content || '',
+      duration: content?.duration,
+      name: content?.name,
+      size: content?.size,
+    }
+  if (type === 'file')
+    return {
+      url: content?.fileUrl ?? '',
+      name: content?.name ?? '',
+      size: Number(content?.size ?? 0),
+    }
   if (type === 'product' || type === 'order' || type === 'coupon') {
     // DAJI:Card 消息：content 形状就是 { customType, data }
     if (content?.data) return content.data
     // 兼容老协议：content.content 是一段 JSON 字符串
     if (typeof content?.content === 'string') {
-      try { return JSON.parse(content.content) } catch { /* ignore */ }
+      try {
+        return JSON.parse(content.content)
+      } catch {
+        /* ignore */
+      }
     }
     return content
   }
@@ -120,9 +131,12 @@ function formatLastMessagePreview(latest: any): string {
       const t = typeof content?.content === 'string' ? content.content : ''
       return t || '[消息]'
     }
-    case 'image':  return '[图片]'
-    case 'video':  return '[视频]'
-    case 'file':   return '[文件]'
+    case 'image':
+      return '[图片]'
+    case 'video':
+      return '[视频]'
+    case 'file':
+      return '[文件]'
     case 'product': {
       const title = content?.data?.title
       return title ? `[商品] ${title}` : '[商品]'
@@ -135,6 +149,7 @@ function formatLastMessagePreview(latest: any): string {
       const title = content?.data?.title
       return title ? `[优惠券] ${title}` : '[优惠券]'
     }
-    default: return '[消息]'
+    default:
+      return '[消息]'
   }
 }

@@ -28,7 +28,10 @@ async function probeImage(file: File): Promise<{ width?: number; height?: number
       resolve({ width: img.naturalWidth, height: img.naturalHeight })
       URL.revokeObjectURL(url)
     }
-    img.onerror = () => { resolve({}); URL.revokeObjectURL(url) }
+    img.onerror = () => {
+      resolve({})
+      URL.revokeObjectURL(url)
+    }
     img.src = url
   })
 }
@@ -42,7 +45,10 @@ async function probeVideo(file: File): Promise<{ width?: number; height?: number
       resolve({ width: v.videoWidth, height: v.videoHeight, duration: v.duration })
       URL.revokeObjectURL(url)
     }
-    v.onerror = () => { resolve({}); URL.revokeObjectURL(url) }
+    v.onerror = () => {
+      resolve({})
+      URL.revokeObjectURL(url)
+    }
     v.src = url
   })
 }

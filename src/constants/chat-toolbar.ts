@@ -3,7 +3,18 @@
  * 统一管理工作台和访客端的按钮可见性
  */
 
-export type ToolbarButton = 'emoji' | 'image' | 'video' | 'file' | 'order' | 'product' | 'coupon' | 'quick' | 'complaint' | 'agent' | 'platform'
+export type ToolbarButton =
+  | 'emoji'
+  | 'image'
+  | 'video'
+  | 'file'
+  | 'order'
+  | 'product'
+  | 'coupon'
+  | 'quick'
+  | 'complaint'
+  | 'agent'
+  | 'platform'
 
 // 工具栏按钮权限配置
 export interface ToolbarPermissions {
@@ -55,7 +66,7 @@ export function getToolbarPermissions(context: {
     complaint: false,
     agent: false,
     platform: false,
-   }
+  }
 
   // 客服工作台
   if (role === 'agent') {

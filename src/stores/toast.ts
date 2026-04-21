@@ -28,15 +28,18 @@ export const useToastStore = defineStore('toast', () => {
     if (i > -1) items.value.splice(i, 1)
   }
 
-  function clear() { items.value = [] }
+  function clear() {
+    items.value = []
+  }
 
   return {
     items,
-    info:    (m: string, d?: number) => push('info', m, d),
+    info: (m: string, d?: number) => push('info', m, d),
     success: (m: string, d?: number) => push('success', m, d),
-    error:   (m: string, d?: number) => push('error', m, d ?? 4000),
+    error: (m: string, d?: number) => push('error', m, d ?? 4000),
     warning: (m: string, d?: number) => push('warning', m, d),
-    dismiss, clear,
+    dismiss,
+    clear,
   }
 })
 
@@ -45,8 +48,8 @@ export const useToastStore = defineStore('toast', () => {
  * 组件里建议直接 useToastStore() 保持响应式一致。
  */
 export const toast = {
-  info:    (m: string, d?: number) => useToastStore().info(m, d),
+  info: (m: string, d?: number) => useToastStore().info(m, d),
   success: (m: string, d?: number) => useToastStore().success(m, d),
-  error:   (m: string, d?: number) => useToastStore().error(m, d),
+  error: (m: string, d?: number) => useToastStore().error(m, d),
   warning: (m: string, d?: number) => useToastStore().warning(m, d),
 }

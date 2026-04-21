@@ -4,7 +4,6 @@
  * 仅用于 `<script src="daji-cs.iife.js">` 方式的直接接入。
  * ESM / CJS 用户请使用 `import ... from '@daji/cs-sdk'`（走 src/sdk/index.ts）。
  */
-
 import * as SDK from './index'
 
 const api = {

@@ -19,7 +19,16 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["index.esm.js", "index.esm.js.map", "index.cjs", "index.cjs.map", "iife", "types", "package.json", "README.md"],
+  "files": [
+    "index.esm.js",
+    "index.esm.js.map",
+    "index.cjs",
+    "index.cjs.map",
+    "iife",
+    "types",
+    "package.json",
+    "README.md"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "restricted"

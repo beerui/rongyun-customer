@@ -10,12 +10,7 @@
 const DAJI_MSG_SOURCE = 'daji-cs'
 const DAJI_MSG_VERSION = '0.1.0'
 
-export type EmbedMsgType =
-  | 'daji:ready'
-  | 'daji:unread'
-  | 'daji:message'
-  | 'daji:conversation-end'
-  | 'daji:close'
+export type EmbedMsgType = 'daji:ready' | 'daji:unread' | 'daji:message' | 'daji:conversation-end' | 'daji:close'
 
 export interface EmbedMessage<T = unknown> {
   source: typeof DAJI_MSG_SOURCE
@@ -67,9 +62,7 @@ export function sendToParent<T>(type: EmbedMsgType, payload?: T): void {
 }
 
 /** 监听 parent 下发的 daji 协议消息（如 identity 补发）。返回取消函数。 */
-export function onParentMessage(
-  handler: (type: string, payload: unknown) => void,
-): () => void {
+export function onParentMessage(handler: (type: string, payload: unknown) => void): () => void {
   if (typeof window === 'undefined') return () => {}
   const listener = (e: MessageEvent) => {
     const data = e.data

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { fetchUserImCredential, agentLogin as apiAgentLogin, type AgentImCredential } from '@/apis/auth'
+import { computed, ref } from 'vue'
+import { type AgentImCredential, agentLogin as apiAgentLogin, fetchUserImCredential } from '@/apis/auth'
 
 export type Role = 'guest' | 'user' | 'agent'
 
@@ -18,7 +18,9 @@ function loadAgentSession(): AgentSession | null {
   try {
     const raw = localStorage.getItem(AGENT_SESSION_KEY)
     return raw ? JSON.parse(raw) : null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 function saveAgentSession(s: AgentSession) {
@@ -109,7 +111,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    role, userId, name, avatar, rcToken, peerId, peers, isAgent,
-    bootstrap, bootstrapUser, loginAgent, restoreAgent, logout,
+    role,
+    userId,
+    name,
+    avatar,
+    rcToken,
+    peerId,
+    peers,
+    isAgent,
+    bootstrap,
+    bootstrapUser,
+    loginAgent,
+    restoreAgent,
+    logout,
   }
 })

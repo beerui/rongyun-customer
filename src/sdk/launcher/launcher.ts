@@ -1,9 +1,9 @@
-import type { OpenOptions } from '../types'
 import { emit, on } from '../events'
-import type { Unsubscribe } from '../utils/event-emitter'
-import { open, buildChatUrl } from '../open'
 import { onReset } from '../lifecycle'
-import { injectStyles, openWidget, closeWidget, isWidgetOpen, updateTheme, destroyWidget } from './widget'
+import { buildChatUrl, open } from '../open'
+import type { OpenOptions } from '../types'
+import type { Unsubscribe } from '../utils/event-emitter'
+import { closeWidget, destroyWidget, injectStyles, isWidgetOpen, openWidget, updateTheme } from './widget'
 
 export type LauncherPosition = 'bottom-right' | 'bottom-left'
 export type LauncherMode = 'iframe' | 'tab'

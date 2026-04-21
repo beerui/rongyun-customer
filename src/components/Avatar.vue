@@ -1,8 +1,5 @@
 <script setup lang="ts">
-withDefaults(
-  defineProps<{ src?: string; name?: string; size?: number; bg?: string }>(),
-  { size: 36 },
-)
+withDefaults(defineProps<{ src?: string; name?: string; size?: number; bg?: string }>(), { size: 36 })
 </script>
 
 <template>
@@ -11,7 +8,7 @@ withDefaults(
     :style="{
       width: size + 'px',
       height: size + 'px',
-      fontSize: (size * 0.38) + 'px',
+      fontSize: size * 0.38 + 'px',
       background: bg || '#E6F4FF',
     }"
   >

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { Message } from '@/im'
+import EmptyState from './EmptyState.vue'
 import MessageBubble from './MessageBubble.vue'
 import TimeDivider from './TimeDivider.vue'
-import EmptyState from './EmptyState.vue'
 
 const props = defineProps<{
   messages: Message[]
@@ -51,9 +51,12 @@ async function scrollToBottom() {
   if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
 }
 
-watch(() => props.messages.length, (n, prev) => {
-  if (n > prev) scrollToBottom()
-})
+watch(
+  () => props.messages.length,
+  (n, prev) => {
+    if (n > prev) scrollToBottom()
+  },
+)
 
 const FIVE_MIN = 5 * 60 * 1000
 const items = computed(() => {
@@ -74,10 +77,9 @@ const items = computed(() => {
   <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 bg-white">
     <EmptyState v-if="!messages.length" title="还没有消息" desc="等待用户发起咨询…" />
     <div v-if="hasMore" class="text-center mb-3">
-      <button
-        class="text-[11px] text-ink-500 hover:text-brand-500 px-3 py-1 rounded bg-bg-soft"
-        @click="loadEarlier"
-      >加载更早的消息（剩余 {{ messages.length - visibleCount }} 条）</button>
+      <button class="text-[11px] text-ink-500 hover:text-brand-500 px-3 py-1 rounded bg-bg-soft" @click="loadEarlier">
+        加载更早的消息（剩余 {{ messages.length - visibleCount }} 条）
+      </button>
     </div>
     <template v-for="it in items" :key="it.key">
       <TimeDivider v-if="it.kind === 'time'" :ts="it.ts" />

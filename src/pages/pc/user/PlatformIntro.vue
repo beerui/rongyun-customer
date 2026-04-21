@@ -2,7 +2,8 @@
   <div class="h-full overflow-y-auto scrollbar-thin px-10 py-12 bg-white">
     <div class="max-w-2xl">
       <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 text-[11px] mb-4">
-        <span>✨</span><span>我们随时为您服务</span>
+        <span>✨</span>
+        <span>我们随时为您服务</span>
       </div>
       <h1 class="text-[24px] font-semibold text-ink-900 mb-3">欢迎来到中国大集</h1>
       <p class="text-sm text-ink-600 leading-relaxed mb-10">
@@ -35,16 +36,20 @@
       <h2 class="text-base font-semibold text-ink-900 mb-3">常见问题</h2>
       <ul class="space-y-2 text-sm text-ink-700">
         <li class="flex items-center gap-2 rounded-md hover:bg-bg-soft px-3 py-2 cursor-pointer">
-          <span class="text-brand-500">›</span>如何查询订单物流？
+          <span class="text-brand-500">›</span>
+          如何查询订单物流？
         </li>
         <li class="flex items-center gap-2 rounded-md hover:bg-bg-soft px-3 py-2 cursor-pointer">
-          <span class="text-brand-500">›</span>退换货流程是怎样的？
+          <span class="text-brand-500">›</span>
+          退换货流程是怎样的？
         </li>
         <li class="flex items-center gap-2 rounded-md hover:bg-bg-soft px-3 py-2 cursor-pointer">
-          <span class="text-brand-500">›</span>如何修改收货地址？
+          <span class="text-brand-500">›</span>
+          如何修改收货地址？
         </li>
         <li class="flex items-center gap-2 rounded-md hover:bg-bg-soft px-3 py-2 cursor-pointer">
-          <span class="text-brand-500">›</span>发票如何开具？
+          <span class="text-brand-500">›</span>
+          发票如何开具？
         </li>
       </ul>
     </div>

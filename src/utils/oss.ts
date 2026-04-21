@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { getUploadPolicy } from '@/apis/oss'
 import { OSS_DIR, OSS_DIR_NAME, OSS_RESIZE_KEY } from '@/constants/common'
+import { getUploadPolicy } from '@/apis/oss'
 
 const ossAxios = axios.create({ timeout: 30000 })
 
@@ -98,10 +98,7 @@ const resizeKeyMap: Record<string, string> = {
 /**
  * 图片缩放 URL（对齐 oss.js `getImageResizeUrl`）
  */
-export function getImageResizeUrl(
-  url: string,
-  options: Record<string, string | number>,
-): string {
+export function getImageResizeUrl(url: string, options: Record<string, string | number>): string {
   if (!url || typeof url !== 'string') return url
   if (!options || typeof options !== 'object') return url
   const params: string[] = ['x-oss-process=image/resize']
@@ -132,7 +129,12 @@ export function addOssResizeParams(
 ): string {
   if (!resize || typeof resize !== 'object') return url
   const resizeArray = Object.keys(resize)
-    .filter((key) => OSS_RESIZE_KEY[key as keyof typeof OSS_RESIZE_KEY] && (resize as any)[key] !== '' && (resize as any)[key] !== undefined)
+    .filter(
+      (key) =>
+        OSS_RESIZE_KEY[key as keyof typeof OSS_RESIZE_KEY] &&
+        (resize as any)[key] !== '' &&
+        (resize as any)[key] !== undefined,
+    )
     .map((key) => `${key}_${(resize as any)[key]}`)
   if (!resizeArray.length) return url
   return addOssImgParams(url, `resize,${resizeArray.join(',')}`)

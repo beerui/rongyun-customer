@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Drawer from '@/components/Drawer.vue'
-import type { CouponPayload } from '@/im/types'
 import { mockCoupons } from '@/utils/mock-data'
+import type { CouponPayload } from '@/im/types'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{
@@ -28,10 +28,9 @@ const emit = defineEmits<{
           <div class="text-sm font-medium text-ink-900">{{ c.title }}</div>
           <div class="text-[11px] text-ink-600 mt-1">有效期至 {{ c.expireAt }}</div>
         </div>
-        <button
-          class="shrink-0 h-8 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-xs"
-          @click="emit('send', c)"
-        >发放</button>
+        <button class="shrink-0 h-8 px-3 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-xs" @click="emit('send', c)">
+          发放
+        </button>
       </div>
     </div>
   </Drawer>

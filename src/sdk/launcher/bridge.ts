@@ -9,7 +9,6 @@
  *   - 收消息时严格校验 event.origin 属于白名单（boot 时从 baseUrl 推导 + 可补充）
  *   - 消息必须带 source='daji-cs'，type 必须是预期字符串
  */
-
 import { emit } from '../events'
 import { onReset } from '../lifecycle'
 import { closeWidget, getWidgetIframe, showEndBanner } from './widget'

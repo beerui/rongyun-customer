@@ -35,8 +35,20 @@ defineEmits<{ (e: 'close'): void }>()
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity .2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.slide-right-enter-active, .slide-right-leave-active { transition: transform .24s ease; }
-.slide-right-enter-from, .slide-right-leave-to { transform: translateX(100%); }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.24s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(100%);
+}
 </style>
