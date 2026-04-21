@@ -26,7 +26,8 @@ async function handleIdentity(payload: unknown) {
   const p = (payload ?? {}) as Record<string, unknown>
   const token = typeof p.token === 'string' ? p.token : ''
   if (!token) return
-  localStorage.setItem('auth_token', token)
+  const tokenKey = auth.getAuthTokenKey()
+  localStorage.setItem(tokenKey, token)
   try {
     im.disconnect()
     await auth.bootstrapUser()

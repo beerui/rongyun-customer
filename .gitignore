@@ -6,3 +6,4 @@ dist
 *.log
 .idea
 public/daji-cs.iife.js
+docs/IMLib-APIDoc-v5.10.1

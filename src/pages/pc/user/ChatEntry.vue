@@ -13,7 +13,7 @@ onMounted(async () => {
   const q = route.query as Record<string, string | undefined>
 
   // 宿主业务 token → 走 http 拦截器的 Authorization
-  if (q.daji_token) localStorage.setItem('auth_token', String(q.daji_token))
+  if (q.daji_token) localStorage.setItem('user_auth_token', String(q.daji_token))
   if (q.daji_language) setDefaultLang(String(q.daji_language))
 
   // 上下文信息（SDK 来源、外部用户、商户等），留痕排查用

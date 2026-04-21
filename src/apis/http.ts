@@ -8,7 +8,9 @@ export const http: AxiosInstance = axios.create({
 })
 
 http.interceptors.request.use((config) => {
-  const imToken = localStorage.getItem('auth_token') || READY_TOKEN || ''
+  const isAgentRoute = location.pathname.startsWith('/agent')
+  const tokenKey = isAgentRoute ? 'agent_auth_token' : 'user_auth_token'
+  const imToken = localStorage.getItem(tokenKey) || READY_TOKEN || ''
   if (imToken) (config.headers as any).ImToken = imToken
   // if (imToken) (config.headers as any).accessToken = imToken
   // if (imToken) (config.headers as any).Authorization = imToken
@@ -30,7 +32,9 @@ http.interceptors.response.use(
   },
   (err) => {
     if (err?.response?.status === 401) {
-      localStorage.removeItem('auth_token')
+      const isAgentRoute = location.pathname.startsWith('/agent')
+      const tokenKey = isAgentRoute ? 'agent_auth_token' : 'user_auth_token'
+      localStorage.removeItem(tokenKey)
       if (!location.pathname.includes('/agent/login')) {
         location.href = '/agent/login'
       }

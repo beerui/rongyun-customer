@@ -107,15 +107,15 @@ export interface ToolbarButtonConfig {
 }
 
 export const TOOLBAR_BUTTONS: Record<ToolbarButton, ToolbarButtonConfig> = {
-  emoji: { label: '表情', action: 'emoji' },
-  complaint: { label: '我要投诉', action: 'complaint' },
-  agent: { label: '转人工', action: 'agent' },
-  order: { label: '发订单', action: 'order' },
-  product: { label: '发商品', action: 'product' },
-  image: { label: '图片', action: 'image' },
-  video: { label: '视频', action: 'video' },
-  file: { label: '文件', action: 'file' },
-  coupon: { label: '优惠券', action: 'coupon' },
-  quick: { label: '快捷话术', action: 'quick' },
-  platform: { label: '平台客服', action: 'platform' },
+  emoji: { label: '表情', action: 'emoji', icon: '😊' },
+  complaint: { label: '我要投诉', action: 'complaint', icon: '📢' },
+  agent: { label: '转人工', action: 'agent', icon: '👤' },
+  order: { label: '发订单', action: 'order', icon: '📦' },
+  product: { label: '发商品', action: 'product', icon: '🛍️' },
+  image: { label: '图片', action: 'image', icon: '🖼️' },
+  video: { label: '视频', action: 'video', icon: '🎞️' },
+  file: { label: '文件', action: 'file', icon: '📎' },
+  coupon: { label: '优惠券', action: 'coupon', icon: '🎟️' },
+  quick: { label: '快捷话术', action: 'quick', icon: '⚡' },
+  platform: { label: '平台客服', action: 'platform', icon: '🏢' },
 }

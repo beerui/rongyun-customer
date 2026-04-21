@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { type ConversationTag, getToolbarPermissions } from '@/constants/chat-toolbar'
+import { type ConversationTag, TOOLBAR_BUTTONS, getToolbarPermissions } from '@/constants/chat-toolbar'
 import { useComposerStore } from '@/stores/composer'
 import { emojiList } from '@/utils/emoji'
 
@@ -195,25 +195,16 @@ function closeMobileMenus() {
   showEmoji.value = false
 }
 
-function pickImageAndClose() {
-  pickImage()
+function onMobileToolClick(action: string) {
   showMobilePlus.value = false
+  if (action === 'image') return pickImage()
+  if (action === 'video') return pickVideo()
+  if (action === 'file') return pickFile()
+  emit('open-drawer', action as any)
 }
 
-function pickVideoAndClose() {
-  pickVideo()
-  showMobilePlus.value = false
-}
-
-function pickFileAndClose() {
-  pickFile()
-  showMobilePlus.value = false
-}
-
-function openDrawerAndClose(kind: 'order' | 'product' | 'coupon' | 'quick') {
-  emit('open-drawer', kind)
-  showMobilePlus.value = false
-}
+// 移动端可见工具（排除表情，表情有单独按钮）
+const mobileVisibleTools = computed(() => visibleTools.value.filter((t) => t.action !== 'emoji'))
 </script>
 
 <template>
@@ -265,33 +256,16 @@ function openDrawerAndClose(kind: 'order' | 'product' | 'coupon' | 'quick') {
     </div>
 
     <div v-if="showMobilePlus" class="border-t border-line-light p-4 grid grid-cols-4 gap-3">
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickImageAndClose">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🖼️</span>
-        <span class="text-[11px] text-ink-700">图片</span>
-      </button>
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickVideoAndClose">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🎞️</span>
-        <span class="text-[11px] text-ink-700">视频</span>
-      </button>
-      <button class="flex flex-col items-center gap-1.5 py-2" @click="pickFileAndClose">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📎</span>
-        <span class="text-[11px] text-ink-700">文件</span>
-      </button>
-      <button v-if="permissions.order" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('order')">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">📦</span>
-        <span class="text-[11px] text-ink-700">订单</span>
-      </button>
-      <button v-if="permissions.product" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('product')">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🛍️</span>
-        <span class="text-[11px] text-ink-700">商品</span>
-      </button>
-      <button v-if="permissions.coupon" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('coupon')">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">🎟️</span>
-        <span class="text-[11px] text-ink-700">优惠券</span>
-      </button>
-      <button v-if="permissions.quick" class="flex flex-col items-center gap-1.5 py-2" @click="openDrawerAndClose('quick')">
-        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">⚡</span>
-        <span class="text-[11px] text-ink-700">话术</span>
+      <button
+        v-for="tool in mobileVisibleTools"
+        :key="tool.action"
+        class="flex flex-col items-center gap-1.5 py-2"
+        @click="onMobileToolClick(tool.action)"
+      >
+        <span class="w-12 h-12 rounded-xl bg-bg-soft flex items-center justify-center text-2xl">
+          {{ TOOLBAR_BUTTONS[tool.action as keyof typeof TOOLBAR_BUTTONS].icon }}
+        </span>
+        <span class="text-[11px] text-ink-700">{{ tool.label }}</span>
       </button>
     </div>
 
