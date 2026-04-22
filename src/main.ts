@@ -10,19 +10,9 @@ const hasVconsoleParam = new URLSearchParams(window.location.search).get('vconso
 const shouldLoadVconsole = isMobile && (import.meta.env.DEV || hasVconsoleParam)
 
 if (shouldLoadVconsole) {
-  import('https://unpkg.com/vconsole@latest/dist/vconsole.min.js')
-    .then((module) => {
-      new (module as any).default()
-    })
-    .catch(() => {
-      // 降级方案：通过 script 标签加载
-      const script = document.createElement('script')
-      script.src = 'https://unpkg.com/vconsole@latest/dist/vconsole.min.js'
-      script.onload = () => {
-        new (window as any).VConsole()
-      }
-      document.head.appendChild(script)
-    })
+  import('vconsole').then((module) => {
+    new module.default()
+  })
 }
 
 createApp(App).use(createPinia()).use(router).mount('#app')
