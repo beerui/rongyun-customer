@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useImStore } from '@/stores/im'
 import type { Message } from '@/im'
 import EmptyState from './EmptyState.vue'
 import MessageBubble from './MessageBubble.vue'
@@ -15,6 +16,10 @@ const emit = defineEmits<{
   (e: 'recall', id: string): void
 }>()
 
+const im = useImStore()
+const loading = computed(() => im.loadingHistory)
+const hasMore = computed(() => im.hasMoreHistory)
+
 const scroller = ref<HTMLElement>()
 
 async function scrollToBottom() {
@@ -22,10 +27,29 @@ async function scrollToBottom() {
   if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
 }
 
+function handleScroll() {
+  if (!scroller.value || loading.value || !hasMore.value) return
+  if (scroller.value.scrollTop < 50) {
+    loadMore()
+  }
+}
+
+async function loadMore() {
+  if (!scroller.value) return
+  const prevHeight = scroller.value.scrollHeight
+  const prevTop = scroller.value.scrollTop
+  const success = await im.loadMoreHistory()
+  if (success) {
+    await nextTick()
+    const diff = scroller.value.scrollHeight - prevHeight
+    scroller.value.scrollTop = prevTop + diff
+  }
+}
+
 watch(
-  () => props.messages.length,
-  (n, prev) => {
-    if (n > prev) scrollToBottom()
+  () => props.messages[props.messages.length - 1]?.id,
+  (newLastId, prevLastId) => {
+    if (newLastId && newLastId !== prevLastId) scrollToBottom()
   },
 )
 
@@ -41,6 +65,14 @@ const items = computed(() => {
     lastTs = m.sentTime
   }
   return out
+})
+
+onMounted(() => {
+  scroller.value?.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  scroller.value?.removeEventListener('scroll', handleScroll)
 })
 </script>
 
