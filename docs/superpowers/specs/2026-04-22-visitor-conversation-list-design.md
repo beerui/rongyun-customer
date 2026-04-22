@@ -19,7 +19,7 @@
 **技术栈：**
 - Vue 3 Composition API + TypeScript
 - Pinia (复用 conversations store)
-- 原生 BroadcastChannel API (单标签页强制)
+- broadcast-channel (单标签页强制，跨浏览器兼容)
 - 轻量级日志系统
 
 ---
@@ -49,7 +49,9 @@ UserChat.vue (三栏布局)
 - 预留后端 API 扩展能力（未来可通过后端接口获取更丰富的对话元数据）
 
 **2. 单标签页强制 (新增 single-tab.ts)**
-- 使用原生 BroadcastChannel API 实现跨标签页通信（Chrome 54+, Firefox 38+, Safari 15.4+）
+- 使用 broadcast-channel 库实现跨标签页通信
+- 支持多种传输方式（Native BroadcastChannel、LocalStorage、IndexedDB 等）
+- 自动降级，兼容 IE11、Safari 旧版本
 - 新标签页打开时通知旧标签页关闭
 - 旧标签页收到通知后显示提示并执行 window.close()
 
@@ -175,7 +177,8 @@ export function cleanupSingleTab(): void
 ```
 
 **实现要点：**
-- 使用原生 `new BroadcastChannel('daji-visitor-tab')` 创建频道
+- 使用 `broadcast-channel` 库创建频道
+- 支持多种传输方式，自动降级
 - 初始化时立即发送 `'visitor-tab-opened'` 消息
 - 监听其他标签页的消息，收到后调用 `onForceClose` 回调
 - 清理时关闭 BroadcastChannel
@@ -183,19 +186,15 @@ export function cleanupSingleTab(): void
 **完整实现代码：**
 ```typescript
 // src/utils/single-tab.ts
-let channel: BroadcastChannel | null = null
+import { BroadcastChannel } from 'broadcast-channel'
+
+let channel: BroadcastChannel<string> | null = null
 
 export function initSingleTab(onForceClose: () => void): void {
-  // 兼容性检测
-  if (typeof BroadcastChannel === 'undefined') {
-    console.warn('[SingleTab] BroadcastChannel not supported, single-tab enforcement disabled')
-    return
-  }
-  
   channel = new BroadcastChannel('daji-visitor-tab')
   
-  channel.onmessage = (event) => {
-    if (event.data === 'visitor-tab-opened') {
+  channel.onmessage = (msg) => {
+    if (msg === 'visitor-tab-opened') {
       onForceClose()
       window.close()
     }
@@ -209,6 +208,13 @@ export function cleanupSingleTab(): void {
   channel = null
 }
 ```
+
+**为什么使用 broadcast-channel 库：**
+- **跨浏览器兼容**：支持 IE11、Safari 旧版本（原生 API 在 Safari 15.4 以下不支持）
+- **自动降级**：根据浏览器能力自动选择最佳传输方式（Native BroadcastChannel、LocalStorage、IndexedDB 等）
+- **更可靠**：处理了浏览器差异和边界情况
+- **维护良好**：GitHub 8.5k stars，活跃维护
+- **体积小**：约 5KB gzipped
 
 **日志埋点：**
 - 初始化：`logger.info('初始化单标签页管理')`
@@ -553,6 +559,9 @@ export function formatMessageTime(timestamp?: number): string {
    - 新增日志埋点
    - 预计修改约 10 行
 
+4. **package.json**
+   - 新增依赖：`broadcast-channel`
+
 ### 复用文件
 
 1. **src/components/ConversationItem.vue** (无需修改)
@@ -566,23 +575,25 @@ export function formatMessageTime(timestamp?: number): string {
 实施顺序按照依赖关系组织：
 
 ### Phase 1: 基础工具层
-1. 实现 `logger.ts` 轻量级日志系统
-2. 实现 `time.ts` 时间格式化工具
-3. 实现 `single-tab.ts` 单标签页管理（使用原生 BroadcastChannel API）
+1. 安装 `broadcast-channel` 依赖
+2. 实现 `logger.ts` 轻量级日志系统
+3. 实现 `time.ts` 时间格式化工具
+4. 实现 `single-tab.ts` 单标签页管理（使用 broadcast-channel 库）
 
 ### Phase 2: Store 层增强
-4. 在 `conversations.ts` 中添加日志埋点
+5. 在 `conversations.ts` 中添加日志埋点
 
 ### Phase 3: UI 层改造
-5. 改造 `UserChat.vue` 布局（三栏）
-6. 集成对话列表功能
-7. 集成单标签页逻辑
-8. 添加日志埋点
+6. 改造 `UserChat.vue` 布局（三栏）
+7. 集成对话列表功能
+8. 添加 ConversationItem 未读角标
+9. 集成单标签页逻辑
+10. 添加日志埋点
 
 ### Phase 4: 测试验证
-9. 功能测试（对话列表、切换、单标签页）
-10. 边界测试（无对话、网络异常、多标签页）
-11. 日志输出验证
+11. 功能测试（对话列表、切换、单标签页）
+12. 边界测试（无对话、网络异常、多标签页）
+13. 日志输出验证
 
 ---
 
@@ -590,7 +601,7 @@ export function formatMessageTime(timestamp?: number): string {
 
 1. **代码复用最大化：** 复用 conversations store 和 ConversationItem 组件，避免重复开发
 
-2. **原生 API 优先：** 使用原生 BroadcastChannel API 实现单标签页强制，无需额外依赖
+2. **broadcast-channel 库优势：** 跨浏览器兼容（支持 IE11、Safari 旧版本），自动降级，处理浏览器差异
 
 3. **轻量级日志系统：** 简化日志实现，仅 30 行代码即可满足需求
 
@@ -599,6 +610,8 @@ export function formatMessageTime(timestamp?: number): string {
 5. **用户体验优化：** 单标签页强制避免多窗口混乱，对话列表支持快速切换
 
 6. **多店铺场景支持：** 访客可同时与店铺A客服、店铺B客服、平台客服对话并快速切换
+
+7. **URL 参数驱动：** 通过 URL 参数（peerId）实现从不同入口自动打开对应对话
 
 ---
 
