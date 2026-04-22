@@ -1,4 +1,5 @@
 import * as RC from '@rongcloud/imlib-next'
+import { HISTORY_PAGE_SIZE } from '@/constants/pagination'
 import { buildDajiCardMessage } from './custom-messages'
 import { parseRcConversation, parseRcMessage } from './parse'
 import type { Conversation, ConversationKind, Message } from './types'
@@ -117,7 +118,7 @@ export async function getConversationList(): Promise<Conversation[]> {
     startTime: 0,
 
     // 获取的会话数量，单次建议不超过 50，最大支持 200。
-    count: 20,
+    count: HISTORY_PAGE_SIZE,
 
     // 拉取顺序。
     // 0: 降序（获取 startTime 之前的会话，即更旧的）。

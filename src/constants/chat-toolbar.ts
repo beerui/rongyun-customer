@@ -83,6 +83,7 @@ export function getToolbarPermissions(context: {
   if (role === 'user') {
     base.complaint = true
     base.product = true
+    base.order = true
     base.platform = true
     base.agent = true
     // 预留功能：根据会话标签动态调整

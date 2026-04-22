@@ -17,7 +17,12 @@
       "Bash(git merge *)",
       "Bash(git stash *)",
       "Bash(pnpm add *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git restore *)",
+      "Bash(git log *)",
+      "Bash(gh *)",
+      "Bash(git pull *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
