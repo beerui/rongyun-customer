@@ -4,7 +4,17 @@
 
 **目标：** 为访客端新增对话列表功能，支持查看历史对话、切换不同客服对话，并强制同一浏览器只存在一个访客端标签页。
 
-**背景：** 当前访客端（UserChat.vue）只支持单一对话场景，无法查看和切换与不同客服的历史对话。在实际业务中，一个访客可能同时与多个店铺客服对话（店铺A客服、店铺B客服、平台客服等），需要能够在这些对话之间快速切换。本功能将访客端升级为多对话管理模式，同时通过单标签页强制机制避免多窗口混乱。
+**背景：** 当前访客端（UserChat.vue）只支持单一对话场景，无法查看和切换与不同客服的历史对话。在实际业务中，访客通过不同入口进入客服系统（例如：从店铺A商品页点击客服按钮、从店铺B商品页点击客服按钮、从平台帮助中心进入），每次进入都会建立一个新的对话。访客需要能够查看所有历史对话并在它们之间快速切换。本功能将访客端升级为多对话管理模式，同时通过单标签页强制机制避免多窗口混乱。
+
+**业务场景说明：**
+- 访客从店铺A商品页点击客服 → 建立与店铺A客服的对话
+- 访客从店铺B商品页点击客服 → 建立与店铺B客服的对话
+- 访客从平台帮助中心进入 → 建立与平台客服的对话
+- 访客端显示所有历史对话列表，支持快速切换
+
+**数据来源：**
+- 主要：融云 IM 的 `getConversationList()` API（访客连接融云后，自动获取该访客的所有历史对话）
+- 预留：后端 API 扩展接口（未来可通过后端 API 获取更丰富的对话元数据）
 
 **技术栈：**
 - Vue 3 Composition API + TypeScript
@@ -33,9 +43,10 @@ UserChat.vue (三栏布局)
 ### 模块职责
 
 **1. 对话列表管理 (复用 conversations store)**
-- 加载访客的所有对话列表
+- 加载访客的所有对话列表（通过融云 IM 的 `getConversationList()` API）
 - 监听对话变化（新消息、新对话）
 - 按最后消息时间排序
+- 预留后端 API 扩展能力（未来可通过后端接口获取更丰富的对话元数据）
 
 **2. 单标签页强制 (新增 single-tab.ts)**
 - 使用原生 BroadcastChannel API 实现跨标签页通信（Chrome 54+, Firefox 38+, Safari 15.4+）
@@ -54,18 +65,29 @@ UserChat.vue (三栏布局)
 ### 对话列表加载流程
 
 ```
+访客从不同入口进入（店铺A/B商品页、平台帮助中心等）
+  ↓
 UserChat.onMounted
   ↓
-auth.bootstrapUser() - 确保访客身份初始化
+auth.bootstrapUser() - 确保访客身份初始化（获取 rcToken）
   ↓
 im.connect(auth.rcToken) - 连接融云 IM
   ↓
-conversations.load() - 加载对话列表
+conversations.load() - 调用融云 getConversationList() 获取所有历史对话
   ↓
-conversations.watch() - 监听对话变化
+conversations.watch() - 监听对话变化（新消息、新对话）
   ↓
-渲染 ConversationItem 列表
+渲染 ConversationItem 列表（按最后消息时间倒序）
+  ↓
+如果有 peerId 参数，自动打开对应对话（从入口带入的客服 ID）
+否则，显示对话列表，等待用户选择
 ```
+
+**关键点：**
+- `auth.bootstrapUser()` 返回访客的 rcToken，用于连接融云 IM
+- `getConversationList()` 返回该访客的所有历史对话（包括与不同店铺客服的对话）
+- 如果 URL 带有 `peerId` 参数（从入口进入时），自动打开对应对话
+- 如果没有 `peerId` 参数（直接访问访客端），显示对话列表供用户选择
 
 ### 切换对话流程
 
@@ -92,7 +114,11 @@ onMounted 调用 initSingleTab()
   ↓
 旧标签页收到消息
   ↓
-显示 alert 提示 + 执行 window.close()
+显示遮罩提示 + 执行 window.close()
+  ↓
+如果 window.close() 失败（浏览器限制）
+  ↓
+保持遮罩显示，禁用所有交互（强制用户手动关闭）
 ```
 
 ---
@@ -124,6 +150,12 @@ export function cleanupSingleTab(): void
 let channel: BroadcastChannel | null = null
 
 export function initSingleTab(onForceClose: () => void): void {
+  // 兼容性检测
+  if (typeof BroadcastChannel === 'undefined') {
+    console.warn('[SingleTab] BroadcastChannel not supported, single-tab enforcement disabled')
+    return
+  }
+  
   channel = new BroadcastChannel('daji-visitor-tab')
   
   channel.onmessage = (event) => {
@@ -234,12 +266,24 @@ export const userChatLogger = new Logger('UserChat')
 - 对话项：复用 `ConversationItem` 组件
 - 当前对话高亮：背景色 `bg-[#FEF5F5]`（粉红色，与 ConversationItem 现有样式一致）
 - 空状态：显示 `EmptyState` 组件，提示"暂无对话"
-- 加载状态：显示 loading 提示
+- 加载状态：显示骨架屏（3个占位对话项，灰色背景动画）
 - 错误状态：显示"加载失败，请刷新重试"
+
+**加载状态骨架屏：**
+```vue
+<!-- UserChat.vue 对话列表区域 -->
+<div v-if="conversations.loading" class="px-5 space-y-2">
+  <div v-for="i in 3" :key="i" class="h-[70px] bg-gray-200 rounded-lg animate-pulse"></div>
+</div>
+```
 
 **时间格式化工具：**
 ```typescript
 // src/utils/time.ts (新增)
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`
+}
+
 export function formatMessageTime(timestamp?: number): string {
   if (!timestamp) return ''
   
@@ -270,11 +314,11 @@ export function formatMessageTime(timestamp?: number): string {
   
   // 今年：MM-DD
   if (date.getFullYear() === today.getFullYear()) {
-    return `${date.getMonth() + 1}-${date.getDate()}`
+    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
   }
   
   // 更早：YYYY-MM-DD
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 ```
 
@@ -296,26 +340,32 @@ export function formatMessageTime(timestamp?: number): string {
 
 ---
 
-### 5. ConversationItem 组件 (复用，无需修改)
+### 5. ConversationItem 组件 (需微调)
 
 **显示内容：**
 - 客服名称（item.title）
 - 最后消息预览（item.lastMessage，文本截断）
 - 最后消息时间（timeLabel prop，由父组件传入格式化后的时间）
-- 未读消息数（item.unread，Conversation 类型已包含此字段）
+- 未读消息数（item.unread，红色角标）
 
 **当前实现状态：**
 - ✅ 客服名称显示正常
 - ✅ 最后消息预览正常
 - ✅ 时间显示（通过 timeLabel prop）
-- ⚠️ 未读消息数角标未实现（需要在 UserChat.vue 中添加，或后续优化）
+- ❌ 未读消息数角标未实现（需要添加）
 - ⚠️ Avatar 组件被注释（访客端暂不需要头像，保持现状）
+
+**需要添加的未读角标：**
+```vue
+<!-- ConversationItem.vue 中添加 -->
+<div v-if="item.unread > 0" class="shrink-0 bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+  {{ item.unread > 99 ? '99+' : item.unread }}
+</div>
+```
 
 **交互：**
 - 点击整个对话项触发切换
 - 当前对话高亮显示（active prop 控制背景色）
-
-**注意：** ConversationItem 组件当前实现已满足基本需求，未读消息数角标可作为后续优化项。
 
 ---
 
@@ -334,28 +384,27 @@ export function formatMessageTime(timestamp?: number): string {
 **场景：** 旧标签页收到关闭通知，但 `window.close()` 执行失败（某些浏览器限制非脚本打开的窗口不能关闭）
 
 **处理：**
-- 显示全屏遮罩层组件，提示"检测到您在其他标签页打开了客服窗口，建议关闭此页面以避免消息混乱"
-- 提供"我知道了"按钮，点击后隐藏遮罩但保持页面可用
-- 日志记录：`logger.warn('window.close() 执行失败，显示提示遮罩')`
+- 显示全屏遮罩层组件，提示"检测到您在其他标签页打开了客服窗口，此页面已失效"
+- 遮罩不可关闭，强制用户手动关闭标签页
+- 日志记录：`logger.warn('window.close() 执行失败，显示强制遮罩')`
 
 **遮罩层实现：**
 ```vue
 <!-- UserChat.vue 中添加 -->
-<div v-if="showForceCloseOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-lg p-6 max-w-md">
+<div v-if="showForceCloseOverlay" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 max-w-md text-center">
     <div class="text-lg font-semibold mb-2">检测到新标签页</div>
     <div class="text-sm text-ink-600 mb-4">
-      检测到您在其他标签页打开了客服窗口，建议关闭此页面以避免消息混乱。
+      检测到您在其他标签页打开了客服窗口，此页面已失效，请手动关闭此标签页。
     </div>
-    <button 
-      class="w-full h-10 bg-brand-500 text-white rounded hover:bg-brand-600"
-      @click="showForceCloseOverlay = false"
-    >
-      我知道了
-    </button>
+    <div class="text-xs text-ink-400">
+      提示：按 Ctrl+W (Mac: Cmd+W) 关闭标签页
+    </div>
   </div>
 </div>
 ```
+
+**注意：** 遮罩层不提供关闭按钮，确保单标签页强制的严格性。
 
 ### 3. 切换对话失败
 
@@ -427,12 +476,17 @@ export function formatMessageTime(timestamp?: number): string {
 
 1. **src/pages/pc/user/UserChat.vue**
    - 布局改造：两栏 → 三栏
-   - 集成对话列表
+   - 集成对话列表（加载、渲染、切换）
    - 集成单标签页逻辑
    - 新增日志埋点
-   - 预计修改约 100 行
+   - 支持 peerId 参数自动打开对应对话
+   - 预计修改约 150 行
 
-2. **src/stores/conversations.ts**
+2. **src/components/ConversationItem.vue**
+   - 添加未读消息数红色角标
+   - 预计修改约 5 行
+
+3. **src/stores/conversations.ts**
    - 新增日志埋点
    - 预计修改约 10 行
 
@@ -487,13 +541,13 @@ export function formatMessageTime(timestamp?: number): string {
 
 ## 遗留问题
 
-1. **未读消息数角标：** ConversationItem 组件未实现未读消息数红色角标显示，可作为后续优化项
+1. **对话列表性能优化：** 当对话数量超过 100 时，考虑虚拟滚动优化
 
-2. **对话列表性能优化：** 当对话数量超过 100 时，考虑虚拟滚动优化
+2. **对话删除功能：** 当前设计不包含删除对话功能，未来可扩展
 
-3. **对话删除功能：** 当前设计不包含删除对话功能，未来可扩展
+3. **对话搜索功能：** 当前设计不包含搜索功能，未来可扩展
 
-4. **对话搜索功能：** 当前设计不包含搜索功能，未来可扩展
+4. **后端 API 扩展：** 当前使用融云 IM 的 `getConversationList()`，未来可扩展后端 API 获取更丰富的对话元数据
 
 ---
 
