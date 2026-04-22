@@ -79,6 +79,12 @@ onUnmounted(() => {
 <template>
   <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 bg-white">
     <EmptyState v-if="!messages.length" title="还没有消息" desc="等待用户发起咨询…" />
+    <div v-if="loading" class="text-center py-2">
+      <span class="text-xs text-ink-500">加载中...</span>
+    </div>
+    <div v-else-if="!hasMore && messages.length > 0" class="text-center py-2">
+      <span class="text-xs text-ink-400">没有更多消息了</span>
+    </div>
     <template v-for="it in items" :key="it.key">
       <TimeDivider v-if="it.kind === 'time'" :ts="it.ts" />
       <MessageBubble
