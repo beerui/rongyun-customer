@@ -2,6 +2,8 @@
 name: 聊天记录下拉加载历史消息
 description: 实现滚动到顶部自动加载融云历史消息，支持分页和加载状态提示
 type: feature
+status: implemented
+implemented_date: 2026-04-22
 ---
 
 # 聊天记录下拉加载历史消息设计
