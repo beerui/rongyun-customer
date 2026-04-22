@@ -9,14 +9,15 @@ import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
 import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
+import { useToastStore } from '@/stores/toast'
 import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
 import type { OrderPayload, ProductPayload } from '@/im'
 import PlatformIntro from './PlatformIntro.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
+const toast = useToastStore()
 
-// 抽屉状态
 const drawerOrder = ref(false)
 const drawerProduct = ref(false)
 
@@ -77,10 +78,23 @@ function handleEnd() {
   im.endConversation('user')
 }
 
-function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick') {
-  if (kind === 'order') drawerOrder.value = true
-  if (kind === 'product') drawerProduct.value = true
-  // 访客端不支持优惠券和快捷回复
+function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick' | 'complaint' | 'agent' | 'platform') {
+  switch (kind) {
+    case 'order':
+      drawerOrder.value = true
+      return
+    case 'product':
+      drawerProduct.value = true
+      return
+    case 'complaint':
+    case 'agent':
+    case 'platform':
+      toast.info('功能开发中，敬请期待')
+      return
+    case 'coupon':
+    case 'quick':
+      return
+  }
 }
 
 async function sendProduct(p: ProductPayload) {

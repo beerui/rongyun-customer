@@ -11,7 +11,6 @@ export const useConversationsStore = defineStore('conversations', () => {
     loading.value = true
     try {
       list.value = await getConversationList()
-      console.log('getConversationList', list.value)
       list.value.sort((a, b) => (b.lastTime ?? 0) - (a.lastTime ?? 0))
     } finally {
       loading.value = false
