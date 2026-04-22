@@ -22,7 +22,10 @@
       "Bash(git log *)",
       "Bash(gh *)",
       "Bash(git pull *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git worktree *)",
+      "Bash(sudo chown *)",
+      "Bash(npm cache *)"
     ]
   }
 }
