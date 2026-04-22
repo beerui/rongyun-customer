@@ -37,8 +37,14 @@ function tagStyle(tag?: string) {
       <div class="text-[11px] text-ink-600 truncate">{{ item.lastMessage || '暂无消息' }}</div>
     </div>
 
-    <div class="shrink-0 text-[11px] text-ink-600/70 self-start pt-0.5">
-      {{ timeLabel || '' }}
+    <div class="shrink-0 flex flex-col items-end gap-1 self-start pt-0.5">
+      <div class="text-[11px] text-ink-600/70">{{ timeLabel || '' }}</div>
+      <div
+        v-if="item.unread > 0"
+        class="bg-red-500 text-white text-[10px] rounded-full px-1.5 min-w-[18px] h-[16px] leading-[16px] text-center"
+      >
+        {{ item.unread > 99 ? '99+' : item.unread }}
+      </div>
     </div>
   </div>
 </template>
