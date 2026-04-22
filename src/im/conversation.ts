@@ -21,7 +21,6 @@ export async function getHistory(
   targetId: string,
   opts: { timestamp?: number; count?: number } = {},
 ): Promise<Message[]> {
-  console.log('getHistory', targetId, opts)
   const res = await RC.getHistoryMessages(
     { conversationType: rcType(), targetId },
     { timestamp: opts.timestamp ?? 0, count: opts.count ?? 50, order: 0 },

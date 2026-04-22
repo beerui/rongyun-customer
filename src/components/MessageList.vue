@@ -21,17 +21,19 @@ const loading = computed(() => im.loadingHistory)
 const hasMore = computed(() => im.hasMoreHistory)
 
 const scroller = ref<HTMLElement>()
+const topSentinel = ref<HTMLElement>()
+
+const NEAR_BOTTOM_THRESHOLD = 120
 
 async function scrollToBottom() {
   await nextTick()
   if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
 }
 
-function handleScroll() {
-  if (!scroller.value || loading.value || !hasMore.value) return
-  if (scroller.value.scrollTop < 50) {
-    loadMore()
-  }
+function isNearBottom() {
+  const el = scroller.value
+  if (!el) return true
+  return el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_THRESHOLD
 }
 
 async function loadMore() {
@@ -46,28 +48,29 @@ async function loadMore() {
   }
 }
 
-async function checkAndAutoLoad() {
-  await nextTick()
-  if (!scroller.value || loading.value || !hasMore.value) return
-  const hasScrollbar = scroller.value.scrollHeight > scroller.value.clientHeight
-  if (!hasScrollbar) {
-    await loadMore()
-    // 递归检查：加载后可能仍无滚动条
-    await checkAndAutoLoad()
-  }
+let observer: IntersectionObserver | null = null
+
+function setupObserver() {
+  if (!scroller.value || !topSentinel.value) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting && !loading.value && hasMore.value && props.messages.length > 0) {
+        loadMore()
+      }
+    },
+    { root: scroller.value, rootMargin: '80px 0px 0px 0px', threshold: 0 },
+  )
+  observer.observe(topSentinel.value)
 }
 
 watch(
   () => props.messages[props.messages.length - 1]?.id,
   (newLastId, prevLastId) => {
-    if (newLastId && newLastId !== prevLastId) scrollToBottom()
-  },
-)
-
-watch(
-  () => props.messages.length,
-  () => {
-    checkAndAutoLoad()
+    if (!newLastId || newLastId === prevLastId) return
+    const last = props.messages[props.messages.length - 1]
+    const isMine = last?.senderId === props.myUserId || last?.senderId === 'me'
+    if (isMine || isNearBottom()) scrollToBottom()
   },
 )
 
@@ -86,18 +89,20 @@ const items = computed(() => {
 })
 
 onMounted(() => {
-  scroller.value?.addEventListener('scroll', handleScroll)
-  checkAndAutoLoad()
+  setupObserver()
+  scrollToBottom()
 })
 
 onUnmounted(() => {
-  scroller.value?.removeEventListener('scroll', handleScroll)
+  observer?.disconnect()
+  observer = null
 })
 </script>
 
 <template>
   <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 bg-white">
     <EmptyState v-if="!messages.length" title="还没有消息" desc="等待用户发起咨询…" />
+    <div ref="topSentinel" aria-hidden="true" class="h-px" />
     <div v-if="loading" class="text-center py-2">
       <span class="text-xs text-ink-500">加载中...</span>
     </div>
