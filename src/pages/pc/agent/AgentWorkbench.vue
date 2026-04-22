@@ -323,7 +323,7 @@ const drawerProduct = ref(false)
 const drawerCoupon = ref(false)
 const drawerQuick = ref(false)
 
-function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick') {
+function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick' | 'complaint' | 'agent' | 'platform') {
   if (kind === 'order') drawerOrder.value = true
   if (kind === 'product') drawerProduct.value = true
   if (kind === 'coupon') drawerCoupon.value = true

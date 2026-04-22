@@ -28,8 +28,10 @@ const emit = defineEmits<{
   (e: 'send-image', file: File): void
   (e: 'send-video', file: File): void
   (e: 'send-file', file: File): void
-  (e: 'open-drawer', kind: 'order' | 'product' | 'coupon' | 'quick'): void
+  (e: 'open-drawer', kind: ToolbarDrawerKind): void
 }>()
+
+type ToolbarDrawerKind = 'order' | 'product' | 'coupon' | 'quick' | 'complaint' | 'agent' | 'platform'
 
 const composer = useComposerStore()
 const text = ref(composer.draft)
@@ -176,7 +178,7 @@ function onToolClick(action: string) {
   if (action === 'image') return pickImage()
   if (action === 'video') return pickVideo()
   if (action === 'file') return pickFile()
-  emit('open-drawer', action as any)
+  emit('open-drawer', action as ToolbarDrawerKind)
 }
 
 // 移动端辅助方法
@@ -200,7 +202,7 @@ function onMobileToolClick(action: string) {
   if (action === 'image') return pickImage()
   if (action === 'video') return pickVideo()
   if (action === 'file') return pickFile()
-  emit('open-drawer', action as any)
+  emit('open-drawer', action as ToolbarDrawerKind)
 }
 
 // 移动端可见工具（排除表情，表情有单独按钮）

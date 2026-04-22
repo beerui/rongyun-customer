@@ -131,10 +131,18 @@ export const useImStore = defineStore('im', () => {
         return false
       }
 
-      const sorted = history.sort((a, b) => a.sentTime - b.sentTime)
-      messages.value.unshift(...sorted)
+      const existingIds = new Set(messages.value.map((m) => m.id))
+      const fresh = history.filter((m) => !existingIds.has(m.id))
+      if (fresh.length === 0) {
+        hasMoreHistory.value = false
+        return false
+      }
 
+      const sorted = fresh.sort((a, b) => a.sentTime - b.sentTime)
+      messages.value.unshift(...sorted)
       oldestTimestamp.value = sorted[0].sentTime
+
+      if (history.length < HISTORY_PAGE_SIZE) hasMoreHistory.value = false
 
       return true
     } catch (e) {
@@ -157,8 +165,9 @@ export const useImStore = defineStore('im', () => {
       const history = await getHistory(targetId, { count: HISTORY_PAGE_SIZE })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
       if (history.length > 0) {
-        oldestTimestamp.value = history[0].sentTime
+        oldestTimestamp.value = messages.value[0].sentTime
       }
+      if (history.length < HISTORY_PAGE_SIZE) hasMoreHistory.value = false
       await clearUnread(targetId).catch(() => {})
     } catch (e) {
       console.warn('load history unavailable', e)

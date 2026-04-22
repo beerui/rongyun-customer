@@ -25,7 +25,11 @@
       "Bash(git check-ignore *)",
       "Bash(git worktree *)",
       "Bash(sudo chown *)",
-      "Bash(npm cache *)"
+      "Bash(npm cache *)",
+      "Bash(git branch *)",
+      "Bash(grep -v \"TOOLBAR_BUTTONS\\\\|chat-toolbar\\\\|ToolbarButton\\\\|ToolbarPermission\\\\|'supplier'\\\\|供应商\\\\|'platform'$\")",
+      "Bash(echo \"---EXIT=$?---\")",
+      "Bash(npx eslint *)"
     ]
   }
 }
