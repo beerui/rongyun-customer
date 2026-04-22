@@ -6,17 +6,19 @@ import { conversationsLogger } from '@/utils/logger'
 export const useConversationsStore = defineStore('conversations', () => {
   const list = ref<Conversation[]>([])
   const loading = ref(false)
+  const error = ref<Error | null>(null)
   let unsub: (() => void) | null = null
 
   async function load() {
     loading.value = true
+    error.value = null
     try {
       list.value = await getConversationList()
-      conversationsLogger.info('对话列表加载完成', list.value.length)
       list.value.sort((a, b) => (b.lastTime ?? 0) - (a.lastTime ?? 0))
-    } catch (error) {
-      conversationsLogger.error('对话列表加载失败', error)
-      throw error
+      conversationsLogger.info('对话列表加载完成', list.value.length)
+    } catch (e) {
+      error.value = e instanceof Error ? e : new Error(String(e))
+      conversationsLogger.error('对话列表加载失败', e)
     } finally {
       loading.value = false
     }
@@ -40,5 +42,5 @@ export const useConversationsStore = defineStore('conversations', () => {
     unsub = null
   }
 
-  return { list, loading, load, watch, unwatch }
+  return { list, loading, error, load, watch, unwatch }
 })

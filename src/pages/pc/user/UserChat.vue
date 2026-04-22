@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import Avatar from '@/components/Avatar.vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import ConversationItem from '@/components/ConversationItem.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MessageInput from '@/components/MessageInput.vue'
 import MessageList from '@/components/MessageList.vue'
@@ -8,53 +9,105 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
 import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useConversationsStore } from '@/stores/conversations'
 import { useImStore } from '@/stores/im'
 import { useToastStore } from '@/stores/toast'
 import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
+import { userChatLogger } from '@/utils/logger'
+import { initSingleTab } from '@/utils/single-tab'
+import { formatMessageTime } from '@/utils/time'
 import type { OrderPayload, ProductPayload } from '@/im'
 import PlatformIntro from './PlatformIntro.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
+const conversations = useConversationsStore()
 const toast = useToastStore()
+const route = useRoute()
+const router = useRouter()
 
 const drawerOrder = ref(false)
 const drawerProduct = ref(false)
+const selfBlocked = ref(false)
 
-// 仅在 iframe 嵌入场景下（SDK Launcher Widget 模式）显示"收起 / 结束对话"两枚按钮
 const embedded = computed(() => isEmbedded())
 
-async function ensureOpen() {
-  if (!auth.peerId || !im.connected) return
-  if (im.currentTargetId !== auth.peerId) {
-    await im.openConversation(auth.peerId)
-  }
+const conversationItems = computed(() =>
+  conversations.list.map((c) => ({
+    item: c,
+    timeLabel: formatMessageTime(c.lastTime),
+  })),
+)
+
+let cleanupSingleTab: (() => void) | null = null
+
+async function handleSelectConversation(targetId: string) {
+  if (im.currentTargetId === targetId) return
+  await im.openConversation(targetId)
+  router.replace({ query: { ...route.query, target: targetId } })
+  userChatLogger.info('用户切换对话', targetId)
 }
 
+watch(
+  () => route.query.target as string | undefined,
+  async (next, prev) => {
+    if (!next || next === prev) return
+    if (im.currentTargetId === next) return
+    if (!im.connected) return
+    await im.openConversation(next)
+  },
+)
+
 onMounted(async () => {
+  cleanupSingleTab = initSingleTab(() => {
+    selfBlocked.value = true
+    userChatLogger.warn('检测到重复标签页，本页已自我屏蔽')
+  })
+  if (selfBlocked.value) return
+
   if (auth.role === 'guest' || !auth.rcToken) {
     try {
       await auth.bootstrapUser()
     } catch (e) {
-      console.warn('bootstrapUser failed', e)
-      return // 获取失败就不要往下走了
+      userChatLogger.error('bootstrapUser 失败', e)
+      return
     }
   }
 
   if (auth.rcToken && !im.connected) {
     try {
-      // 加上 await 等待连接完全成功
       await im.connect(auth.rcToken)
     } catch (e) {
-      console.warn('RC connect failed:', e)
-      return // 连接失败就不再执行 ensureOpen
+      userChatLogger.error('IM 连接失败', e)
+      return
     }
   }
 
-  await ensureOpen()
+  if (selfBlocked.value) return
+
+  await conversations.load()
+  conversations.watch()
+
+  const initialTarget = route.query.target as string | undefined
+  const targetToOpen =
+    initialTarget ||
+    im.currentTargetId ||
+    conversations.list[0]?.targetId ||
+    auth.peerId ||
+    ''
+
+  if (targetToOpen && im.currentTargetId !== targetToOpen) {
+    await im.openConversation(targetToOpen)
+    if (initialTarget !== targetToOpen) {
+      router.replace({ query: { ...route.query, target: targetToOpen } })
+    }
+  }
 })
 
-watch(() => [im.connected, auth.peerId], ensureOpen)
+onUnmounted(() => {
+  cleanupSingleTab?.()
+  conversations.unwatch()
+})
 
 function handleSendText(t: string) {
   im.sendTextMessage(t)
@@ -109,8 +162,7 @@ async function sendOrder(o: OrderPayload) {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col bg-bg-app min-w-[960px]">
-    <!-- 顶部红色栏（与工作台一致） -->
+  <div class="h-screen w-screen flex flex-col bg-bg-app min-w-[1200px]">
     <header class="h-20 bg-brand-500 flex items-center px-5 shrink-0 text-white">
       <div class="text-[20px] font-semibold">{{ auth.name || '平台客服' }}</div>
       <div class="flex items-center gap-1.5 ml-8 text-[14px]">
@@ -134,24 +186,53 @@ async function sendOrder(o: OrderPayload) {
     </header>
 
     <div class="flex-1 flex min-h-0">
-      <!-- 中间：聊天区（无左侧会话列表） -->
-      <section class="flex-1 min-w-0 flex flex-col bg-white">
-        <!-- <div class="flex items-center gap-3 px-6 h-16 border-b border-line-light shrink-0">
-          <Avatar name="客" :size="38" :bg="'#FEF5F5'" />
-          <div class="min-w-0">
-            <div class="text-base font-semibold text-ink-900">平台客服</div>
-            <div class="text-[12px] text-ink-600 mt-0.5">您好，有什么可以帮您？</div>
-          </div>
-        </div> -->
+      <!-- 左侧：对话列表 -->
+      <aside class="w-[280px] shrink-0 bg-bg-app border-r border-line-light flex flex-col">
+        <div class="h-[60px] flex items-center px-5 shrink-0">
+          <div class="text-[16px] font-semibold text-ink-900">我的对话</div>
+        </div>
 
+        <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2.5">
+          <!-- 加载骨架屏 -->
+          <div v-if="conversations.loading && !conversations.list.length" class="px-2.5 space-y-2">
+            <div v-for="i in 3" :key="i" class="flex items-center gap-2.5 h-[70px]">
+              <div class="flex-1 space-y-2">
+                <div class="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+                <div class="h-2 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+              </div>
+              <div class="w-8 h-2 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          <!-- 错误态 -->
+          <EmptyState v-else-if="conversations.error" title="加载失败" desc="对话列表加载失败，请重试">
+            <button class="mt-4 px-4 py-2 bg-brand-500 text-white rounded hover:bg-brand-600" @click="conversations.load()">
+              重试
+            </button>
+          </EmptyState>
+
+          <!-- 空态 -->
+          <EmptyState v-else-if="!conversations.list.length" title="暂无对话" desc="选择商品或服务开始咨询" />
+
+          <!-- 列表 -->
+          <ConversationItem
+            v-for="row in conversationItems"
+            :key="row.item.targetId"
+            :item="row.item"
+            :active="row.item.targetId === im.currentTargetId"
+            :time-label="row.timeLabel"
+            @click="handleSelectConversation(row.item.targetId)"
+          />
+        </div>
+      </aside>
+
+      <!-- 中间：聊天区 -->
+      <section class="flex-1 min-w-0 flex flex-col bg-white">
         <div v-if="!im.currentTargetId" class="flex-1 flex items-center justify-center bg-bg-app">
           <EmptyState title="正在接入客服…" desc="请稍候" />
         </div>
         <template v-else>
           <div class="flex-1 min-h-0 flex flex-col">
-            <!-- <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">
-              今天 会话开始
-            </div> -->
             <MessageList :messages="im.messages" :my-user-id="auth.userId" @retry="(id: string) => im.retry(id)" />
           </div>
 
@@ -183,5 +264,19 @@ async function sendOrder(o: OrderPayload) {
       @send-product="sendProduct"
     />
     <ProductListDrawer :open="drawerProduct" @close="drawerProduct = false" @send="sendProduct" />
+
+    <!-- 单标签页自我屏蔽遮罩 -->
+    <div v-if="selfBlocked" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md text-center">
+        <div class="text-lg font-semibold mb-2">客服窗口已在其他标签页打开</div>
+        <div class="text-sm text-ink-600 mb-4">
+          为避免会话冲突，每个浏览器只允许打开一个客服窗口。<br />
+          请回到原标签页继续使用，并关闭当前标签页。
+        </div>
+        <div class="text-xs text-ink-400">
+          提示：按 Ctrl+W (Mac: Cmd+W) 关闭当前标签页
+        </div>
+      </div>
+    </div>
   </div>
 </template>
