@@ -5,6 +5,7 @@ import ConversationItem from '@/components/ConversationItem.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MessageInput from '@/components/MessageInput.vue'
 import MessageList from '@/components/MessageList.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import CouponDrawer from '@/components/drawers/CouponDrawer.vue'
 import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
 import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
@@ -288,13 +289,7 @@ function logout() {
             </button>
           </div> -->
 
-          <div class="relative">
-            <input
-              v-model="keyword"
-              placeholder="搜索用户名/订单号"
-              class="w-full h-8 rounded-[20px] border border-[rgba(0, 0, 0, 0.2)] px-3 text-xs focus:outline-none focus:border-[#fa3e3e] focus:bg-white"
-            />
-          </div>
+          <SearchInput v-model="keyword" placeholder="搜索用户名/订单号" />
         </div>
 
         <div class="flex-1 overflow-y-auto scrollbar-thin px-[20px]">
@@ -353,7 +348,6 @@ function logout() {
         </div>
         <template v-else>
           <div class="flex-1 min-h-0 flex flex-col">
-            <div class="text-center py-3 text-[11px] text-ink-600 bg-white shrink-0">今天 12:32 会话开始</div>
             <MessageList :messages="im.messages" :my-user-id="auth.userId" @retry="(id: string) => im.retry(id)" @recall="handleRecall" />
           </div>
 
@@ -385,11 +379,7 @@ function logout() {
           <button class="text-ink-600 hover:text-ink-900" @click="showTransfer = false">✕</button>
         </div>
         <div class="px-5 py-3">
-          <input
-            v-model="transferKeyword"
-            placeholder="搜索客服名称"
-            class="w-full h-8 rounded border border-line-light px-3 text-xs focus:outline-none focus:border-brand-500"
-          />
+          <SearchInput v-model="transferKeyword" placeholder="搜索客服名称" />
         </div>
         <div class="max-h-[320px] overflow-y-auto scrollbar-thin">
           <div v-if="!filteredAgents.length" class="text-center py-8 text-xs text-ink-600">暂无可选客服</div>

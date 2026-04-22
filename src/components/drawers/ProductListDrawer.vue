@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import Drawer from '@/components/Drawer.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import { mockProducts } from '@/utils/mock-data'
 import type { ProductPayload } from '@/im/types'
 
@@ -21,14 +22,7 @@ function send(p: ProductPayload) {
 <template>
   <Drawer :open="props.open" title="商品列表" :width="480" @close="emit('close')">
     <div class="px-5 py-3 border-b border-line-light">
-      <div class="relative">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-600 text-xs">🔍</span>
-        <input
-          v-model="keyword"
-          placeholder="搜索商品名"
-          class="w-full h-8 rounded bg-bg-app border border-transparent pl-8 pr-3 text-xs focus:outline-none focus:border-brand-500 focus:bg-white"
-        />
-      </div>
+      <SearchInput v-model="keyword" placeholder="搜索商品名" />
     </div>
     <div class="p-4 space-y-3">
       <div v-for="p in filtered" :key="p.productId" class="flex gap-3 rounded-lg border border-line-light p-3 hover:border-brand-500">
