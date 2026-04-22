@@ -11,6 +11,7 @@ const im = useImStore()
 
 async function ensureOpen() {
   if (!auth.peerId) return
+  if (!im.connected) return
   if (im.currentTargetId !== auth.peerId) {
     await im.openConversation(auth.peerId)
   }
