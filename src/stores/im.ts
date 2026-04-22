@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { HISTORY_PAGE_SIZE } from '@/constants/pagination'
 import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
 import { bindVisibilityReset, browserNotify, flashTitle, playBeep } from '@/utils/notify'
 import { uploadFile as upFile, uploadImage, uploadVideo } from '@/utils/upload'
@@ -29,6 +30,9 @@ export const useImStore = defineStore('im', () => {
   const messages = ref<Message[]>([])
   const unreadTotal = ref(0)
   const unsubs: Array<() => void> = []
+  const loadingHistory = ref(false)
+  const hasMoreHistory = ref(true)
+  const oldestTimestamp = ref(0)
   bindVisibilityReset()
 
   const connected = computed(() => status.value === 'connected')
@@ -110,17 +114,53 @@ export const useImStore = defineStore('im', () => {
     while (unsubs.length) unsubs.pop()!()
   }
 
+  async function loadMoreHistory(): Promise<boolean> {
+    if (loadingHistory.value || !hasMoreHistory.value || !currentTargetId.value) {
+      return false
+    }
+
+    loadingHistory.value = true
+    try {
+      const history = await getHistory(currentTargetId.value, {
+        timestamp: oldestTimestamp.value,
+        count: HISTORY_PAGE_SIZE,
+      })
+
+      if (history.length === 0) {
+        hasMoreHistory.value = false
+        return false
+      }
+
+      const sorted = history.sort((a, b) => a.sentTime - b.sentTime)
+      messages.value.unshift(...sorted)
+
+      oldestTimestamp.value = sorted[0].sentTime
+
+      return true
+    } catch (e) {
+      console.warn('load more history failed', e)
+      return false
+    } finally {
+      loadingHistory.value = false
+    }
+  }
+
   async function openConversation(targetId: string) {
     currentTargetId.value = targetId
     messages.value = []
+    loadingHistory.value = false
+    hasMoreHistory.value = true
+    oldestTimestamp.value = 0
     unreadTotal.value = 0
     if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
-      const history = await getHistory(targetId, { count: 50 })
+      const history = await getHistory(targetId, { count: HISTORY_PAGE_SIZE })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
+      if (history.length > 0) {
+        oldestTimestamp.value = history[0].sentTime
+      }
       await clearUnread(targetId).catch(() => {})
     } catch (e) {
-      // mock 会话无历史，静默
       console.warn('load history unavailable', e)
     }
   }
@@ -281,6 +321,7 @@ export const useImStore = defineStore('im', () => {
     connect,
     disconnect,
     openConversation,
+    loadMoreHistory,
     endConversation,
     sendTextMessage,
     sendImageFile,
@@ -290,5 +331,7 @@ export const useImStore = defineStore('im', () => {
     retry,
     recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
+    loadingHistory,
+    hasMoreHistory,
   }
 })

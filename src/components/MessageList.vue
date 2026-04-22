@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useImStore } from '@/stores/im'
 import type { Message } from '@/im'
 import EmptyState from './EmptyState.vue'
 import MessageBubble from './MessageBubble.vue'
@@ -15,46 +16,58 @@ const emit = defineEmits<{
   (e: 'recall', id: string): void
 }>()
 
+const im = useImStore()
+const loading = computed(() => im.loadingHistory)
+const hasMore = computed(() => im.hasMoreHistory)
+
 const scroller = ref<HTMLElement>()
-
-/**
- * 窗口化策略：只渲染最近 WINDOW_SIZE 条，超出则顶部显示"加载更早"。
- * 不用完整虚拟滚动的原因：消息高度差异极大（文本/图/卡片），估算错会抖动。
- */
-const WINDOW_SIZE = 150
-const WINDOW_STEP = 100
-const visibleCount = ref(WINDOW_SIZE)
-
-const windowed = computed(() => {
-  const total = props.messages.length
-  if (visibleCount.value >= total) return props.messages
-  return props.messages.slice(total - visibleCount.value)
-})
-
-const hasMore = computed(() => visibleCount.value < props.messages.length)
-
-async function loadEarlier() {
-  if (!scroller.value) {
-    visibleCount.value += WINDOW_STEP
-    return
-  }
-  const prevHeight = scroller.value.scrollHeight
-  const prevTop = scroller.value.scrollTop
-  visibleCount.value += WINDOW_STEP
-  await nextTick()
-  const diff = scroller.value.scrollHeight - prevHeight
-  scroller.value.scrollTop = prevTop + diff
-}
 
 async function scrollToBottom() {
   await nextTick()
   if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
 }
 
+function handleScroll() {
+  if (!scroller.value || loading.value || !hasMore.value) return
+  if (scroller.value.scrollTop < 50) {
+    loadMore()
+  }
+}
+
+async function loadMore() {
+  if (!scroller.value) return
+  const prevHeight = scroller.value.scrollHeight
+  const prevTop = scroller.value.scrollTop
+  const success = await im.loadMoreHistory()
+  if (success) {
+    await nextTick()
+    const diff = scroller.value.scrollHeight - prevHeight
+    scroller.value.scrollTop = prevTop + diff
+  }
+}
+
+async function checkAndAutoLoad() {
+  await nextTick()
+  if (!scroller.value || loading.value || !hasMore.value) return
+  const hasScrollbar = scroller.value.scrollHeight > scroller.value.clientHeight
+  if (!hasScrollbar) {
+    await loadMore()
+    // 递归检查：加载后可能仍无滚动条
+    await checkAndAutoLoad()
+  }
+}
+
+watch(
+  () => props.messages[props.messages.length - 1]?.id,
+  (newLastId, prevLastId) => {
+    if (newLastId && newLastId !== prevLastId) scrollToBottom()
+  },
+)
+
 watch(
   () => props.messages.length,
-  (n, prev) => {
-    if (n > prev) scrollToBottom()
+  () => {
+    checkAndAutoLoad()
   },
 )
 
@@ -62,7 +75,7 @@ const FIVE_MIN = 5 * 60 * 1000
 const items = computed(() => {
   const out: Array<{ kind: 'time'; ts: number; key: string } | { kind: 'msg'; m: Message; key: string }> = []
   let lastTs = 0
-  for (const m of windowed.value) {
+  for (const m of props.messages) {
     if (!lastTs || m.sentTime - lastTs > FIVE_MIN) {
       out.push({ kind: 'time', ts: m.sentTime, key: `t_${m.sentTime}` })
     }
@@ -71,15 +84,25 @@ const items = computed(() => {
   }
   return out
 })
+
+onMounted(() => {
+  scroller.value?.addEventListener('scroll', handleScroll)
+  checkAndAutoLoad()
+})
+
+onUnmounted(() => {
+  scroller.value?.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
   <div ref="scroller" class="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 bg-white">
     <EmptyState v-if="!messages.length" title="还没有消息" desc="等待用户发起咨询…" />
-    <div v-if="hasMore" class="text-center mb-3">
-      <button class="text-[11px] text-ink-500 hover:text-brand-500 px-3 py-1 rounded bg-bg-soft" @click="loadEarlier">
-        加载更早的消息（剩余 {{ messages.length - visibleCount }} 条）
-      </button>
+    <div v-if="loading" class="text-center py-2">
+      <span class="text-xs text-ink-500">加载中...</span>
+    </div>
+    <div v-else-if="!hasMore && messages.length > 0" class="text-center py-2">
+      <span class="text-xs text-ink-400">没有更多消息了</span>
     </div>
     <template v-for="it in items" :key="it.key">
       <TimeDivider v-if="it.kind === 'time'" :ts="it.ts" />
