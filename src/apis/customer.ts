@@ -24,3 +24,7 @@ export const translateText = (text: string, targetLang = 'zh') =>
     { text, targetLang },
     { timeout: 50_000 },
   )
+
+/** 触发客服欢迎消息（访客首次连接时调用） */
+export const triggerWelcomeMessage = (customerId: string, visitorId: string) =>
+  http.post('/api/customer/welcome', { customerId, visitorId })

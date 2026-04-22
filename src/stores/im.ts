@@ -161,6 +161,12 @@ export const useImStore = defineStore('im', () => {
     oldestTimestamp.value = 0
     unreadTotal.value = 0
     if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
+
+    // 立即清除对话列表中的未读数（UI 响应）
+    const { useConversationsStore } = await import('@/stores/conversations')
+    const convStore = useConversationsStore()
+    convStore.clearUnread(targetId)
+
     try {
       const history = await getHistory(targetId, { count: HISTORY_PAGE_SIZE })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)

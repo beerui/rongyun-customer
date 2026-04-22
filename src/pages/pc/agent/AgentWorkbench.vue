@@ -198,6 +198,7 @@ import { useComposerStore } from '@/stores/composer'
 import { useConversationsStore } from '@/stores/conversations'
 import { useImStore } from '@/stores/im'
 import { useToastStore } from '@/stores/toast'
+import { formatMessageTime } from '@/utils/time'
 import type { CouponPayload, OrderPayload, ProductPayload } from '@/im'
 import UserInfoPanel from './UserInfoPanel.vue'
 
@@ -209,6 +210,7 @@ const toast = useToastStore()
 
 const keyword = ref('')
 const filterKey = ref<'all' | 'waiting' | 'active'>('all')
+const timeUpdateTrigger = ref(0)
 
 /**
  * demo 对照数据 — 每个会话附带 tag，用来决定工具栏中"订单列表/商品列表"按钮的可见性
@@ -226,10 +228,12 @@ const filterKey = ref<'all' | 'waiting' | 'active'>('all')
 // ]
 
 const filtered = computed(() => {
+  // 触发时间更新
+  timeUpdateTrigger.value
   const base = conv.list.length
     ? conv.list.map((c) => ({
         ...c,
-        timeLabel: '',
+        timeLabel: formatMessageTime(c.lastTime),
       }))
     : []
   // 待接入 / 进行中：简单策略——看"最后一条消息是否由当前客服发出"。
@@ -357,6 +361,8 @@ async function sendQuickReply(t: string) {
 
 // ========== 发送 ==========
 
+let timeUpdateInterval: number | null = null
+
 onMounted(async () => {
   if (!im.connected && auth.rcToken) {
     try {
@@ -376,6 +382,11 @@ onMounted(async () => {
   if (!im.currentTargetId && filtered.value[0]) {
     await selectConv(filtered.value[0].targetId)
   }
+
+  // 每分钟更新一次时间显示
+  timeUpdateInterval = window.setInterval(() => {
+    timeUpdateTrigger.value++
+  }, 60000)
 })
 
 // 切换筛选 tab 后，若当前选中会话不在新筛选结果里，自动落到新列表的第一条，避免右侧出现空会话。
@@ -388,6 +399,10 @@ watch(filterKey, async () => {
 
 onUnmounted(() => {
   conv.unwatch()
+  if (timeUpdateInterval) {
+    clearInterval(timeUpdateInterval)
+    timeUpdateInterval = null
+  }
 })
 
 function handleSendText(t: string) {

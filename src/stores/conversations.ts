@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { type Conversation, getConversationList, onConversationChange } from '@/im'
 import { conversationsLogger } from '@/utils/logger'
+import { type Conversation, getConversationList, onConversationChange } from '@/im'
 
 export const useConversationsStore = defineStore('conversations', () => {
   const list = ref<Conversation[]>([])
@@ -42,5 +42,11 @@ export const useConversationsStore = defineStore('conversations', () => {
     unsub = null
   }
 
-  return { list, loading, error, load, watch, unwatch }
+  /** 手动清除指定对话的未读数（用于打开对话后立即更新 UI） */
+  function clearUnread(targetId: string) {
+    const conv = list.value.find((c) => c.targetId === targetId)
+    if (conv) conv.unread = 0
+  }
+
+  return { list, loading, error, load, watch, unwatch, clearUnread }
 })

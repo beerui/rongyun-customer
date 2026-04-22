@@ -40,12 +40,13 @@ function normalizeAgent(raw: AgentLoginRaw): AgentImCredential {
   }
 }
 
-/** 获取或生成访客 UUID（持久化到 localStorage） */
+/** 获取或生成访客 UUID（持久化到 localStorage，全局唯一） */
 function getOrCreateGuestUuid(): string {
-  let uuid = localStorage.getItem('guest_uuid')
+  const key = 'guest_uuid'
+  let uuid = localStorage.getItem(key)
   if (!uuid) {
     uuid = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-    localStorage.setItem('guest_uuid', uuid)
+    localStorage.setItem(key, uuid)
   }
   return uuid
 }
@@ -57,14 +58,20 @@ function getOrCreateGuestUuid(): string {
  */
 export const fetchUserImCredential = async (): Promise<UserImCredential> => {
   const uuid = getOrCreateGuestUuid()
+  const params = new URLSearchParams(window.location.search)
+  const target = params.get('target')
+
   try {
-    const raw: any = await http.post('/api/customer/getRyToken', { uuid })
+    const payload: any = { uuid }
+    if (target) payload.customerId = target
+
+    const raw: any = await http.post('/api/customer/getRyToken', payload)
     return {
       rcToken: raw.ryToken,
       userId: String(raw.userId),
       name: raw.nickname || `访客${uuid.slice(-4)}`,
       avatar: raw.avatar,
-      peerId: String(raw.customerId || ''),
+      peerId: target || String(raw.customerId || ''),
     }
   } catch (e) {
     console.warn('[mock] getRyToken unavailable, using mock visitor credential:', e)
@@ -73,7 +80,7 @@ export const fetchUserImCredential = async (): Promise<UserImCredential> => {
       userId: `visitor_${uuid.slice(-8)}`,
       name: `访客${uuid.slice(-4)}`,
       avatar: '',
-      peerId: 'agent_default',
+      peerId: target || 'agent_default',
     }
   }
 }

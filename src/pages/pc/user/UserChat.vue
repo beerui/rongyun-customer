@@ -29,17 +29,21 @@ const router = useRouter()
 const drawerOrder = ref(false)
 const drawerProduct = ref(false)
 const selfBlocked = ref(false)
+const timeUpdateTrigger = ref(0)
 
 const embedded = computed(() => isEmbedded())
 
-const conversationItems = computed(() =>
-  conversations.list.map((c) => ({
+const conversationItems = computed(() => {
+  // 触发时间更新
+  timeUpdateTrigger.value
+  return conversations.list.map((c) => ({
     item: c,
     timeLabel: formatMessageTime(c.lastTime),
-  })),
-)
+  }))
+})
 
 let cleanupSingleTab: (() => void) | null = null
+let timeUpdateInterval: number | null = null
 
 async function handleSelectConversation(targetId: string) {
   if (im.currentTargetId === targetId) return
@@ -91,12 +95,7 @@ onMounted(async () => {
   conversations.watch()
 
   const initialTarget = route.query.target as string | undefined
-  const targetToOpen =
-    initialTarget ||
-    im.currentTargetId ||
-    conversations.list[0]?.targetId ||
-    auth.peerId ||
-    ''
+  const targetToOpen = initialTarget || im.currentTargetId || conversations.list[0]?.targetId || auth.peerId || ''
 
   if (targetToOpen && im.currentTargetId !== targetToOpen) {
     await im.openConversation(targetToOpen)
@@ -104,11 +103,20 @@ onMounted(async () => {
       router.replace({ query: { ...route.query, target: targetToOpen } })
     }
   }
+
+  // 每分钟更新一次时间显示
+  timeUpdateInterval = window.setInterval(() => {
+    timeUpdateTrigger.value++
+  }, 60000)
 })
 
 onUnmounted(() => {
   cleanupSingleTab?.()
   conversations.unwatch()
+  if (timeUpdateInterval) {
+    clearInterval(timeUpdateInterval)
+    timeUpdateInterval = null
+  }
 })
 
 function handleSendText(t: string) {
@@ -208,9 +216,7 @@ async function sendOrder(o: OrderPayload) {
 
           <!-- 错误态 -->
           <EmptyState v-else-if="conversations.error" title="加载失败" desc="对话列表加载失败，请重试">
-            <button class="mt-4 px-4 py-2 bg-brand-500 text-white rounded hover:bg-brand-600" @click="conversations.load()">
-              重试
-            </button>
+            <button class="mt-4 px-4 py-2 bg-brand-500 text-white rounded hover:bg-brand-600" @click="conversations.load()">重试</button>
           </EmptyState>
 
           <!-- 空态 -->
@@ -272,12 +278,11 @@ async function sendOrder(o: OrderPayload) {
       <div class="bg-white rounded-lg p-6 max-w-md text-center">
         <div class="text-lg font-semibold mb-2">客服窗口已在其他标签页打开</div>
         <div class="text-sm text-ink-600 mb-4">
-          为避免会话冲突，每个浏览器只允许打开一个客服窗口。<br />
+          为避免会话冲突，每个浏览器只允许打开一个客服窗口。
+          <br />
           请回到原标签页继续使用，并关闭当前标签页。
         </div>
-        <div class="text-xs text-ink-400">
-          提示：按 Ctrl+W (Mac: Cmd+W) 关闭当前标签页
-        </div>
+        <div class="text-xs text-ink-400">提示：按 Ctrl+W (Mac: Cmd+W) 关闭当前标签页</div>
       </div>
     </div>
   </div>
