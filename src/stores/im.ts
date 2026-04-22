@@ -29,12 +29,12 @@ export const useImStore = defineStore('im', () => {
   const messages = ref<Message[]>([])
   const unreadTotal = ref(0)
   const unsubs: Array<() => void> = []
+  const loadingHistory = ref(false)
+  const hasMoreHistory = ref(true)
+  const oldestTimestamp = ref(0)
   bindVisibilityReset()
 
   const connected = computed(() => status.value === 'connected')
-  const isMock = computed(
-    () => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false,
-  )
 
   async function connect(token: string) {
     initIM(APPKEY)
@@ -116,7 +116,7 @@ export const useImStore = defineStore('im', () => {
     unreadTotal.value = 0
     if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
-      const history = await getHistory(targetId, { count: 50 })
+      const history = await getHistory(targetId, { count: 5 })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
       await clearUnread(targetId).catch(() => {})
     } catch (e) {
@@ -276,7 +276,6 @@ export const useImStore = defineStore('im', () => {
     connected,
     currentTargetId,
     messages,
-    isMock,
     unreadTotal,
     connect,
     disconnect,
@@ -290,5 +289,7 @@ export const useImStore = defineStore('im', () => {
     retry,
     recall,
     sendImageMessage: (url: string) => sendTextMessage(url),
+    loadingHistory,
+    hasMoreHistory,
   }
 })
