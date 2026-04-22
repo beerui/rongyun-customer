@@ -113,6 +113,37 @@ export const useImStore = defineStore('im', () => {
     while (unsubs.length) unsubs.pop()!()
   }
 
+  async function loadMoreHistory(): Promise<boolean> {
+    if (loadingHistory.value || !hasMoreHistory.value || !currentTargetId.value) {
+      return false
+    }
+
+    loadingHistory.value = true
+    try {
+      const history = await getHistory(currentTargetId.value, {
+        timestamp: oldestTimestamp.value,
+        count: 20,
+      })
+
+      if (history.length === 0) {
+        hasMoreHistory.value = false
+        return false
+      }
+
+      const sorted = history.sort((a, b) => a.sentTime - b.sentTime)
+      messages.value.unshift(...sorted)
+
+      oldestTimestamp.value = sorted[0].sentTime
+
+      return true
+    } catch (e) {
+      console.warn('load more history failed', e)
+      return false
+    } finally {
+      loadingHistory.value = false
+    }
+  }
+
   async function openConversation(targetId: string) {
     currentTargetId.value = targetId
     messages.value = []
@@ -284,6 +315,7 @@ export const useImStore = defineStore('im', () => {
     connect,
     disconnect,
     openConversation,
+    loadMoreHistory,
     endConversation,
     sendTextMessage,
     sendImageFile,
