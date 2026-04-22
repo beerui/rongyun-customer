@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import Avatar from '@/components/Avatar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MessageInput from '@/components/MessageInput.vue'
 import MessageList from '@/components/MessageList.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
+import OrderListDrawer from '@/components/drawers/OrderListDrawer.vue'
+import ProductListDrawer from '@/components/drawers/ProductListDrawer.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useImStore } from '@/stores/im'
 import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
+import type { OrderPayload, ProductPayload } from '@/im'
 import PlatformIntro from './PlatformIntro.vue'
 
 const auth = useAuthStore()
 const im = useImStore()
+
+// 抽屉状态
+const drawerOrder = ref(false)
+const drawerProduct = ref(false)
 
 // 仅在 iframe 嵌入场景下（SDK Launcher Widget 模式）显示"收起 / 结束对话"两枚按钮
 const embedded = computed(() => isEmbedded())
@@ -68,6 +75,22 @@ function handleMinimize() {
 function handleEnd() {
   if (!window.confirm('确认结束本次会话？')) return
   im.endConversation('user')
+}
+
+function onOpenDrawer(kind: 'order' | 'product' | 'coupon' | 'quick') {
+  if (kind === 'order') drawerOrder.value = true
+  if (kind === 'product') drawerProduct.value = true
+  // 访客端不支持优惠券和快捷回复
+}
+
+async function sendProduct(p: ProductPayload) {
+  await im.sendCard('product', p)
+  drawerProduct.value = false
+}
+
+async function sendOrder(o: OrderPayload) {
+  await im.sendCard('order', o)
+  drawerOrder.value = false
 }
 </script>
 
@@ -126,6 +149,7 @@ function handleEnd() {
             @send-image="handleSendImage"
             @send-video="handleSendVideo"
             @send-file="handleSendFile"
+            @open-drawer="onOpenDrawer"
           />
         </template>
       </section>
@@ -135,5 +159,15 @@ function handleEnd() {
         <PlatformIntro />
       </aside>
     </div>
+
+    <!-- 功能抽屉 -->
+    <OrderListDrawer
+      :open="drawerOrder"
+      :user-id="auth.userId"
+      @close="drawerOrder = false"
+      @send-order="sendOrder"
+      @send-product="sendProduct"
+    />
+    <ProductListDrawer :open="drawerProduct" @close="drawerProduct = false" @send="sendProduct" />
   </div>
 </template>
