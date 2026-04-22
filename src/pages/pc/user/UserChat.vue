@@ -62,8 +62,9 @@ onMounted(async () => {
   cleanupSingleTab = initSingleTab(() => {
     selfBlocked.value = true
     userChatLogger.warn('检测到重复标签页，本页已自我屏蔽')
+    // 已经 load/watch 的资源由 onUnmounted 统一清理
+    conversations.unwatch()
   })
-  if (selfBlocked.value) return
 
   if (auth.role === 'guest' || !auth.rcToken) {
     try {
@@ -86,6 +87,7 @@ onMounted(async () => {
   if (selfBlocked.value) return
 
   await conversations.load()
+  if (selfBlocked.value) return
   conversations.watch()
 
   const initialTarget = route.query.target as string | undefined
