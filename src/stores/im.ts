@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { HISTORY_PAGE_SIZE } from '@/constants/pagination'
 import { isEmbedded, sendToParent } from '@/utils/embed-bridge'
 import { bindVisibilityReset, browserNotify, flashTitle, playBeep } from '@/utils/notify'
 import { uploadFile as upFile, uploadImage, uploadVideo } from '@/utils/upload'
@@ -122,7 +123,7 @@ export const useImStore = defineStore('im', () => {
     try {
       const history = await getHistory(currentTargetId.value, {
         timestamp: oldestTimestamp.value,
-        count: 20,
+        count: HISTORY_PAGE_SIZE,
       })
 
       if (history.length === 0) {
@@ -153,7 +154,7 @@ export const useImStore = defineStore('im', () => {
     unreadTotal.value = 0
     if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
-      const history = await getHistory(targetId, { count: 20 })
+      const history = await getHistory(targetId, { count: HISTORY_PAGE_SIZE })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
       if (history.length > 0) {
         oldestTimestamp.value = history[0].sentTime

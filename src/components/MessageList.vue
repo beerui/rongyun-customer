@@ -46,10 +46,28 @@ async function loadMore() {
   }
 }
 
+async function checkAndAutoLoad() {
+  await nextTick()
+  if (!scroller.value || loading.value || !hasMore.value) return
+  const hasScrollbar = scroller.value.scrollHeight > scroller.value.clientHeight
+  if (!hasScrollbar) {
+    await loadMore()
+    // 递归检查：加载后可能仍无滚动条
+    await checkAndAutoLoad()
+  }
+}
+
 watch(
   () => props.messages[props.messages.length - 1]?.id,
   (newLastId, prevLastId) => {
     if (newLastId && newLastId !== prevLastId) scrollToBottom()
+  },
+)
+
+watch(
+  () => props.messages.length,
+  () => {
+    checkAndAutoLoad()
   },
 )
 
@@ -69,6 +87,7 @@ const items = computed(() => {
 
 onMounted(() => {
   scroller.value?.addEventListener('scroll', handleScroll)
+  checkAndAutoLoad()
 })
 
 onUnmounted(() => {
