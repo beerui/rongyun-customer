@@ -147,14 +147,19 @@ export const useImStore = defineStore('im', () => {
   async function openConversation(targetId: string) {
     currentTargetId.value = targetId
     messages.value = []
+    loadingHistory.value = false
+    hasMoreHistory.value = true
+    oldestTimestamp.value = 0
     unreadTotal.value = 0
     if (isEmbedded()) sendToParent('daji:unread', { count: 0 })
     try {
-      const history = await getHistory(targetId, { count: 50 })
+      const history = await getHistory(targetId, { count: 20 })
       messages.value = history.sort((a, b) => a.sentTime - b.sentTime)
+      if (history.length > 0) {
+        oldestTimestamp.value = history[0].sentTime
+      }
       await clearUnread(targetId).catch(() => {})
     } catch (e) {
-      // mock 会话无历史，静默
       console.warn('load history unavailable', e)
     }
   }
