@@ -65,29 +65,65 @@ UserChat.vue (三栏布局)
 ### 对话列表加载流程
 
 ```
-访客从不同入口进入（店铺A/B商品页、平台帮助中心等）
+访客从不同入口进入（URL 携带不同的 peerId 参数）
+  例如：
+  - 店铺A商品页 → /chat?peerId=shop_a_agent_123
+  - 店铺B商品页 → /chat?peerId=shop_b_agent_456
+  - 平台帮助中心 → /chat?peerId=platform_agent_789
   ↓
 UserChat.onMounted
   ↓
-auth.bootstrapUser() - 确保访客身份初始化（获取 rcToken）
+1. 解析 URL 参数（route.query.peerId）
   ↓
-im.connect(auth.rcToken) - 连接融云 IM
+2. auth.bootstrapUser() - 初始化访客身份（获取 rcToken）
   ↓
-conversations.load() - 调用融云 getConversationList() 获取所有历史对话
+3. im.connect(auth.rcToken) - 连接融云 IM（必须等待连接成功）
   ↓
-conversations.watch() - 监听对话变化（新消息、新对话）
+4. conversations.load() - 调用融云 getConversationList() 获取所有历史对话
   ↓
-渲染 ConversationItem 列表（按最后消息时间倒序）
+5. conversations.watch() - 监听对话变化（新消息、新对话）
   ↓
-如果有 peerId 参数，自动打开对应对话（从入口带入的客服 ID）
-否则，显示对话列表，等待用户选择
+6. 渲染 ConversationItem 列表（按最后消息时间倒序）
+  ↓
+7. 如果有 peerId 参数，自动打开对应对话
+   否则，显示对话列表，等待用户选择
 ```
 
 **关键点：**
+- URL 参数格式：`/chat?peerId=xxx`（使用 Vue Router 的 `route.query.peerId` 获取）
 - `auth.bootstrapUser()` 返回访客的 rcToken，用于连接融云 IM
 - `getConversationList()` 返回该访客的所有历史对话（包括与不同店铺客服的对话）
-- 如果 URL 带有 `peerId` 参数（从入口进入时），自动打开对应对话
-- 如果没有 `peerId` 参数（直接访问访客端），显示对话列表供用户选择
+- 每次从不同入口进入时，URL 携带不同的 peerId，自动打开对应对话
+- 如果直接访问 `/chat`（无 peerId 参数），显示对话列表供用户选择
+
+**URL 参数解析实现：**
+```typescript
+// UserChat.vue 中添加
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+onMounted(async () => {
+  // 1. 解析 URL 参数
+  const targetPeerId = route.query.peerId as string
+  
+  // 2. 初始化访客身份
+  await auth.bootstrapUser()
+  
+  // 3. 连接融云 IM（必须等待连接成功）
+  await im.connect(auth.rcToken)
+  
+  // 4. 加载对话列表
+  await conversations.load()
+  conversations.watch()
+  
+  // 5. 如果有 peerId 参数，自动打开对应对话
+  if (targetPeerId) {
+    await im.openConversation(targetPeerId)
+  }
+  // 否则，显示对话列表，等待用户选择
+})
+```
 
 ### 切换对话流程
 
@@ -269,11 +305,18 @@ export const userChatLogger = new Logger('UserChat')
 - 加载状态：显示骨架屏（3个占位对话项，灰色背景动画）
 - 错误状态：显示"加载失败，请刷新重试"
 
-**加载状态骨架屏：**
+**加载状态骨架屏（模拟真实对话项结构）：**
 ```vue
 <!-- UserChat.vue 对话列表区域 -->
 <div v-if="conversations.loading" class="px-5 space-y-2">
-  <div v-for="i in 3" :key="i" class="h-[70px] bg-gray-200 rounded-lg animate-pulse"></div>
+  <div v-for="i in 3" :key="i" class="flex items-center gap-2.5 h-[70px]">
+    <div class="w-[38px] h-[38px] bg-gray-200 rounded-full animate-pulse"></div>
+    <div class="flex-1 space-y-2">
+      <div class="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+      <div class="h-2 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+    </div>
+    <div class="w-8 h-2 bg-gray-200 rounded animate-pulse"></div>
+  </div>
 </div>
 ```
 
@@ -302,14 +345,14 @@ export function formatMessageTime(timestamp?: number): string {
   // 今天：HH:MM
   const today = new Date()
   if (date.toDateString() === today.toDateString()) {
-    return date.toTimeString().slice(0, 5)
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`
   }
   
   // 昨天：昨天 HH:MM
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   if (date.toDateString() === yesterday.toDateString()) {
-    return `昨天 ${date.toTimeString().slice(0, 5)}`
+    return `昨天 ${pad(date.getHours())}:${pad(date.getMinutes())}`
   }
   
   // 今年：MM-DD
@@ -355,11 +398,14 @@ export function formatMessageTime(timestamp?: number): string {
 - ❌ 未读消息数角标未实现（需要添加）
 - ⚠️ Avatar 组件被注释（访客端暂不需要头像，保持现状）
 
-**需要添加的未读角标：**
+**需要添加的未读角标（放置在时间标签旁边）：**
 ```vue
-<!-- ConversationItem.vue 中添加 -->
-<div v-if="item.unread > 0" class="shrink-0 bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
-  {{ item.unread > 99 ? '99+' : item.unread }}
+<!-- ConversationItem.vue 修改第 40-42 行 -->
+<div class="shrink-0 flex items-center gap-1.5 self-start pt-0.5">
+  <div class="text-[11px] text-ink-600/70">{{ timeLabel || '' }}</div>
+  <div v-if="item.unread > 0" class="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+    {{ item.unread > 99 ? '99+' : item.unread }}
+  </div>
 </div>
 ```
 
@@ -376,8 +422,25 @@ export function formatMessageTime(timestamp?: number): string {
 **场景：** `conversations.load()` 调用失败（网络错误、接口异常）
 
 **处理：**
-- 显示 `EmptyState` 组件，提示"加载失败，请刷新重试"
+- 显示 `EmptyState` 组件，提示"加载失败"并提供重试按钮
 - 日志记录：`logger.error('对话列表加载失败', error)`
+
+**EmptyState 实现：**
+```vue
+<!-- UserChat.vue 对话列表区域 -->
+<EmptyState 
+  v-if="loadError"
+  title="加载失败" 
+  desc="对话列表加载失败，请重试"
+>
+  <button 
+    class="mt-4 px-4 py-2 bg-brand-500 text-white rounded hover:bg-brand-600"
+    @click="conversations.load()"
+  >
+    重试
+  </button>
+</EmptyState>
+```
 
 ### 2. window.close() 失败
 
