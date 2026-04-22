@@ -101,9 +101,22 @@ UserChat.onMounted
 **URL 参数解析实现：**
 ```typescript
 // UserChat.vue 中添加
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
+
+// 切换对话的处理函数
+function handleSwitchConversation(targetId: string) {
+  // 1. 切换到目标对话
+  im.openConversation(targetId)
+  
+  // 2. 同步更新 URL
+  router.push({ query: { peerId: targetId } })
+  
+  // 3. 日志记录
+  logger.info('切换对话', targetId)
+}
 
 onMounted(async () => {
   // 1. 解析 URL 参数
@@ -136,8 +149,16 @@ im.openConversation(targetId) - 切换到目标对话
   ↓
 im.currentTargetId 更新
   ↓
+router.push({ query: { peerId: targetId } }) - 同步更新 URL
+  ↓
 高亮当前对话 + 加载该对话的消息列表
 ```
+
+**URL 同步策略：**
+- 从外部入口进入：URL 携带 peerId 参数，自动打开对应对话
+- 在访客端内部切换对话：同步更新 URL 中的 peerId 参数
+- 刷新页面：根据 URL 中的 peerId 恢复到当前对话
+- 优点：用户刷新页面后仍然停留在当前对话，体验更好
 
 ### 单标签页强制流程
 
@@ -286,17 +307,21 @@ export const userChatLogger = new Logger('UserChat')
 **新增功能：**
 
 1. **对话列表集成：**
-   - 引入 `useConversationsStore`
+   - 引入 `useConversationsStore` 和 `useRouter`
    - onMounted 时调用 `conversations.load()` 和 `conversations.watch()`
    - 使用 `v-for` 渲染 `ConversationItem` 组件
-   - 点击对话项时调用 `im.openConversation(targetId)`
+   - 点击对话项时调用 `im.openConversation(targetId)` 并同步更新 URL
    - 高亮当前激活对话（`im.currentTargetId === conversation.targetId`）
 
-2. **单标签页逻辑：**
-   - onMounted 时调用 `initSingleTab(() => { alert('检测到新标签页打开，当前页面即将关闭'); })`
+2. **URL 同步逻辑：**
+   - 切换对话时：`router.push({ query: { peerId: targetId } })`
+   - 保持 URL 与当前对话同步，刷新页面后恢复到当前对话
+
+3. **单标签页逻辑：**
+   - onMounted 时调用 `initSingleTab(() => { showForceCloseOverlay.value = true })`
    - onUnmounted 时调用 `cleanupSingleTab()`
 
-3. **日志埋点：**
+4. **日志埋点：**
    - 对话列表加载：`logger.info('对话列表加载完成', conversations.list.length)`
    - 切换对话：`logger.info('切换对话', targetId)`
    - 单标签页强制关闭：`logger.warn('被新标签页强制关闭')`
