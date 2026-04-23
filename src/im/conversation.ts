@@ -6,13 +6,6 @@ import type { Conversation, ConversationKind, Message } from './types'
 
 let currentKind: ConversationKind = 'private'
 
-export function setConversationKind(kind: ConversationKind) {
-  currentKind = kind
-}
-export function getConversationKind(): ConversationKind {
-  return currentKind
-}
-
 function rcType() {
   return currentKind === 'group' ? RC.ConversationType.GROUP : RC.ConversationType.PRIVATE
 }
