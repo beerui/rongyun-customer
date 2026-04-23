@@ -118,6 +118,9 @@ export const useAuthStore = defineStore('auth', () => {
       restoreAgent()
       return
     }
+    // URL 直传融云凭证时跳过后端接口，由 UserChat.vue 负责初始化
+    const params = new URLSearchParams(location.search)
+    if (params.get('daji_userId') && params.get('daji_token')) return
     try {
       await bootstrapUser()
     } catch {
