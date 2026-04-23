@@ -67,7 +67,16 @@ function ensureBooted(): DajiCSBootOptions {
   return config
 }
 
-function buildUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
+/** tab 模式：直接打开 /buyer/:supplierId，query 携带身份信息 */
+function buildTabUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
+  const root = cfg.baseUrl.replace(/\/$/, '')
+  const supplierId = opts.supplierId ?? 'default'
+  const qs = buildQuery(opts, cfg.version ?? VERSION)
+  return `${root}/buyer/${encodeURIComponent(supplierId)}${qs ? '?' + qs : ''}`
+}
+
+/** iframe 模式：通过 /chat 入口，由 ChatEntry.vue 解析 query 后跳转 */
+function buildIframeUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
   const root = cfg.baseUrl.replace(/\/$/, '')
   const qs = buildQuery(opts, cfg.version ?? VERSION)
   return `${root}/chat${qs ? '?' + qs : ''}`
@@ -75,7 +84,7 @@ function buildUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
 
 /** 公共：根据当前 boot 配置构造 /chat URL（供 launcher iframe 模式使用） */
 export function buildChatUrl(opts: OpenOptions): string {
-  return buildUrl(ensureBooted(), opts)
+  return buildIframeUrl(ensureBooted(), opts)
 }
 
 function windowKey(opts: OpenOptions): string {
@@ -149,14 +158,14 @@ export async function open(opts: OpenOptions): Promise<void> {
       warn('pre-send product card failed, opening window anyway:', e)
     }
   }
-  openWindowSmart(key, buildUrl(cfg, opts), opts.windowFeatures)
+  openWindowSmart(key, buildTabUrl(cfg, opts), opts.windowFeatures)
 }
 
 /** 兜底：跳过预投，直接打开窗口（仍复用已有窗口）。 */
 export function openSafe(opts: OpenOptions): void {
   const cfg = ensureBooted()
   const key = windowKey(opts)
-  openWindowSmart(key, buildUrl(cfg, opts), opts.windowFeatures)
+  openWindowSmart(key, buildTabUrl(cfg, opts), opts.windowFeatures)
 }
 
 /** 关闭并释放指定用户×客服的窗口缓存（便于宿主手动控制） */
