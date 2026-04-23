@@ -40,6 +40,4 @@ export interface OpenOptions {
   priceType?: string
   supplierId?: string | number
   card?: ProductCard
-  /** 透传给 window.open 的特性串，默认 `width=1000,height=600,scrollbars=yes,resizable=yes` */
-  windowFeatures?: string
 }

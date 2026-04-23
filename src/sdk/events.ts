@@ -9,12 +9,8 @@ export type DajiCSEventMap = {
   /** SDK 首次 boot 完成触发一次 */
   'ready': void
 
-  /** 成功新开了客服窗口 */
+  /** 成功打开客服标签页（浏览器自动复用同名窗口） */
   'window:open': { key: string; url: string }
-  /** 复用了已开的客服窗口 */
-  'window:focus': { key: string; url: string }
-  /** 窗口被用户关闭（轮询探测，最多延迟 1s） */
-  'window:close': { key: string }
 
   /** 开始预投商品卡 */
   'presend:start': { clientMsgId: string; card: ProductCard; opts: OpenOptions }

@@ -98,10 +98,10 @@
     </div>
 
     <div class="card">
-      <strong>3. 兜底入口 / 主动关窗</strong>
+      <strong>3. 兜底入口 / 重置</strong>
       <button id="btn-safe">openSafe</button>
-      <button id="btn-close">close()</button>
       <button id="btn-reset">reset()</button>
+      <p><small>💡 标签页模式：浏览器自动复用同名窗口 'DJ_Chat_Window'，无需手动管理</small></p>
     </div>
 
     <div class="card">
@@ -163,8 +163,6 @@
       const events = [
         'ready',
         'window:open',
-        'window:focus',
-        'window:close',
         'presend:start',
         'presend:success',
         'presend:error',
@@ -201,8 +199,6 @@
           },
         })
       document.getElementById('btn-safe').onclick = () => DajiCS.openSafe({ ...common })
-      document.getElementById('btn-close').onclick = () =>
-        DajiCS.close({ userId: common.userId, supplierId: common.supplierId })
       document.getElementById('btn-reset').onclick = () => {
         DajiCS.reset()
         DajiCS.boot(bootConfig)

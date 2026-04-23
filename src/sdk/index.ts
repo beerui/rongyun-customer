@@ -9,7 +9,7 @@ import {
 } from './launcher/bridge'
 import { getLauncherElement, mountLauncher, setUnreadCount, toggleWidget, unmountLauncher } from './launcher/launcher'
 import { closeWidget, getWidgetIframe, hideEndBanner, isWidgetOpen, openWidget, showEndBanner } from './launcher/widget'
-import { boot, buildChatUrl, close, getOpenWindow, isReadyNow, open, openSafe, ready, reset, version } from './open'
+import { boot, buildChatUrl, isReadyNow, open, openSafe, ready, reset, version } from './open'
 
 /**
  * 语法糖：向 widget iframe 下发新身份（典型：宿主 token 续期后）。
@@ -29,7 +29,6 @@ export {
   boot,
   open,
   openSafe,
-  close,
   reset,
   ready,
   isReadyNow,
@@ -46,7 +45,6 @@ export {
   isWidgetOpen,
   getWidgetIframe,
   buildChatUrl,
-  getOpenWindow,
   sendToWidgetIframe,
   sendToOpenWindow,
   isBridgeActive,
