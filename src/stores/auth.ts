@@ -64,6 +64,16 @@ export const useAuthStore = defineStore('auth', () => {
     peerId.value = cred.peerId
   }
 
+  /** URL 直传融云凭证（第三方系统已有 token，跳过后端接口） */
+  function bootstrapFromUrlParams(params: { userId: string; rcToken: string; peerId?: string }): void {
+    role.value = 'user'
+    userId.value = params.userId
+    rcToken.value = params.rcToken
+    peerId.value = params.peerId ?? ''
+    name.value = `访客${params.userId.slice(-4)}`
+    avatar.value = ''
+  }
+
   async function bootstrapUserWithTarget(targetId?: string) {
     const cred = await fetchUserImCredential(targetId)
     console.log('bootstrapUser', cred)
@@ -141,6 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
     bootstrap,
     bootstrapUser,
     bootstrapUserWithTarget,
+    bootstrapFromUrlParams,
     loginAgent,
     restoreAgent,
     logout,

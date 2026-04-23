@@ -71,10 +71,19 @@ onMounted(async () => {
   })
 
   const targetId = route.params.targetId as string | undefined
+  const q = route.query as Record<string, string | undefined>
 
   if (auth.role === 'guest' || !auth.rcToken) {
     try {
-      await auth.bootstrapUserWithTarget(targetId)
+      if (q.daji_userId && q.daji_token) {
+        auth.bootstrapFromUrlParams({
+          userId: q.daji_userId,
+          rcToken: q.daji_token,
+          peerId: targetId,
+        })
+      } else {
+        await auth.bootstrapUserWithTarget(targetId)
+      }
     } catch (e) {
       userChatLogger.error('bootstrapUser 失败', e)
       return
