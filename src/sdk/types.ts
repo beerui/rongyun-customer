@@ -41,3 +41,6 @@ export interface OpenOptions {
   supplierId?: string | number
   card?: ProductCard
 }
+
+/** closeWidget 的关闭原因 */
+export type WidgetCloseReason = 'user' | 'minimize' | 'programmatic'

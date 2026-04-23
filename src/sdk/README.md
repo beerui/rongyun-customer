@@ -2,6 +2,7 @@
 
 大集客服 SDK —— 第三方站点一键接入大集在线客服。
 
+- **一行代码打开客服**：`DajiCS.open()` 即可新标签页跳转客服系统
 - postMessage 双向桥（严格 origin 白名单）
 - 悬浮 Launcher + iframe Widget（移动端自适应全屏）
 - 未读数 / 消息 / 会话结束事件透传
@@ -22,10 +23,80 @@ npm i @daji/cs-sdk
 
 ## 快速开始
 
+> 核心场景：用户在商品页 / 商家主页点击"联系客服"按钮 → 新标签页打开客服系统。
+
 ### ESM / TypeScript
 
 ```ts
-import { boot, mountLauncher, on, refreshIdentity } from '@daji/cs-sdk'
+import { boot, open } from '@daji/cs-sdk'
+
+// 1. 初始化（页面加载时调用一次）
+boot({
+  baseUrl: 'https://cs.chinamarket.cn',
+  apiBase: 'https://api.chinamarket.cn',
+  debug: import.meta.env.DEV,
+})
+
+// 2. 绑定按钮 → 点击即打开客服
+document.querySelector('#contact-cs')!.addEventListener('click', () => {
+  open({
+    userId: 'u_123',
+    userName: '小明',
+    supplierId: 'shop_abc',
+  })
+})
+```
+
+如需同时预投商品卡（如商品详情页的"咨询"按钮），只需传入 `card`：
+
+```ts
+open({
+  userId: 'u_123',
+  supplierId: 'shop_abc',
+  card: {
+    title: '精品大枣 5kg',
+    imgUrl: 'https://cdn.example.com/sku/9999.jpg',
+    spuId: 'SPU_9999',
+    jumpUrl: 'https://shop.example.com/product/9999',
+  },
+})
+```
+
+### CommonJS
+
+```js
+const { boot, open } = require('@daji/cs-sdk')
+
+boot({ baseUrl: '...', apiBase: '...' })
+
+contactBtn.addEventListener('click', () => {
+  open({ userId: 'u_123', supplierId: 'shop_abc' })
+})
+```
+
+### IIFE（`<script>` 直接加载）
+
+```html
+<script src="./daji-cs.iife.js"></script>
+<script>
+  DajiCS.boot({ baseUrl: '...', apiBase: '...' })
+
+  document.querySelector('#contact-cs').addEventListener('click', function () {
+    DajiCS.open({ userId: 'u_123', supplierId: 'shop_abc' })
+  })
+</script>
+```
+
+---
+
+## 进阶用法
+
+### 悬浮气泡 + iframe Widget（Launcher 模式）
+
+如果希望在页面右下角常驻一个客服气泡按钮，点击后以 iframe 嵌入方式打开客服面板：
+
+```ts
+import { boot, mountLauncher, on } from '@daji/cs-sdk'
 
 boot({
   baseUrl: 'https://cs.chinamarket.cn',
@@ -33,10 +104,12 @@ boot({
   debug: import.meta.env.DEV,
 })
 
+// 监听未读数，更新页面标题
 on('unread:change', ({ count }) => {
   document.title = count > 0 ? `(${count}) 大集商城` : '大集商城'
 })
 
+// 挂载悬浮气泡 + iframe widget
 mountLauncher({
   position: 'bottom-right',
   primary: '#FA3E3E',
@@ -46,24 +119,22 @@ mountLauncher({
 })
 ```
 
-### CommonJS
+### 宿主 token 续期：给已挂载的 iframe widget 下发新身份
 
-```js
-const { boot, mountLauncher } = require('@daji/cs-sdk')
-boot({ baseUrl: '...', apiBase: '...' })
+```ts
+const newToken = await refreshHostAuth()
+DajiCS.refreshIdentity({ token: newToken })
+// iframe 内的 /chat 会自动 bootstrap + 重连 IM
 ```
 
-### IIFE（`<script>` 直接加载）
+### 会话结束后弹满意度问卷，而不是直接关窗
 
-```html
-<script src="./daji-cs.iife.js"></script>
-<script>
-  DajiCS.boot({ baseUrl: '...', apiBase: '...' })
-  DajiCS.mountLauncher({
-    position: 'bottom-right',
-    openWith: { userId: 'u_123', supplierId: 'shop_abc' },
-  })
-</script>
+```ts
+boot({ ..., autoCloseOnEnd: false })
+on('conversation:end', ({ reason }) => {
+  showSatisfactionSurvey()
+  setTimeout(() => closeWidget(), 10_000)
+})
 ```
 
 ---
@@ -89,24 +160,6 @@ askBtn.addEventListener('click', () => {
 
 预投失败不阻塞开窗（`presend:error` 事件 + 窗口正常弹出）。
 
-### 宿主 token 续期：给已挂载的 iframe widget 下发新身份
-
-```ts
-const newToken = await refreshHostAuth()
-DajiCS.refreshIdentity({ token: newToken })
-// iframe 内的 /chat 会自动 bootstrap + 重连 IM
-```
-
-### 会话结束后弹满意度问卷，而不是直接关窗
-
-```ts
-boot({ ..., autoCloseOnEnd: false })
-on('conversation:end', ({ reason }) => {
-  showSatisfactionSurvey()
-  setTimeout(() => closeWidget(), 10_000)
-})
-```
-
 ---
 
 ## API 速查
@@ -118,8 +171,6 @@ on('conversation:end', ({ reason }) => {
 |          | `ready()` / `isReadyNow()`                                   | boot 完成的 Promise / 同步查询                            |
 | 新开窗口 | `open(opts)`                                                 | 可选预投商品卡 → `window.open`                            |
 |          | `openSafe(opts)`                                             | 跳过预投直接开                                            |
-|          | `close(opts)`                                                | 关闭指定 user×supplier 窗口                               |
-|          | `getOpenWindow(opts)`                                        | 取 Window 句柄（跨域可能 `null`）                         |
 | 悬浮 UI  | `mountLauncher(opts)`                                        | 气泡按钮 + iframe Widget                                  |
 |          | `unmountLauncher()` · `setUnreadCount(n)` · `toggleWidget()` |                                                           |
 |          | `openWidget(url)` · `closeWidget()` · `isWidgetOpen()`       |                                                           |
@@ -151,8 +202,10 @@ on('conversation:end', ({ reason }) => {
 所有消息结构统一：
 
 ```ts
-{ source: 'daji-cs', version: '0.1.0', type: 'daji:*', payload: ... }
+{ source: 'daji-cs', version: SDK_VERSION, type: 'daji:*', payload: ... }
 ```
+
+> `SDK_VERSION` 由构建注入，值见 `src/sdk/version.ts`。
 
 | 方向            | type                    | payload                                      |
 | --------------- | ----------------------- | -------------------------------------------- |

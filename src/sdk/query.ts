@@ -1,6 +1,12 @@
 import type { OpenOptions } from './types'
 
-/** 把 OpenOptions 序列化成老方案的 daji_* query string */
+/**
+ * 把 OpenOptions 序列化成老方案的 daji_* query string。
+ *
+ * ⚠️ 安全注意：token 以明文出现在 URL query 中（daji_token=xxx），
+ * 会被浏览器历史、Referrer、服务端 access-log 等记录。
+ * 生产环境应尽早迁移到 postMessage 下发 token 的方案（C2 阶段）。
+ */
 export function buildQuery(opts: OpenOptions, sdkVersion: string): string {
   const params: Record<string, string> = {
     daji_userId: String(opts.userId ?? ''),

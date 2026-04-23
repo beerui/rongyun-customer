@@ -57,7 +57,7 @@ export {
 }
 export { HttpError, TimeoutError, fetchWithRetry, defaultShouldRetry } from './utils/fetch-with-retry'
 export { EventEmitter } from './utils/event-emitter'
-export type { DajiCSBootOptions, OpenOptions, ProductCard } from './types'
+export type { DajiCSBootOptions, OpenOptions, ProductCard, WidgetCloseReason } from './types'
 export type { DajiCSEventMap, DajiCSEventType, DajiCSListener } from './events'
 export type { LauncherOptions, LauncherPosition, LauncherMode } from './launcher/launcher'
 export type { WidgetState, WidgetPosition } from './launcher/widget'

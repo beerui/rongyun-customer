@@ -1,4 +1,4 @@
-import type { OpenOptions, ProductCard } from './types'
+import type { OpenOptions, ProductCard, WidgetCloseReason } from './types'
 import { EventEmitter, type Listener, type Unsubscribe } from './utils/event-emitter'
 
 /**
@@ -11,6 +11,10 @@ export type DajiCSEventMap = {
 
   /** 成功打开客服标签页（浏览器自动复用同名窗口） */
   'window:open': { key: string; url: string }
+  /** 复用已有客服窗口（聚焦） */
+  'window:focus': { key: string; url: string }
+  /** 客服窗口被关闭（1s 轮询探测） */
+  'window:close': { key: string }
 
   /** 开始预投商品卡 */
   'presend:start': { clientMsgId: string; card: ProductCard; opts: OpenOptions }
@@ -36,7 +40,7 @@ export type DajiCSEventMap = {
   /** iframe Widget 打开 */
   'widget:open': { url: string }
   /** iframe Widget 关闭 */
-  'widget:close': { reason: 'user' | 'minimize' | 'programmatic' }
+  'widget:close': { reason: WidgetCloseReason }
 
   /** 其它未分类错误（boot / 内部状态异常等） */
   'error': { source: string; error: unknown }

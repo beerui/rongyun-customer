@@ -68,6 +68,7 @@ export async function preSendProductCard(
 
   const url = apiBase.replace(/\/$/, '') + '/sendRyMessage'
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // 后端约定：Authorization 直接传裸 token（非 Bearer 方案），由后端网关自行包装。
   if (opts.token) headers.Authorization = String(opts.token)
 
   try {

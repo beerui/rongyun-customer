@@ -11,10 +11,11 @@
  */
 import { emit } from '../events'
 import { onReset } from '../lifecycle'
+import { SDK_VERSION } from '../version'
 import { closeWidget, getWidgetIframe, showEndBanner } from './widget'
 
 export const DAJI_MSG_SOURCE = 'daji-cs'
-export const DAJI_MSG_VERSION = '0.1.0'
+export const DAJI_MSG_VERSION = SDK_VERSION
 
 export type DajiMsgType =
   | 'daji:ready'
@@ -178,6 +179,11 @@ export function sendToWidgetIframe(type: DajiMsgType, payload?: unknown, targetO
   const iframe = getWidgetIframe()
   if (!iframe?.contentWindow) return false
   const origin = targetOrigin ?? [...allowedOrigins][0] ?? '*'
+  if (origin === '*') {
+    console.warn(
+      '[DajiCS] sendToWidgetIframe() fell back to wildcard targetOrigin="*"; pass targetOrigin explicitly for stricter security.',
+    )
+  }
   const msg: DajiMessage = {
     source: DAJI_MSG_SOURCE,
     version: DAJI_MSG_VERSION,
@@ -192,6 +198,11 @@ export function sendToWidgetIframe(type: DajiMsgType, payload?: unknown, targetO
 export function sendToOpenWindow(win: Window, type: DajiMsgType, payload?: unknown, targetOrigin?: string): boolean {
   if (!win || win.closed) return false
   const origin = targetOrigin ?? [...allowedOrigins][0] ?? '*'
+  if (origin === '*') {
+    console.warn(
+      '[DajiCS] sendToOpenWindow() fell back to wildcard targetOrigin="*"; pass targetOrigin explicitly for stricter security.',
+    )
+  }
   const msg: DajiMessage = {
     source: DAJI_MSG_SOURCE,
     version: DAJI_MSG_VERSION,

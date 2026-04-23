@@ -6,9 +6,10 @@
  *
  * 非 iframe 场景（直接访问 /chat）全部 no-op，不影响用户端正常使用。
  */
+import { SDK_VERSION } from '../sdk/version'
 
 const DAJI_MSG_SOURCE = 'daji-cs'
-const DAJI_MSG_VERSION = '0.1.0'
+const DAJI_MSG_VERSION = SDK_VERSION
 
 export type EmbedMsgType = 'daji:ready' | 'daji:unread' | 'daji:message' | 'daji:conversation-end' | 'daji:close'
 
@@ -61,10 +62,22 @@ export function sendToParent<T>(type: EmbedMsgType, payload?: T): void {
   }
 }
 
-/** 监听 parent 下发的 daji 协议消息（如 identity 补发）。返回取消函数。 */
-export function onParentMessage(handler: (type: string, payload: unknown) => void): () => void {
+/**
+ * 监听 parent 下发的 daji 协议消息（如 identity 补发）。返回取消函数。
+ *
+ * @param handler       处理函数
+ * @param trustedOrigin 可选白名单 origin（如 `https://cs.example.com`）。
+ *                      未传时回退 document.referrer 推导；推导失败则接受所有 origin（与旧行为一致）。
+ */
+export function onParentMessage(handler: (type: string, payload: unknown) => void, trustedOrigin?: string): () => void {
   if (typeof window === 'undefined') return () => {}
+
+  const allowed = trustedOrigin ?? getParentOrigin()
+
   const listener = (e: MessageEvent) => {
+    // origin 校验：如果能推导出具体 origin，则严格比对
+    if (allowed !== '*' && e.origin !== allowed) return
+
     const data = e.data
     if (!data || typeof data !== 'object') return
     if ((data as { source?: unknown }).source !== DAJI_MSG_SOURCE) return

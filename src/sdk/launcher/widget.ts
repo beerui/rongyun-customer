@@ -1,4 +1,5 @@
 import { emit } from '../events'
+import type { WidgetCloseReason } from '../types'
 import { CSS, STYLE_ID } from './styles'
 
 let styleEl: HTMLStyleElement | null = null
@@ -95,7 +96,7 @@ export function openWidget(url: string, opts?: Partial<WidgetState>): void {
   }
 }
 
-export function closeWidget(reason: 'user' | 'minimize' | 'programmatic' = 'user'): void {
+export function closeWidget(reason: WidgetCloseReason = 'user'): void {
   if (!widgetEl || !isOpen) return
   widgetEl.setAttribute('data-open', 'false')
   isOpen = false

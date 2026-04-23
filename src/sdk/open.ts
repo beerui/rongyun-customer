@@ -5,11 +5,17 @@ import { preSendProductCard } from './pre-send'
 import { buildQuery } from './query'
 import { isReadyNow, ready as readyPromise, resetReady, signalReady } from './ready'
 import type { DajiCSBootOptions, OpenOptions } from './types'
+import { SDK_VERSION } from './version'
 
-const VERSION = '0.1.0'
 const WINDOW_NAME = 'DJ_Chat_Window'
 
 let config: DajiCSBootOptions | null = null
+
+/** 最后一个通过 openTab 打开/复用的窗口引用 */
+let openedWindow: Window | null = null
+
+/** 轮询检测窗口关闭的定时器 */
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 function log(...args: unknown[]): void {
   if (config?.debug) console.log('[DajiCS]', ...args)
@@ -17,6 +23,32 @@ function log(...args: unknown[]): void {
 
 function warn(...args: unknown[]): void {
   console.warn('[DajiCS]', ...args)
+}
+
+/** 停止轮询并清除窗口引用 */
+function stopPolling(): void {
+  if (pollTimer !== null) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  openedWindow = null
+}
+
+/** 启动轮询检测窗口是否关闭（1s 间隔） */
+function startPolling(): void {
+  // 先清除之前的轮询（如果有）
+  if (pollTimer !== null) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+
+  pollTimer = setInterval(() => {
+    if (openedWindow && openedWindow.closed) {
+      log('detected window closed')
+      emit('window:close', { key: WINDOW_NAME })
+      stopPolling()
+    }
+  }, 1000)
 }
 
 export function boot(options: DajiCSBootOptions): void {
@@ -32,7 +64,7 @@ export function boot(options: DajiCSBootOptions): void {
     log('boot() called again with identical config — no-op.')
     return
   }
-  config = { ...options, version: options.version ?? VERSION }
+  config = { ...options, version: options.version ?? SDK_VERSION }
   log('booted', config)
   startBridge(config.baseUrl, config.allowedOrigins, {
     autoClose: config.autoCloseOnEnd,
@@ -50,6 +82,7 @@ export function boot(options: DajiCSBootOptions): void {
  */
 export function reset(options?: { clearListeners?: boolean }): void {
   config = null
+  stopPolling()
   resetReady()
   triggerReset()
   if (options?.clearListeners) clearAllListeners()
@@ -64,14 +97,14 @@ function ensureBooted(): DajiCSBootOptions {
 function buildTabUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
   const root = cfg.baseUrl.replace(/\/$/, '')
   const supplierId = opts.supplierId ?? 'default'
-  const qs = buildQuery(opts, cfg.version ?? VERSION)
+  const qs = buildQuery(opts, cfg.version ?? SDK_VERSION)
   return `${root}/buyer/${encodeURIComponent(supplierId)}${qs ? '?' + qs : ''}`
 }
 
 /** iframe 模式：通过 /chat 入口，由 ChatEntry.vue 解析 query 后跳转 */
 function buildIframeUrl(cfg: DajiCSBootOptions, opts: OpenOptions): string {
   const root = cfg.baseUrl.replace(/\/$/, '')
-  const qs = buildQuery(opts, cfg.version ?? VERSION)
+  const qs = buildQuery(opts, cfg.version ?? SDK_VERSION)
   return `${root}/chat${qs ? '?' + qs : ''}`
 }
 
@@ -83,10 +116,28 @@ export function buildChatUrl(opts: OpenOptions): string {
 /** 打开客服标签页（浏览器自动复用同名窗口） */
 function openTab(url: string): Window | null {
   if (typeof window === 'undefined') return null
+
+  // 判断是否有已打开且未关闭的同名窗口（复用场景）
+  const isReuse = openedWindow != null && !openedWindow.closed
+
   const win = window.open(url, WINDOW_NAME)
   if (!win) {
     emit('error', { source: 'window.open', error: new Error('window.open returned null (popup blocked?)') })
+    return null
   }
+
+  // 保存窗口引用
+  openedWindow = win
+
+  // 如果是复用已有窗口，emit window:focus
+  if (isReuse) {
+    log('reused existing window, emitting window:focus')
+    emit('window:focus', { key: WINDOW_NAME, url })
+  }
+
+  // 启动轮询检测窗口关闭
+  startPolling()
+
   return win
 }
 
@@ -121,4 +172,4 @@ export function openSafe(opts: OpenOptions): void {
 }
 
 export { readyPromise as ready, isReadyNow }
-export const version = VERSION
+export const version = SDK_VERSION
