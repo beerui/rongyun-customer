@@ -80,7 +80,7 @@
       <strong>1. 基础打开（无商品卡）</strong>
       <p>
         只传身份 query，直接新开
-        <code>/chat</code>
+        <code>/buyer/:supplierId</code>
         。
       </p>
       <button id="btn-basic">打开客服</button>
@@ -163,6 +163,8 @@
       const events = [
         'ready',
         'window:open',
+        'window:focus',
+        'window:close',
         'presend:start',
         'presend:success',
         'presend:error',
@@ -225,7 +227,7 @@
 
       // C3 验证：模拟 iframe → parent 的协议消息（demo 同源，origin 在白名单里）
       function fakeFromIframe(type, payload) {
-        window.postMessage({ source: 'daji-cs', version: '0.1.0', type, payload: payload || null }, location.origin)
+        window.postMessage({ source: 'daji-cs', version: DajiCS.DAJI_MSG_VERSION, type, payload: payload || null }, location.origin)
       }
       document.getElementById('btn-sim-end-agent').onclick = () =>
         fakeFromIframe('daji:conversation-end', { reason: 'agent' })
