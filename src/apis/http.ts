@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from 'axios'
 
 export const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE,
-  timeout: 15000,
+  timeout: 60000,
 })
 
 http.interceptors.request.use((config) => {

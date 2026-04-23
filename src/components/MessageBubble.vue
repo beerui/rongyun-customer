@@ -225,7 +225,7 @@ function formatDuration(s?: number) {
       </div>
 
       <!-- 优惠券卡片 -->
-      <div
+      <!-- <div
         v-else-if="message.type === 'coupon'"
         class="flex items-center gap-3 p-3 rounded-md bg-gradient-to-r from-brand-50 to-white border border-brand-100 max-w-[300px]"
       >
@@ -237,7 +237,7 @@ function formatDuration(s?: number) {
             {{ (message.content as any).expireAt }}
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div v-else-if="message.type === 'system'" class="px-2.5 py-1.5 rounded-md bg-bg-soft text-[11px] text-ink-500 text-center">
         {{ (message.content as any)?.message || (message.content as any)?.operation || '[系统消息]' }}
