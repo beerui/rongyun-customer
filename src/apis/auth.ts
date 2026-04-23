@@ -56,14 +56,12 @@ function getOrCreateGuestUuid(): string {
  * 后端 getRyToken 暂未就绪（1015 错误），返回 mock 凭证保证 UI 可跑通；
  * 后端修复后自动走真实响应，不需再改前端。
  */
-export const fetchUserImCredential = async (): Promise<UserImCredential> => {
+export const fetchUserImCredential = async (targetId?: string): Promise<UserImCredential> => {
   const uuid = getOrCreateGuestUuid()
-  const params = new URLSearchParams(window.location.search)
-  const target = params.get('target')
 
   try {
     const payload: any = { uuid }
-    if (target) payload.customerId = target
+    if (targetId) payload.customerId = targetId
 
     const raw: any = await http.post('/api/customer/getRyToken', payload)
     return {
@@ -71,7 +69,7 @@ export const fetchUserImCredential = async (): Promise<UserImCredential> => {
       userId: String(raw.userId),
       name: raw.nickname || `访客${uuid.slice(-4)}`,
       avatar: raw.avatar,
-      peerId: target || String(raw.customerId || ''),
+      peerId: targetId || String(raw.customerId || ''),
     }
   } catch (e) {
     console.warn('[mock] getRyToken unavailable, using mock visitor credential:', e)
@@ -80,7 +78,7 @@ export const fetchUserImCredential = async (): Promise<UserImCredential> => {
       userId: `visitor_${uuid.slice(-8)}`,
       name: `访客${uuid.slice(-4)}`,
       avatar: '',
-      peerId: target || 'agent_default',
+      peerId: targetId || 'agent_default',
     }
   }
 }

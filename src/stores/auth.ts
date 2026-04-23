@@ -64,6 +64,17 @@ export const useAuthStore = defineStore('auth', () => {
     peerId.value = cred.peerId
   }
 
+  async function bootstrapUserWithTarget(targetId?: string) {
+    const cred = await fetchUserImCredential(targetId)
+    console.log('bootstrapUser', cred)
+    role.value = 'user'
+    userId.value = cred.userId
+    name.value = cred.name
+    avatar.value = cred.avatar ?? ''
+    rcToken.value = cred.rcToken
+    peerId.value = cred.peerId
+  }
+
   async function loginAgent(account: string, password: string) {
     const cred = await apiAgentLogin(account, password)
     console.log('loginAgent', cred)
@@ -129,6 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
     getAuthTokenKey,
     bootstrap,
     bootstrapUser,
+    bootstrapUserWithTarget,
     loginAgent,
     restoreAgent,
     logout,

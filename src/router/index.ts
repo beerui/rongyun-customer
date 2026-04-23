@@ -9,13 +9,14 @@ const MobileChat = () => import('@/pages/mobile/user/MobileChat.vue')
 const MobileIntro = () => import('@/pages/mobile/user/MobileIntro.vue')
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', component: UserChat },
+  { path: '/', redirect: '/buyer/default' },
+  { path: '/buyer/:targetId', component: UserChat },
   { path: '/chat', component: ChatEntry },
   { path: '/agent/login', component: AgentLogin },
   { path: '/agent', component: AgentWorkbench, meta: { requiresAgent: true } },
   { path: '/m', component: MobileChat },
   { path: '/m/intro', component: MobileIntro },
-  { path: '/:pathMatch(.*)*', redirect: '/' },
+  { path: '/:pathMatch(.*)*', redirect: '/buyer/default' },
 ]
 
 const router = createRouter({

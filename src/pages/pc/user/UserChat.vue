@@ -48,12 +48,12 @@ let timeUpdateInterval: number | null = null
 async function handleSelectConversation(targetId: string) {
   if (im.currentTargetId === targetId) return
   await im.openConversation(targetId)
-  router.replace({ query: { ...route.query, target: targetId } })
+  router.replace(`/buyer/${targetId}`)
   userChatLogger.info('用户切换对话', targetId)
 }
 
 watch(
-  () => route.query.target as string | undefined,
+  () => route.params.targetId as string | undefined,
   async (next, prev) => {
     if (!next || next === prev) return
     if (im.currentTargetId === next) return
@@ -70,9 +70,11 @@ onMounted(async () => {
     conversations.unwatch()
   })
 
+  const targetId = route.params.targetId as string | undefined
+
   if (auth.role === 'guest' || !auth.rcToken) {
     try {
-      await auth.bootstrapUser()
+      await auth.bootstrapUserWithTarget(targetId)
     } catch (e) {
       userChatLogger.error('bootstrapUser 失败', e)
       return
@@ -94,13 +96,13 @@ onMounted(async () => {
   if (selfBlocked.value) return
   conversations.watch()
 
-  const initialTarget = route.query.target as string | undefined
-  const targetToOpen = initialTarget || im.currentTargetId || conversations.list[0]?.targetId || auth.peerId || ''
+  const initialTarget = targetId || auth.peerId || ''
+  const targetToOpen = initialTarget || im.currentTargetId || conversations.list[0]?.targetId || ''
 
   if (targetToOpen && im.currentTargetId !== targetToOpen) {
     await im.openConversation(targetToOpen)
     if (initialTarget !== targetToOpen) {
-      router.replace({ query: { ...route.query, target: targetToOpen } })
+      router.replace(`/buyer/${targetToOpen}`)
     }
   }
 
