@@ -17,6 +17,7 @@ import { userChatLogger } from '@/utils/logger'
 import { initSingleTab } from '@/utils/single-tab'
 import { formatMessageTime } from '@/utils/time'
 import type { OrderPayload, ProductPayload } from '@/im'
+import MerchantInfoPanel from './MerchantInfoPanel.vue'
 import PlatformIntro from './PlatformIntro.vue'
 
 const auth = useAuthStore()
@@ -30,6 +31,9 @@ const drawerOrder = ref(false)
 const drawerProduct = ref(false)
 const selfBlocked = ref(false)
 const timeUpdateTrigger = ref(0)
+
+// type=2 为商家客服，type=1 或默认为平台客服
+const isMerchant = computed(() => route.query.type === '2')
 
 const embedded = computed(() => isEmbedded())
 
@@ -258,9 +262,10 @@ async function sendOrder(o: OrderPayload) {
         </template>
       </section>
 
-      <!-- 右侧：平台介绍卡片区 -->
+      <!-- 右侧：平台介绍 / 商家信息 -->
       <aside class="w-[360px] shrink-0 bg-white border-l border-line-light overflow-y-auto scrollbar-thin">
-        <PlatformIntro />
+        <MerchantInfoPanel v-if="isMerchant" />
+        <PlatformIntro v-else />
       </aside>
     </div>
 

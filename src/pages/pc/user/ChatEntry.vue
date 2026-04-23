@@ -46,8 +46,10 @@ onMounted(async () => {
     })
   }
 
-  // 进入 PC/移动端 UserChat，router guard 会自动适配
-  router.replace({ path: '/', query: {} })
+  // 进入 PC/移动端 UserChat，router guard 会自动适配，透传 type 参数
+  const forwardQuery: Record<string, string> = {}
+  if (q.type) forwardQuery.type = String(q.type)
+  router.replace({ path: '/', query: forwardQuery })
 })
 </script>
 

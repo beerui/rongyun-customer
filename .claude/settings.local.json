@@ -29,7 +29,11 @@
       "Bash(git branch *)",
       "Bash(grep -v \"TOOLBAR_BUTTONS\\\\|chat-toolbar\\\\|ToolbarButton\\\\|ToolbarPermission\\\\|'supplier'\\\\|供应商\\\\|'platform'$\")",
       "Bash(echo \"---EXIT=$?---\")",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "mcp__masterGo-magic-mcp__mcp__getDsl",
+      "Bash(npx tsc *)",
+      "Bash(git -C /mnt/d/2026/daji-customer-service status)",
+      "Bash(git -C /mnt/d/2026/daji-customer-service diff --stat)"
     ]
   }
 }

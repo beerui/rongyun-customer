@@ -7,15 +7,17 @@ const AgentLogin = () => import('@/pages/pc/agent/AgentLogin.vue')
 const AgentWorkbench = () => import('@/pages/pc/agent/AgentWorkbench.vue')
 const MobileChat = () => import('@/pages/mobile/user/MobileChat.vue')
 const MobileIntro = () => import('@/pages/mobile/user/MobileIntro.vue')
+const MobileMerchantInfo = () => import('@/pages/mobile/user/MobileMerchantInfo.vue')
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/buyer/default' },
+  { path: '/', redirect: (to) => ({ path: '/buyer/default', query: to.query }) },
   { path: '/buyer/:targetId', component: UserChat },
   { path: '/chat', component: ChatEntry },
   { path: '/agent/login', component: AgentLogin },
   { path: '/agent', component: AgentWorkbench, meta: { requiresAgent: true } },
   { path: '/m', component: MobileChat },
   { path: '/m/intro', component: MobileIntro },
+  { path: '/m/merchant', component: MobileMerchantInfo },
   { path: '/:pathMatch(.*)*', redirect: '/buyer/default' },
 ]
 
@@ -29,12 +31,12 @@ router.beforeEach((to) => {
 
   // 客服路由仅 PC 可访问；移动端一律跳到用户端
   if (to.path.startsWith('/agent') && mobile) {
-    return '/m'
+    return { path: '/m', query: to.query }
   }
 
   // 移动端访问 PC 用户端首页 → 跳 /m
   if (mobile && to.path === '/') {
-    return '/m'
+    return { path: '/m', query: to.query }
   }
 
   // PC 访问移动端路由 → 跳 PC 首页
