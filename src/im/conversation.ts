@@ -4,7 +4,7 @@ import { buildDajiCardMessage } from './custom-messages'
 import { parseRcConversation, parseRcMessage } from './parse'
 import type { Conversation, ConversationKind, Message } from './types'
 
-let currentKind: ConversationKind = 'private'
+const currentKind: ConversationKind = 'group'
 
 function rcType() {
   return currentKind === 'group' ? RC.ConversationType.GROUP : RC.ConversationType.PRIVATE

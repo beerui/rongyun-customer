@@ -30,7 +30,7 @@ function saveAgentSession(s: AgentSession) {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const role = ref<Role>('guest')
+  const role = ref<Role>('user')
   const userId = ref('')
   const name = ref('')
   const avatar = ref('')
@@ -54,18 +54,20 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function bootstrapUser() {
-    const cred = await fetchUserImCredential()
-    console.log('bootstrapUser', cred)
-    role.value = 'user'
-    userId.value = cred.userId
-    name.value = cred.name
-    avatar.value = cred.avatar ?? ''
-    rcToken.value = cred.rcToken
-    peerId.value = cred.peerId
+    console.log('bootstrapUser')
+    // const cred = await fetchUserImCredential()
+    // console.log('bootstrapUser cred', cred)
+    // role.value = 'user'
+    // userId.value = cred.userId
+    // name.value = cred.name
+    // avatar.value = cred.avatar ?? ''
+    // rcToken.value = cred.rcToken
+    // peerId.value = cred.peerId
   }
 
   /** URL 直传融云凭证（第三方系统已有 token，跳过后端接口） */
   function bootstrapFromUrlParams(params: { userId: string; rcToken: string; peerId?: string }): void {
+    console.log('bootstrapFromUrlParams', params)
     role.value = 'user'
     userId.value = params.userId
     rcToken.value = params.rcToken
@@ -75,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function bootstrapUserWithTarget(targetId?: string) {
+    console.log('bootstrapUserWithTarget', targetId)
     const cred = await fetchUserImCredential(targetId)
     console.log('bootstrapUser', cred)
     role.value = 'user'

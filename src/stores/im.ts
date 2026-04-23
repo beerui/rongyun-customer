@@ -36,9 +36,6 @@ export const useImStore = defineStore('im', () => {
   bindVisibilityReset()
 
   const connected = computed(() => status.value === 'connected')
-  const isMock = computed(
-    () => status.value === 'connected' && messages.value && currentTargetId.value.startsWith('mock') === false,
-  )
 
   async function connect(token: string) {
     initIM(APPKEY)
@@ -331,7 +328,6 @@ export const useImStore = defineStore('im', () => {
     connected,
     currentTargetId,
     messages,
-    isMock,
     unreadTotal,
     connect,
     disconnect,

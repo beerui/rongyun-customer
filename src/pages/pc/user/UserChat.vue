@@ -73,29 +73,19 @@ onMounted(async () => {
   const targetId = route.params.targetId as string | undefined
   const q = route.query as Record<string, string | undefined>
 
-  if (auth.role === 'guest' || !auth.rcToken) {
-    try {
-      if (q.daji_userId && q.daji_token) {
-        auth.bootstrapFromUrlParams({
-          userId: q.daji_userId,
-          rcToken: q.daji_token,
-          peerId: targetId,
-        })
-      } else {
-        await auth.bootstrapUserWithTarget(targetId)
-      }
-    } catch (e) {
-      userChatLogger.error('bootstrapUser 失败', e)
-      return
-    }
-  }
+  console.log('auth.role', auth.role)
+  console.log('auth.rcToken', q.daji_token)
+  console.log('im.connected', !im.connected)
 
-  if (auth.rcToken && !im.connected) {
+  if (q.daji_token && !im.connected) {
     try {
-      await im.connect(auth.rcToken)
+      await im.connect(q.daji_token)
+      console.log('im.connect success')
     } catch (e) {
       userChatLogger.error('IM 连接失败', e)
       return
+    } finally {
+      console.log('im.connect finally')
     }
   }
 
