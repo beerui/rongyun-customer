@@ -17,7 +17,7 @@ export interface LauncherOptions {
   title?: string
   /** 点击气泡时的开窗参数（身份 / 可选商品卡） */
   openWith: OpenOptions
-  /** iframe（页内浮窗）/ tab（新开标签），默认 iframe */
+  /** tab（新开标签）/ iframe（页内浮窗），默认 tab */
   mode?: LauncherMode
   /** 未读数超过此值显示 N+，默认 99 */
   badgeMax?: number
@@ -78,7 +78,7 @@ export function mountLauncher(options: LauncherOptions): void {
   const unreadUnsub = on('unread:change', ({ count }) => setBadge(badge, count, badgeMax))
 
   root.addEventListener('click', () => {
-    emit('launcher:click', { mode: options.mode ?? 'iframe' })
+    emit('launcher:click', { mode: options.mode ?? 'tab' })
     handleLauncherClick(options)
   })
 
@@ -89,7 +89,7 @@ export function mountLauncher(options: LauncherOptions): void {
 }
 
 async function handleLauncherClick(options: LauncherOptions): Promise<void> {
-  const mode = options.mode ?? 'iframe'
+  const mode = options.mode ?? 'tab'
   try {
     if (mode === 'tab') {
       await open(options.openWith)
