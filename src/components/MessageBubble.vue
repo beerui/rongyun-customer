@@ -239,6 +239,10 @@ function formatDuration(s?: number) {
         </div>
       </div>
 
+      <div v-else-if="message.type === 'system'" class="px-2.5 py-1.5 rounded-md bg-bg-soft text-[11px] text-ink-500 text-center">
+        {{ (message.content as any)?.message || (message.content as any)?.operation || '[系统消息]' }}
+      </div>
+
       <div v-else class="px-2.5 py-2 rounded-md bg-bg-soft text-[11px] text-ink-600">[不支持的消息类型]</div>
 
       <div v-if="message.status !== 'sent'" class="flex items-center gap-1 mt-1 text-[10px] text-ink-600/70">

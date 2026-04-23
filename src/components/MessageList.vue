@@ -9,6 +9,7 @@ import TimeDivider from './TimeDivider.vue'
 const props = defineProps<{
   messages: Message[]
   myUserId: string
+  showSystemMessages?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -79,6 +80,7 @@ const items = computed(() => {
   const out: Array<{ kind: 'time'; ts: number; key: string } | { kind: 'msg'; m: Message; key: string }> = []
   let lastTs = 0
   for (const m of props.messages) {
+    if (m.type === 'system' && !props.showSystemMessages) continue
     if (!lastTs || m.sentTime - lastTs > FIVE_MIN) {
       out.push({ kind: 'time', ts: m.sentTime, key: `t_${m.sentTime}` })
     }

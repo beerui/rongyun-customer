@@ -44,3 +44,12 @@ export function onConnectionStatus(handler: (s: ConnectionStatus) => void): Unsu
     RC.removeEventListener(RC.Events.DISCONNECT, fn as any)
   }
 }
+
+export function onGroupOperation(handler: (data: any) => void): Unsub {
+  const fn = (evt: any) => {
+    console.log('群组操作变更', evt)
+    handler(evt)
+  }
+  RC.addEventListener(RC.Events.GROUP_OPERATION, fn as any)
+  return () => RC.removeEventListener(RC.Events.GROUP_OPERATION, fn as any)
+}

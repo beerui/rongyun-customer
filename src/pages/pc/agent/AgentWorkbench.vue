@@ -115,7 +115,13 @@
         </div>
         <template v-else>
           <div class="flex-1 min-h-0 flex flex-col">
-            <MessageList :messages="im.messages" :my-user-id="auth.userId" @retry="(id: string) => im.retry(id)" @recall="handleRecall" />
+            <MessageList
+              :messages="im.messages"
+              :my-user-id="auth.userId"
+              :show-system-messages="true"
+              @retry="(id: string) => im.retry(id)"
+              @recall="handleRecall"
+            />
           </div>
 
           <MessageInput

@@ -1,4 +1,4 @@
-export type MessageType = 'text' | 'image' | 'video' | 'file' | 'product' | 'order' | 'coupon' | 'custom'
+export type MessageType = 'text' | 'image' | 'video' | 'file' | 'product' | 'order' | 'coupon' | 'custom' | 'system'
 
 export type ImagePayload = { url: string; width?: number; height?: number }
 export type VideoPayload = { url: string; name?: string; size?: number; duration?: number }

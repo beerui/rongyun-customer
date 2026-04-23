@@ -23,6 +23,8 @@ function detectType(objectName: string, content: any): MessageType {
       return 'file'
     case 'RC:SightMsg':
       return 'video'
+    case 'RC:GrpNtf':
+      return 'system'
   }
   return 'custom'
 }
@@ -48,6 +50,7 @@ function parseContent(type: MessageType, content: any): any {
       name: content?.name ?? '',
       size: Number(content?.size ?? 0),
     }
+  if (type === 'system') return content
   if (type === 'product' || type === 'order' || type === 'coupon') {
     // DAJI:Card 消息：content 形状就是 { customType, data }
     if (content?.data) return content.data

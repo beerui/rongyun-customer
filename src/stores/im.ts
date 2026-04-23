@@ -13,6 +13,7 @@ import {
   getHistory,
   initIM,
   onConnectionStatus,
+  onGroupOperation,
   onMessage,
   recallMessage,
   sendCustomCard,
@@ -37,13 +38,14 @@ export const useImStore = defineStore('im', () => {
 
   const connected = computed(() => status.value === 'connected')
 
-  async function connect(token: string) {
+  async function connect(token: string): Promise<{ userId: string }> {
     initIM(APPKEY)
     status.value = 'connecting'
     try {
-      await connectIM(token)
+      const res = await connectIM(token)
       status.value = 'connected'
       bindEvents()
+      return res
     } catch (e) {
       status.value = 'error'
       throw e
@@ -103,6 +105,9 @@ export const useImStore = defineStore('im', () => {
         if (!isCurrent) return
         messages.value.push(msg)
         clearUnread(msg.targetId).catch(() => {})
+      }),
+      onGroupOperation((data) => {
+        console.log('群组操作变更', data)
       }),
     )
   }

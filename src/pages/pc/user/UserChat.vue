@@ -77,15 +77,15 @@ onMounted(async () => {
   console.log('auth.rcToken', q.daji_token)
   console.log('im.connected', !im.connected)
 
-  if (q.daji_token && !im.connected) {
+  const imToken = q.daji_token || localStorage.getItem('user_auth_token') || ''
+  if (imToken && !im.connected) {
     try {
-      await im.connect(q.daji_token)
-      console.log('im.connect success')
+      const { userId } = await im.connect(imToken)
+      localStorage.setItem('user_auth_token', imToken)
+      auth.userId = userId
     } catch (e) {
       userChatLogger.error('IM 连接失败', e)
       return
-    } finally {
-      console.log('im.connect finally')
     }
   }
 
