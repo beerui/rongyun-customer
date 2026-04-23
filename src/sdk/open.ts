@@ -126,7 +126,7 @@ function openWindowSmart(key: string, url: string, features?: string): Window | 
       return existing
     }
   }
-  const win = window.open(url, '_blank', features || DEFAULT_FEATURES)
+  const win = window.open(url, 'DJ_Chat_Window', features || DEFAULT_FEATURES)
   if (win) {
     openedWindows.set(key, win)
     startClosePoll()
