@@ -1,7 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
 
-const READY_TOKEN = import.meta.env.VITE_READY_TOKEN
-
 export const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE,
   timeout: 15000,
@@ -10,7 +8,7 @@ export const http: AxiosInstance = axios.create({
 http.interceptors.request.use((config) => {
   const isAgentRoute = location.pathname.startsWith('/agent')
   const tokenKey = isAgentRoute ? 'agent_auth_token' : 'user_auth_token'
-  const imToken = localStorage.getItem(tokenKey) || READY_TOKEN || ''
+  const imToken = localStorage.getItem(tokenKey) || ''
   if (imToken) (config.headers as any).ImToken = imToken
   // if (imToken) (config.headers as any).accessToken = imToken
   // if (imToken) (config.headers as any).Authorization = imToken
