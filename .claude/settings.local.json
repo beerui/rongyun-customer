@@ -33,7 +33,9 @@
       "mcp__masterGo-magic-mcp__mcp__getDsl",
       "Bash(npx tsc *)",
       "Bash(git -C /mnt/d/2026/daji-customer-service status)",
-      "Bash(git -C /mnt/d/2026/daji-customer-service diff --stat)"
+      "Bash(git -C /mnt/d/2026/daji-customer-service diff --stat)",
+      "Bash(python *)",
+      "Bash(python3 *)"
     ]
   }
 }

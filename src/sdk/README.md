@@ -76,16 +76,74 @@ contactBtn.addEventListener('click', () => {
 
 ### IIFE（`<script>` 直接加载）
 
-```html
-<script src="./daji-cs.iife.js"></script>
-<script>
-  DajiCS.boot({ baseUrl: '...', apiBase: '...' })
+纯静态 HTML、无构建工具的站点推荐此方式，加载后通过 `window.DajiCS` 使用。
 
-  document.querySelector('#contact-cs').addEventListener('click', function () {
-    DajiCS.open({ userId: 'u_123', supplierId: 'shop_abc' })
+**步骤 1：准备 SDK 文件**
+
+```bash
+# 从本仓库构建产物复制
+pnpm build:sdk
+cp dist/sdk/iife/daji-cs.iife.js examples/iife-basic/
+
+# 或从 npm 包复制
+cp node_modules/@daji/cs-sdk/iife/daji-cs.iife.js ./
+```
+
+**步骤 2：引入脚本并初始化**
+
+```html
+<!-- ① 在 <body> 底部或 <head> 中引入 SDK -->
+<script src="./daji-cs.iife.js"></script>
+
+<!-- ② 初始化（整站只需一次） -->
+<script>
+  DajiCS.boot({
+    baseUrl: 'https://cs.chinamarket.cn', // 客服站点根地址
+    apiBase: 'https://api.chinamarket.cn', // 后端 API 根（预投接口所在）
+    debug: true, // 开发阶段建议开启，打印 [DajiCS] 调试日志
   })
 </script>
 ```
+
+**步骤 3：按钮绑定打开客服**
+
+```html
+<script>
+  // 仅打开客服窗口（无商品卡）
+  document.querySelector('#contact-cs').addEventListener('click', function () {
+    DajiCS.open({
+      userId: 'u_123', // 当前用户 ID（必填）
+      userName: '张三', // 用户昵称
+      supplierId: 'shop_abc', // 目标商家 ID（必填）
+      token: '<your-token>', // 宿主业务 token
+      language: 'zh', // zh / en
+    })
+  })
+
+  // 商品详情页：带商品卡预投
+  document.querySelector('#ask-product').addEventListener('click', function () {
+    DajiCS.open({
+      userId: 'u_123',
+      supplierId: 'shop_abc',
+      token: '<your-token>',
+      card: {
+        title: '精品大枣 5kg',
+        imgUrl: 'https://cdn.example.com/sku/9999.jpg',
+        spuId: 'SPU_9999',
+        jumpUrl: 'https://shop.example.com/product/9999',
+      },
+    })
+  })
+</script>
+```
+
+> **完整 IIFE 示例**（包含环境切换、事件日志、Launcher 挂载、未读角标等）见 [`examples/iife-basic/index.html`](../../examples/iife-basic/index.html)：
+>
+> ```bash
+> # 复制 SDK 文件到示例目录后用静态服务器打开
+> cp dist/sdk/iife/daji-cs.iife.js examples/iife-basic/
+> npx serve examples/iife-basic
+> ```
 
 ---
 

@@ -4,203 +4,837 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DajiCS IIFE 最小示例</title>
+  <title>DajiCS IIFE 完整示例</title>
   <style>
+    :root {
+      color-scheme: light;
+      --primary: #fa3e3e;
+      --primary-deep: #e43434;
+      --text: #0f172a;
+      --subtext: #475569;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --success: #16a34a;
+      --warning: #d97706;
+      --code: #0f172a;
+      --code-text: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', system-ui;
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 0 20px;
-      line-height: 1.6;
-      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+      margin: 0;
+      color: var(--text);
+      background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      line-height: 1.65;
     }
 
-    h1 {
-      font-size: 22px;
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
     }
 
-    p {
-      color: #475569;
+    .hero {
+      display: grid;
+      gap: 20px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
     }
 
-    code {
-      background: #f1f5f9;
-      padding: 1px 6px;
-      border-radius: 4px;
+    .hero h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--subtext);
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .main,
+    .side {
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      line-height: 1.35;
+    }
+
+    .card p,
+    .card li {
+      color: var(--subtext);
+    }
+
+    .card ol,
+    .card ul {
+      margin: 12px 0 0;
+      padding-left: 20px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .step {
+      padding: 14px 14px 14px 16px;
+      background: var(--bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .env-grid,
+    .action-grid,
+    .api-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .env-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .env-btn,
+    button {
+      appearance: none;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.18s ease;
+    }
+
+    button:hover,
+    .env-btn:hover {
+      border-color: #fca5a5;
+      background: #fff5f5;
+    }
+
+    .env-btn.active,
+    button.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--primary-deep);
+      border-color: var(--primary-deep);
+    }
+
+    .muted {
+      color: #64748b;
       font-size: 13px;
     }
 
-    .product {
-      display: flex;
-      gap: 16px;
-      padding: 16px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      margin: 20px 0;
-    }
-
-    .product img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
+    .inline-code,
+    code {
+      font-family: Consolas, 'SFMono-Regular', Monaco, monospace;
+      background: #f1f5f9;
       border-radius: 6px;
-    }
-
-    .product button {
-      margin-top: 10px;
-      padding: 8px 18px;
-      background: #fa3e3e;
-      color: #fff;
-      border: 0;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .product button:hover {
-      background: #e43434;
+      padding: 2px 6px;
+      font-size: 13px;
     }
 
     pre {
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      margin: 0;
+      padding: 14px;
       overflow: auto;
-      max-height: 200px;
+      border-radius: 12px;
+      background: var(--code);
+      color: var(--code-text);
+      font-size: 12px;
+      line-height: 1.6;
     }
 
-    .status {
-      margin-top: 20px;
-      padding: 10px 14px;
+    .product {
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      gap: 18px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .product img {
+      width: 132px;
+      height: 132px;
+      object-fit: cover;
+      border-radius: 10px;
       background: #f8fafc;
-      border-left: 3px solid #fa3e3e;
+      border: 1px solid var(--border);
+    }
+
+    .price {
+      margin-top: 6px;
+      color: #dc2626;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .status-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .status-item {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .status-item strong {
+      display: inline-block;
+      min-width: 92px;
+    }
+
+    .hint {
+      padding: 12px 14px;
+      border-left: 4px solid var(--warning);
+      background: #fff7ed;
+      border-radius: 10px;
+      color: #9a3412;
       font-size: 13px;
+    }
+
+    .success {
+      border-left-color: var(--success);
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .api-grid {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .api-item {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+    }
+
+    .log-box {
+      min-height: 320px;
+      max-height: 500px;
+    }
+
+    .two-col {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 20px 14px 56px;
+      }
+
+      .hero {
+        padding: 20px;
+      }
+
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .product {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>DajiCS IIFE 最小示例</h1>
-  <p>
-    这是一个模拟"第三方商城商品页"的示例。点击商品卡片里的
-    <strong>"咨询客服"</strong>
-    ，SDK 会预投商品卡片到客服会话并打开新窗口。右下角的悬浮按钮会展开 iframe Widget。
-  </p>
+  <div class="page">
+    <section class="hero">
+      <div class="hero-tags">
+        <span class="tag">IIFE 零构建接入</span>
+        <span class="tag">标签页模式</span>
+        <span class="tag">Launcher iframe 模式</span>
+        <span class="tag">事件监听全覆盖</span>
+      </div>
+      <div>
+        <h1>DajiCS IIFE 完整示例</h1>
+        <p>
+          本页用于演示在纯静态 HTML 页面中，通过 <code>&lt;script&gt;</code> 直接引入
+          <code>window.DajiCS</code> 的完整接入方式。
+          包含快速接入、商品页咨询、悬浮客服、事件日志、环境切换与调试方式。
+        </p>
+      </div>
+    </section>
 
-  <p>
-    运行方式：先从 SDK 包拷 IIFE bundle 到本目录：
-    <br />
-    <code>cp node_modules/@daji/cs-sdk/iife/daji-cs.iife.js .</code>
-    <br />
-    或本仓库：
-    <code>cp dist/sdk/iife/daji-cs.iife.js examples/iife-basic/</code>
-    <br />
-    然后用任意静态服务器打开：
-    <code>npx serve .</code>
-  </p>
+    <div class="layout">
+      <main class="main">
+        <section class="card">
+          <h2>1. 快速接入</h2>
+          <p>如果你只想先把 IIFE SDK 接进现有站点，按下面 4 步即可跑通。</p>
+          <div class="steps">
+            <div class="step">
+              <strong>步骤 1：准备 SDK 文件</strong>
+              将 <code>daji-cs.iife.js</code> 放到静态资源目录。可从 npm 包复制，或从本仓库构建产物复制。
+            </div>
+            <div class="step">
+              <strong>步骤 2：页面中引入脚本</strong>
+              在 HTML 中加入 <code>&lt;script src="./daji-cs.iife.js"&gt;&lt;/script&gt;</code>，加载后可直接使用
+              <code>window.DajiCS</code>。
+            </div>
+            <div class="step">
+              <strong>步骤 3：页面初始化时执行 boot()</strong>
+              只需执行一次 <code>DajiCS.boot({ baseUrl, apiBase })</code>，用于配置客服站点地址与预投接口地址。
+            </div>
+            <div class="step">
+              <strong>步骤 4：在按钮点击时调用 open()</strong>
+              传入用户身份和 <code>supplierId</code>，即可打开客服；如果是商品详情页，再额外传入 <code>card</code> 即可预投商品卡。
+            </div>
+          </div>
+          <div style="margin-top: 16px"></div>
+          <pre>&lt;script src="./daji-cs.iife.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  DajiCS.boot({
+    baseUrl: 'https://cs.chinamarket.cn',
+    apiBase: 'https://api.chinamarket.cn',
+    debug: true,
+  })
 
-  <div class="product">
-    <img src="https://placehold.co/120x120?text=SKU" alt="商品图" />
-    <div>
-      <div style="font-size: 16px; font-weight: 600">精品大枣 5kg 礼盒装</div>
-      <div style="color: #dc2626; font-weight: 600; margin-top: 6px">¥ 128.00</div>
-      <div style="color: #64748b; font-size: 13px">原价 ¥168 · 限时 8 折</div>
-      <button id="ask">咨询客服</button>
+  document.getElementById('contact-cs').addEventListener('click', function () {
+    DajiCS.open({
+      userId: 'u_10086',
+      userName: '张三',
+      supplierId: 'SUPPLIER_001',
+      token: 'your-token',
+      language: 'zh',
+    })
+  })
+&lt;/script&gt;</pre>
+          <p class="footer-note">
+            更完整的接入说明见 [`src/sdk/README.md`](src/sdk/README.md) 与 [`docs/SDK_USAGE.md`](docs/SDK_USAGE.md)。
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>2. 本地运行方式</h2>
+          <div class="two-col">
+            <div>
+              <h3>方式 A：从本仓库构建产物复制</h3>
+              <pre>pnpm build:sdk
+copy dist\sdk\iife\daji-cs.iife.js examples\iife-basic\daji-cs.iife.js</pre>
+            </div>
+            <div>
+              <h3>方式 B：从 npm 包复制</h3>
+              <pre>copy node_modules\@daji\cs-sdk\iife\daji-cs.iife.js examples\iife-basic\daji-cs.iife.js</pre>
+            </div>
+          </div>
+          <div style="margin-top: 12px"></div>
+          <pre>npx serve examples/iife-basic
+# 然后打开控制台输出的本地地址</pre>
+          <div class="hint success" style="margin-top: 12px">
+            建议先在浏览器控制台观察 <code>[DajiCS]</code> 调试日志，再结合本页的事件日志一起排查接入问题。
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>3. 环境切换</h2>
+          <p>纯静态 HTML 没有构建时环境变量，推荐通过 <code>window.__DAJI_CS__</code> 或独立配置脚本注入环境。</p>
+          <div class="env-grid" id="env-list"></div>
+          <div class="status-panel" style="margin-top: 14px">
+            <div class="status-item"><strong>当前环境</strong><span id="env-name">-</span></div>
+            <div class="status-item"><strong>baseUrl</strong><span id="base-url">-</span></div>
+            <div class="status-item"><strong>apiBase</strong><span id="api-base">-</span></div>
+          </div>
+          <p class="muted" style="margin-top: 12px">
+            说明：切换环境后会自动重新执行 <code>DajiCS.reset()</code> + <code>DajiCS.boot()</code>。
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>4. 商品页示例：咨询客服</h2>
+          <p>这是一个模拟第三方商城商品详情页的示例。点击按钮后，SDK 会先尝试预投商品卡，再打开客服页。</p>
+          <div class="product">
+            <img src="https://placehold.co/132x132?text=SKU" alt="商品图" />
+            <div>
+              <div style="font-size: 18px; font-weight: 700">精品大枣 5kg 礼盒装</div>
+              <div class="price">¥ 128.00</div>
+              <div class="muted">原价 ¥168 · 限时 8 折 · 新疆原产直供 · 节庆送礼推荐</div>
+              <div class="actions">
+                <button class="primary" id="btn-open-card">咨询客服（带商品卡）</button>
+                <button id="btn-open-basic">打开客服（无商品卡）</button>
+                <button id="btn-open-safe">openSafe 兜底打开</button>
+              </div>
+            </div>
+          </div>
+          <div class="hint" style="margin-top: 14px">
+            适用场景：商品详情页、活动页、商家首页。若希望对话框先展示商品上下文，直接传入 <code>card</code>。
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>5. 悬浮客服 Launcher 示例</h2>
+          <p>如果不想通过新标签页承载客服，可以挂载右下角气泡按钮，并使用 iframe widget 在当前页面中展开。</p>
+          <div class="action-grid">
+            <div class="actions">
+              <button class="primary" id="btn-launcher-mount">挂载 Launcher</button>
+              <button id="btn-launcher-toggle">切换展开 / 收起</button>
+              <button id="btn-launcher-unmount">卸载 Launcher</button>
+            </div>
+            <div class="actions">
+              <button id="btn-unread-plus">模拟未读 +1</button>
+              <button id="btn-unread-reset">未读归零</button>
+              <button id="btn-refresh-identity">refreshIdentity</button>
+            </div>
+          </div>
+          <div class="hint" style="margin-top: 14px">
+            使用建议：标签页模式适合“离站咨询”；iframe 模式适合“站内驻留咨询”。若站点希望降低跳转感知，优先选 Launcher。
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>6. IIFE 常用 API 速查</h2>
+          <div class="api-grid">
+            <div class="api-item">
+              <strong>boot(opts)</strong>
+              <p>初始化 SDK。整页或整站只需调用一次。</p>
+            </div>
+            <div class="api-item">
+              <strong>open(opts)</strong>
+              <p>打开客服窗口；若包含 <code>card</code>，则会先尝试预投商品卡。</p>
+            </div>
+            <div class="api-item">
+              <strong>openSafe(opts)</strong>
+              <p>跳过预投逻辑，直接开窗，适合接口异常时兜底。</p>
+            </div>
+            <div class="api-item">
+              <strong>mountLauncher(opts)</strong>
+              <p>挂载悬浮客服气泡，并用 iframe widget 承载会话。</p>
+            </div>
+            <div class="api-item">
+              <strong>on / once / off</strong>
+              <p>订阅事件、一次性监听、取消监听，可用于日志、埋点、角标更新。</p>
+            </div>
+            <div class="api-item">
+              <strong>reset()</strong>
+              <p>重置内部状态，适合切环境或重新初始化时使用。</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="side">
+        <section class="card">
+          <h2>当前状态</h2>
+          <div class="status-panel">
+            <div class="status-item"><strong>SDK 版本</strong><span id="sdk-version">-</span></div>
+            <div class="status-item"><strong>Ready 状态</strong><span id="sdk-ready">未初始化</span></div>
+            <div class="status-item"><strong>未读数</strong><span id="unread-count">0</span></div>
+            <div class="status-item"><strong>Launcher</strong><span id="launcher-status">未挂载</span></div>
+            <div class="status-item"><strong>Widget</strong><span id="widget-status">关闭</span></div>
+          </div>
+          <div class="actions" style="margin-top: 14px">
+            <button id="btn-ready">调用 ready()</button>
+            <button id="btn-reset">reset + 重新 boot</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>事件日志</h2>
+          <p class="muted">已监听 ready、窗口、预投、launcher、widget、未读、消息、会话结束、error 等事件。</p>
+          <pre class="log-box" id="log">[等待事件...]</pre>
+          <div class="actions" style="margin-top: 14px">
+            <button id="btn-clear-log">清空日志</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>推荐接入顺序</h2>
+          <ol>
+            <li>先在测试页中接入 <code>daji-cs.iife.js</code> 并确认 <code>DajiCS.boot()</code> 成功。</li>
+            <li>先跑通 <code>open()</code> 基础开窗，再补商品卡预投。</li>
+            <li>接入 <code>unread:change</code>、<code>message:incoming</code> 做站点角标或提示。</li>
+            <li>若希望站内悬浮交互，再接入 <code>mountLauncher()</code>。</li>
+            <li>上线前确认 <code>baseUrl</code>、<code>apiBase</code>、<code>allowedOrigins</code> 与环境一致。</li>
+          </ol>
+        </section>
+
+        <section class="card">
+          <h2>常见排查点</h2>
+          <ul>
+            <li><code>DajiCS is not defined</code>：通常是脚本路径不对，或 SDK 文件未复制到当前目录。</li>
+            <li>能打开但身份不生效：检查 <code>token</code>、<code>userId</code>、<code>supplierId</code> 是否正确。</li>
+            <li>iframe 无消息：确认 <code>baseUrl</code> 对应 origin 是否在白名单中。</li>
+            <li>预投失败：检查 <code>apiBase</code> 网络可达性与 <code>/sendRyMessage</code> 接口状态。</li>
+          </ul>
+        </section>
+      </aside>
     </div>
   </div>
 
-  <div class="status" id="status">等待事件...</div>
-
-  <h3 style="margin-top: 28px; font-size: 14px">事件日志</h3>
-  <pre id="log"></pre>
-
-  <!-- SDK 入口 -->
   <script src="./daji-cs.iife.js"></script>
 
-  <!--
-    部署前按目标环境修改下面两个值（纯静态 HTML 无构建时 env，走 window 注入）：
-      - 本地 dev : http://localhost:5200  /  https://dev-gateway.chinamarket.cn
-      - staging  : https://staging-cs.chinamarket.cn  /  https://staging-gateway.chinamarket.cn
-      - prod     : https://cs.chinamarket.cn  /  https://api.chinamarket.cn
-  -->
   <script>
-    window.__DAJI_CS__ = {
+    window.__DAJI_CS__ = window.__DAJI_CS__ || {
       baseUrl: 'http://localhost:5200',
       apiBase: 'https://dev-gateway.chinamarket.cn',
     }
   </script>
 
   <script>
-    // 1) 初始化：从 window.__DAJI_CS__ 读取环境配置
-    DajiCS.boot({
-      baseUrl: window.__DAJI_CS__.baseUrl,
-      apiBase: window.__DAJI_CS__.apiBase,
-      debug: true,
-    })
+    ;(function () {
+      var ENVIRONMENTS = [
+        {
+          key: 'dev',
+          name: '开发环境',
+          baseUrl: 'http://localhost:5200',
+          apiBase: 'https://dev-gateway.chinamarket.cn',
+        },
+        {
+          key: 'staging',
+          name: '预发环境',
+          baseUrl: 'https://staging-cs.chinamarket.cn',
+          apiBase: 'https://staging-gateway.chinamarket.cn',
+        },
+        {
+          key: 'prod',
+          name: '生产环境',
+          baseUrl: 'https://cs.chinamarket.cn',
+          apiBase: 'https://api.chinamarket.cn',
+        },
+      ]
 
-    const statusEl = document.getElementById('status')
-    const logEl = document.getElementById('log')
-    const lines = []
-    function log(line) {
-      const ts = new Date().toLocaleTimeString()
-      lines.push(`[${ts}] ${line}`)
-      if (lines.length > 30) lines.shift()
-      logEl.textContent = lines.join('\n')
-    }
+      var currentEnv = resolveInitialEnv()
+      var unread = 0
+      var launcherMounted = false
+      var logLines = []
 
-    // 2) 订阅事件
-    DajiCS.on('ready', () => log('SDK ready'))
-    DajiCS.on('window:open', ({ url }) => log('新开窗口: ' + url))
-    DajiCS.on('window:focus', ({ key }) => log('复用窗口: ' + key))
-    DajiCS.on('window:close', ({ key }) => log('窗口关闭: ' + key))
-    DajiCS.on('presend:start', ({ clientMsgId }) => log('预投开始 msgId=' + clientMsgId))
-    DajiCS.on('presend:success', ({ clientMsgId }) => log('预投成功 msgId=' + clientMsgId))
-    DajiCS.on('presend:error', ({ error }) => log('预投失败: ' + (error?.message || error)))
+      var elements = {
+        envList: document.getElementById('env-list'),
+        envName: document.getElementById('env-name'),
+        baseUrl: document.getElementById('base-url'),
+        apiBase: document.getElementById('api-base'),
+        sdkVersion: document.getElementById('sdk-version'),
+        sdkReady: document.getElementById('sdk-ready'),
+        unreadCount: document.getElementById('unread-count'),
+        launcherStatus: document.getElementById('launcher-status'),
+        widgetStatus: document.getElementById('widget-status'),
+        log: document.getElementById('log'),
+      }
 
-    DajiCS.on('unread:change', ({ count }) => {
-      statusEl.textContent = count > 0 ? `有 ${count} 条未读消息` : '暂无未读消息'
-      document.title = count > 0 ? `(${count}) IIFE 示例` : 'IIFE 示例'
-    })
+      function resolveInitialEnv() {
+        var injected = window.__DAJI_CS__ || {}
+        for (var i = 0; i < ENVIRONMENTS.length; i++) {
+          var env = ENVIRONMENTS[i]
+          if (env.baseUrl === injected.baseUrl && env.apiBase === injected.apiBase) {
+            return env
+          }
+        }
+        return {
+          key: 'custom',
+          name: '自定义环境',
+          baseUrl: injected.baseUrl || ENVIRONMENTS[0].baseUrl,
+          apiBase: injected.apiBase || ENVIRONMENTS[0].apiBase,
+        }
+      }
 
-    DajiCS.on('message:incoming', ({ from, preview }) => {
-      log(`新消息 from=${from}: ${preview}`)
-    })
+      function getCommonIdentity() {
+        return {
+          userId: 'demo_visitor_001',
+          userName: '示例访客',
+          userType: 1,
+          language: 'zh',
+          token: 'awBFRYI4uCsFj2/AvJFConuKkRGJ5BhSN3A9GPflSjk=@zit8.cn.rongnav.com;zit8.cn.rongcfg.com',
+          priceType: 'retail',
+          supplierId: 'shop_abc',
+        }
+      }
 
-    DajiCS.on('conversation:end', ({ reason }) => {
-      log(`会话已结束 reason=${reason}`)
-    })
-
-    // 3) 商品页"咨询"按钮：预投商品卡 + 打开客服窗口
-    document.getElementById('ask').addEventListener('click', () => {
-      DajiCS.open({
-        userId: 'demo_visitor_001',
-        userName: '示例访客',
-        supplierId: 'shop_abc',
-        token: 'awBFRYI4uCsFj2/AvJFConuKkRGJ5BhSN3A9GPflSjk=@zit8.cn.rongnav.com;zit8.cn.rongcfg.com',
-        card: {
+      function getCardPayload() {
+        return {
           title: '精品大枣 5kg 礼盒装',
-          imgUrl: 'https://placehold.co/120x120?text=SKU',
+          imgUrl: 'https://placehold.co/132x132?text=SKU',
           spuId: 'SPU_9999',
           intr: '新疆原产直供',
+          notes: '节庆礼盒 · 限时优惠',
           jumpUrl: 'https://shop.example.com/p/9999',
-        },
-      })
-    })
+        }
+      }
 
-    // 4) 挂载悬浮 Launcher（右下角气泡 + iframe Widget）
-    // DajiCS.mountLauncher({
-    //   position: 'bottom-right',
-    //   primary: '#FA3E3E',
-    //   title: '在线客服',
-    //   mode: 'iframe',
-    //   openWith: {
-    //     userId: 'demo_visitor_001',
-    //     userName: '示例访客',
-    //     supplierId: 'shop_abc',
-    //   },
-    // })
+      function appendLog(line) {
+        var ts = new Date().toLocaleTimeString()
+        logLines.push('[' + ts + '] ' + line)
+        if (logLines.length > 80) logLines = logLines.slice(-80)
+        elements.log.textContent = logLines.join('\n')
+        elements.log.scrollTop = elements.log.scrollHeight
+      }
+
+      function updateStatus() {
+        elements.envName.textContent = currentEnv.name
+        elements.baseUrl.textContent = currentEnv.baseUrl
+        elements.apiBase.textContent = currentEnv.apiBase
+        elements.sdkVersion.textContent = DajiCS.version || '-'
+        elements.sdkReady.textContent = DajiCS.isReadyNow() ? '已就绪' : '未就绪'
+        elements.unreadCount.textContent = String(unread)
+        elements.launcherStatus.textContent = launcherMounted ? '已挂载' : '未挂载'
+        elements.widgetStatus.textContent = DajiCS.isWidgetOpen && DajiCS.isWidgetOpen() ? '已打开' : '关闭'
+      }
+
+      function renderEnvButtons() {
+        elements.envList.innerHTML = ''
+        ENVIRONMENTS.forEach(function (env) {
+          var btn = document.createElement('button')
+          btn.className = 'env-btn' + (env.key === currentEnv.key ? ' active' : '')
+          btn.innerHTML = '<strong>' + env.name + '</strong><br><span class="muted">' + env.baseUrl + '</span>'
+          btn.addEventListener('click', function () {
+            currentEnv = env
+            window.__DAJI_CS__ = {
+              baseUrl: env.baseUrl,
+              apiBase: env.apiBase,
+            }
+            reboot('切换环境到：' + env.name)
+            renderEnvButtons()
+          })
+          elements.envList.appendChild(btn)
+        })
+      }
+
+      function bootSDK() {
+        DajiCS.boot({
+          baseUrl: currentEnv.baseUrl,
+          apiBase: currentEnv.apiBase,
+          debug: true,
+        })
+        updateStatus()
+      }
+
+      function reboot(reason) {
+        DajiCS.reset()
+        launcherMounted = false
+        unread = 0
+        appendLog(reason)
+        bootSDK()
+      }
+
+      function bindEvents() {
+        var events = [
+          'ready',
+          'window:open',
+          'window:focus',
+          'window:close',
+          'presend:start',
+          'presend:success',
+          'presend:error',
+          'launcher:mount',
+          'launcher:click',
+          'launcher:unmount',
+          'widget:open',
+          'widget:close',
+          'unread:change',
+          'message:incoming',
+          'conversation:end',
+          'error',
+        ]
+
+        events.forEach(function (eventName) {
+          DajiCS.on(eventName, function (payload) {
+            if (eventName === 'launcher:mount') launcherMounted = true
+            if (eventName === 'launcher:unmount') launcherMounted = false
+            if (eventName === 'widget:open') elements.widgetStatus.textContent = '已打开'
+            if (eventName === 'widget:close') elements.widgetStatus.textContent = '关闭'
+            if (eventName === 'unread:change') unread = payload && typeof payload.count === 'number' ? payload.count : unread
+            if (eventName === 'ready') elements.sdkReady.textContent = '已就绪'
+            updateStatus()
+            appendLog(eventName + ' ' + stringifyPayload(payload))
+          })
+        })
+      }
+
+      function stringifyPayload(payload) {
+        if (!payload) return ''
+        try {
+          return JSON.stringify(payload, function (key, value) {
+            return value instanceof Window ? '[Window]' : value
+          })
+        } catch (error) {
+          return String(payload)
+        }
+      }
+
+      function bindActions() {
+        document.getElementById('btn-open-basic').addEventListener('click', function () {
+          DajiCS.open(getCommonIdentity())
+        })
+
+        document.getElementById('btn-open-card').addEventListener('click', function () {
+          DajiCS.open({
+            userId: getCommonIdentity().userId,
+            userName: getCommonIdentity().userName,
+            userType: getCommonIdentity().userType,
+            language: getCommonIdentity().language,
+            token: getCommonIdentity().token,
+            priceType: getCommonIdentity().priceType,
+            supplierId: getCommonIdentity().supplierId,
+            card: getCardPayload(),
+          })
+        })
+
+        document.getElementById('btn-open-safe').addEventListener('click', function () {
+          DajiCS.openSafe({
+            userId: getCommonIdentity().userId,
+            userName: getCommonIdentity().userName,
+            userType: getCommonIdentity().userType,
+            language: getCommonIdentity().language,
+            token: getCommonIdentity().token,
+            priceType: getCommonIdentity().priceType,
+            supplierId: getCommonIdentity().supplierId,
+            card: getCardPayload(),
+          })
+        })
+
+        document.getElementById('btn-launcher-mount').addEventListener('click', function () {
+          DajiCS.mountLauncher({
+            position: 'bottom-right',
+            primary: '#FA3E3E',
+            title: '在线客服',
+            mode: 'iframe',
+            openWith: getCommonIdentity(),
+          })
+          launcherMounted = true
+          updateStatus()
+        })
+
+        document.getElementById('btn-launcher-toggle').addEventListener('click', function () {
+          DajiCS.toggleWidget()
+          setTimeout(updateStatus, 60)
+        })
+
+        document.getElementById('btn-launcher-unmount').addEventListener('click', function () {
+          DajiCS.unmountLauncher()
+          launcherMounted = false
+          updateStatus()
+        })
+
+        document.getElementById('btn-unread-plus').addEventListener('click', function () {
+          unread += 1
+          DajiCS.setUnreadCount(unread)
+          updateStatus()
+        })
+
+        document.getElementById('btn-unread-reset').addEventListener('click', function () {
+          unread = 0
+          DajiCS.setUnreadCount(0)
+          updateStatus()
+        })
+
+        document.getElementById('btn-refresh-identity').addEventListener('click', function () {
+          var ok = DajiCS.refreshIdentity({
+            token: 'new-demo-token-' + Date.now(),
+            language: 'zh',
+            userId: getCommonIdentity().userId,
+            supplierId: getCommonIdentity().supplierId,
+          })
+          appendLog('refreshIdentity => ' + ok)
+        })
+
+        document.getElementById('btn-ready').addEventListener('click', function () {
+          DajiCS.ready().then(function () {
+            appendLog('ready() resolved')
+            updateStatus()
+          })
+        })
+
+        document.getElementById('btn-reset').addEventListener('click', function () {
+          reboot('手动 reset + 重新 boot')
+        })
+
+        document.getElementById('btn-clear-log').addEventListener('click', function () {
+          logLines = []
+          elements.log.textContent = '[日志已清空]'
+        })
+      }
+
+      renderEnvButtons()
+      bindEvents()
+      bindActions()
+      bootSDK()
+      appendLog('IIFE 示例页面已加载，可直接点击按钮验证接入链路')
+      updateStatus()
+    })()
   </script>
 </body>
 

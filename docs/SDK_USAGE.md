@@ -9,7 +9,7 @@
 核心场景：**在某个网站中，点击商家客服按钮，携带用户信息和客服信息，打开客服系统。**
 
 ```html
-<!-- ① 引入 SDK（约 2.4 kB gzip） -->
+<!-- ① 引入 SDK（约 2.4 kB gzip，零依赖） -->
 <script src="https://<cs-host>/daji-cs.iife.js"></script>
 
 <script>
@@ -22,11 +22,26 @@
   // ③ 点击客服按钮时调用
   document.querySelector('#contact-cs').addEventListener('click', () => {
     DajiCS.open({
-      userId: '10086', // 当前用户 ID
+      userId: '10086', // 当前用户 ID（必填）
       userName: '张三', // 用户昵称
       token: '<业务token>', // 宿主业务 token
-      supplierId: 'SUPPLIER_001', // 目标商家客服 ID
+      supplierId: 'SUPPLIER_001', // 目标商家客服 ID（必填）
       language: 'zh', // 语言 zh / en
+    })
+  })
+
+  // ④（可选）商品详情页：带商品卡预投
+  document.querySelector('#ask-product').addEventListener('click', () => {
+    DajiCS.open({
+      userId: '10086',
+      supplierId: 'SUPPLIER_001',
+      token: '<业务token>',
+      card: {
+        title: '精品大枣 5kg',
+        imgUrl: 'https://cdn.example.com/sku/9999.jpg',
+        spuId: 'SPU_9999',
+        jumpUrl: 'https://shop.example.com/product/9999',
+      },
     })
   })
 </script>
@@ -255,13 +270,50 @@ DajiCS.version // SDK 版本号
 
 ## 9. 本地调试
 
-大集客服仓库自带 demo：
+### 9.1 开发联调 Demo（内嵌 dev server）
+
+大集客服仓库自带 demo，联调 SDK 与业务逻辑时使用：
 
 ```bash
 pnpm build:sdk        # 产出 dist/sdk/daji-cs.iife.js
-pnpm dev              # 起 dev server
+pnpm dev              # 起 dev server（5173 端口）
 # 浏览器开 http://localhost:5173/sdk-demo.html
 ```
+
+### 9.2 IIFE 独立完整示例（推荐向接入方演示时使用）
+
+项目 `examples/iife-basic/index.html` 是一个**不依赖任何构建工具**的完整演示页，适合：
+
+- 向第三方开发者演示接入效果
+- 验证某个具体 API 在纯静态站点中的行为
+- 排查接入问题时作为最小复现环境
+
+运行步骤：
+
+```bash
+# 1. 构建 SDK（或从 npm 包复制）
+pnpm build:sdk
+copy dist\sdk\iife\daji-cs.iife.js examples\iife-basic\daji-cs.iife.js
+
+# 2. 用静态服务器打开（无需 Node 服务，npx 临时启动即可）
+npx serve examples/iife-basic
+
+# 3. 浏览器打开控制台输出的本地地址，即可看到完整示例界面
+```
+
+该示例页包含：
+
+| 区域          | 功能                                                    |
+| ------------- | ------------------------------------------------------- |
+| 快速接入      | 4 步接入说明 + 最小代码示例                             |
+| 本地运行方式  | npm / 构建产物两种复制方式                              |
+| 环境切换      | 开发 / 预发 / 生产三套配置一键切换，自动 reset + reboot |
+| 商品页示例    | 带商品卡预投 / 基础打开 / openSafe 兜底                 |
+| Launcher 示例 | 挂载 / 切换展开收起 / 卸载 / 未读角标 / refreshIdentity |
+| 实时状态面板  | SDK 版本、Ready、未读数、Launcher 状态、Widget 状态     |
+| 事件日志      | 所有事件实时输出，支持一键清空                          |
+| 推荐接入顺序  | 按步骤提示接入路径                                      |
+| 常见排查点    | 常见问题快速定位                                        |
 
 ## 10. 安全说明
 
